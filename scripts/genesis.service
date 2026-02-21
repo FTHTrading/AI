@@ -1,0 +1,38 @@
+[Unit]
+Description=Genesis Protocol — Organism-as-a-Service
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=genesis
+Group=genesis
+WorkingDirectory=/home/genesis/genesis-protocol
+EnvironmentFile=/home/genesis/genesis-protocol/.env
+ExecStart=/home/genesis/genesis-protocol/target/release/genesis-protocol
+Restart=on-failure
+RestartSec=3
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=genesis
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/genesis/genesis-protocol
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=512M
+CPUQuota=150%
+
+[Install]
+WantedBy=multi-user.target

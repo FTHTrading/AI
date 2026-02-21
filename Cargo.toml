@@ -1,0 +1,55 @@
+[workspace]
+members = [
+    "crates/genesis-dna",
+    "crates/metabolism",
+    "crates/apostle",
+    "crates/ecosystem",
+    "crates/evolution",
+    "crates/gateway",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+genesis-dna = { path = "crates/genesis-dna" }
+metabolism = { path = "crates/metabolism" }
+apostle = { path = "crates/apostle" }
+ecosystem = { path = "crates/ecosystem" }
+evolution = { path = "crates/evolution" }
+gateway = { path = "crates/gateway" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+rand = "0.8"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+thiserror = "1"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+hex = "0.4"
+
+[package]
+name = "genesis-protocol"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+genesis-dna.workspace = true
+metabolism.workspace = true
+apostle.workspace = true
+ecosystem.workspace = true
+evolution.workspace = true
+gateway.workspace = true
+tokio.workspace = true
+tracing = "0.1"
+tracing-subscriber = "0.3"
+serde_json.workspace = true
+
+[features]
+default = []
+cli = []

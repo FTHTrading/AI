@@ -1,0 +1,27 @@
+[package]
+name = "gateway"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+genesis-dna.workspace = true
+metabolism.workspace = true
+apostle.workspace = true
+ecosystem.workspace = true
+evolution.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+axum = "0.7"
+tower-http = { version = "0.5", features = ["cors", "limit", "set-header"] }
+tower = { version = "0.5", features = ["util"] }
+reqwest = { version = "0.12", features = ["json"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full", "test-util"] }
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"

@@ -1,0 +1,27 @@
+# Genesis Protocol — Caddy Reverse Proxy
+#
+# Replace YOUR_DOMAIN with your actual domain.
+# Caddy handles TLS automatically via Let's Encrypt.
+#
+# Install: sudo cp Caddyfile /etc/caddy/Caddyfile
+# Reload:  sudo systemctl reload caddy
+
+YOUR_DOMAIN {
+    reverse_proxy localhost:3000
+
+    # Security headers
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        -Server
+    }
+
+    # Access logging
+    log {
+        output file /var/log/caddy/genesis-access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}

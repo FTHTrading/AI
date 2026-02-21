@@ -1,0 +1,13 @@
+[package]
+name = "apostle"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+genesis-dna.workspace = true
+metabolism.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
