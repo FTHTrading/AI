@@ -387,6 +387,14 @@ impl MoltbotClient {
                     tracing::info!("Moltbook post published successfully");
                     return true;
                 }
+                Ok((status, body)) if status.as_u16() == 403 => {
+                    tracing::warn!(
+                        attempt = attempt + 1,
+                        body = %body,
+                        "Moltbook 403 Forbidden \u{2014} agent may need claiming, skipping retries"
+                    );
+                    return false;
+                }
                 Ok((status, _)) if status.as_u16() == 429 => {
                     tracing::warn!(
                         attempt = attempt + 1,
@@ -579,7 +587,6 @@ impl MoltbotBridge {
             );
 
             if self.client.create_post(&self.config.submolt, &title, &content).await {
-                self.last_post_epoch = stats.epoch;
                 self.posts_sent += 1;
                 self.pending_milestones.clear();
                 tracing::info!(
@@ -589,6 +596,8 @@ impl MoltbotBridge {
                     "Status posted to Moltbook"
                 );
             }
+            // Always advance epoch counter to prevent hammering on persistent errors
+            self.last_post_epoch = stats.epoch;
         }
     }
 
