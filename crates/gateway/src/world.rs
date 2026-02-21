@@ -68,6 +68,103 @@ const MAX_BIRTHS_PER_EPOCH: usize = 3;
 /// Real ecology: species sharing resources compete partially.
 const CROSS_NICHE_ALPHA: f64 = 0.15;
 
+/// Juvenile protection: agents younger than this many epochs get a basal rebate.
+const JUVENILE_PROTECTION_EPOCHS: u64 = 5;
+
+/// Fraction of basal cost rebated to juvenile agents (25% survival cushion).
+const JUVENILE_BASAL_REBATE: f64 = 0.25;
+
+// ─── Seasonal Ecology ──────────────────────────────────────────────────
+//
+// The organism cycles through four ecological states driven by system metrics,
+// not a fixed calendar. States are re-evaluated each epoch.
+//
+//   Spring (decline recovery)  — birth:death < 1.0
+//   Summer (innovation surge)  — birth:death > 1.1
+//   Autumn (stable selection)  — default equilibrium
+//   Winter (hoarding correction) — treasury > 70% of total ATP
+//
+// Priority: Spring > Winter > Summer > Autumn
+
+#[derive(Debug, Clone, Copy, PartialEq, Default, Serialize, Deserialize)]
+pub enum EcoState {
+    /// Recovery mode: reduce reproductive friction, release trapped treasury.
+    Spring,
+    /// Innovation surge: increase mutation pressure, slight friction.
+    Summer,
+    /// Stable competitive selection: no strong modifiers.
+    #[default]
+    Autumn,
+    /// Hoarding correction: force treasury release, slight survival pressure.
+    Winter,
+}
+
+impl EcoState {
+    pub fn name(&self) -> &'static str {
+        match self {
+            EcoState::Spring => "Spring",
+            EcoState::Summer => "Summer",
+            EcoState::Autumn => "Autumn",
+            EcoState::Winter => "Winter",
+        }
+    }
+
+    /// Reproductive cost multiplier. Spring = 0.60 (40% cheaper).
+    pub fn fertility_multiplier(&self) -> f64 {
+        match self {
+            EcoState::Spring => 0.60,
+            EcoState::Summer => 1.05,
+            EcoState::Autumn => 1.00,
+            EcoState::Winter => 1.00,
+        }
+    }
+
+    /// Mutation pressure multiplier. Spring = 0.85 (safer offspring).
+    pub fn mutation_multiplier(&self) -> f64 {
+        match self {
+            EcoState::Spring => 0.85,
+            EcoState::Summer => 1.15,
+            EcoState::Autumn => 1.00,
+            EcoState::Winter => 1.00,
+        }
+    }
+
+    /// Treasury release fraction per epoch. 0.0 = no release.
+    /// Spring uses pressure-scaled formula; caller passes birth_death_ratio.
+    pub fn treasury_release_fraction(&self, birth_death_ratio: f64) -> f64 {
+        match self {
+            EcoState::Spring => {
+                // r = r_min + (1 - R_bd) * r_scale, capped at r_max
+                let pressure = (1.0_f64 - birth_death_ratio).max(0.0);
+                (0.05 + pressure * 0.15).min(0.20)
+            }
+            EcoState::Winter => 0.15,
+            EcoState::Summer | EcoState::Autumn => 0.00,
+        }
+    }
+}
+
+/// Determine the ecological state from current system metrics.
+/// Priority: Spring > Winter > Summer > Autumn.
+fn determine_ecostate(
+    birth_death_ratio: f64,
+    treasury_reserve: f64,
+    circulating_atp: f64,
+) -> EcoState {
+    let total_atp = (treasury_reserve + circulating_atp).max(1.0);
+    let hoarding_ratio = treasury_reserve / total_atp;
+
+    if birth_death_ratio < 1.0 {
+        EcoState::Spring
+    } else if hoarding_ratio > 0.70 {
+        EcoState::Winter
+    } else if birth_death_ratio > 1.10 {
+        EcoState::Summer
+    } else {
+        EcoState::Autumn
+    }
+}
+
 // ─── Resource Pool ──────────────────────────────────────────────────────
 
 /// A regenerating resource pool for one ecological niche.
@@ -265,6 +362,8 @@ pub struct World {
     pub total_births: u64,
     /// Total deaths across all epochs.
     pub total_deaths: u64,
+    /// Current ecological season state.
+    pub eco_state: EcoState,
 }
 
 /// Epoch summary stats returned by run_epoch.
@@ -301,6 +400,10 @@ pub struct EpochStats {
     pub treasury_reserve: f64,
     /// Treasury ATP distributed this epoch (stipends + crisis + overflow).
     pub treasury_distributed: f64,
+    /// Seasonal ecological state active this epoch.
+    pub eco_state: EcoState,
+    /// Birth:death ratio over the rolling history window.
+    pub birth_death_ratio: f64,
 }
 
 /// Registration request from external callers.
@@ -392,6 +495,7 @@ impl World {
             epoch_history: VecDeque::with_capacity(100),
             total_births: 0,
             total_deaths: 0,
+            eco_state: EcoState::Autumn,
         }
     }
 
@@ -541,6 +645,50 @@ impl World {
         self.environment.tick(epoch);
 
         // ═══════════════════════════════════════════════════════════════
+        // STEP 0a: Ecological state determination
+        //
+        // Compute birth:death ratio from rolling history window, then
+        // determine which ecological season the organism is in. Season
+        // drives reproduction cost, mutation pressure, and treasury release.
+        // ═══════════════════════════════════════════════════════════════
+        let birth_death_ratio = {
+            let (w_births, w_deaths) = self.epoch_history.iter().fold((0u64, 0u64), |acc, h| {
+                (acc.0 + h.births, acc.1 + h.deaths)
+            });
+            // Smoothed ratio (Laplace +1 to avoid div0)
+            (w_births + 1) as f64 / (w_deaths + 1) as f64
+        };
+        let circulating_atp = self.ledger.total_supply();
+        let current_eco = determine_ecostate(birth_death_ratio, self.treasury.reserve, circulating_atp);
+        self.eco_state = current_eco;
+
+        // Seasonal treasury release — BEFORE metabolism so agents have energy to survive
+        let release_fraction = current_eco.treasury_release_fraction(birth_death_ratio);
+        if release_fraction > 0.0 && self.treasury.reserve > 0.0 {
+            let release_amount = self.treasury.reserve * release_fraction;
+            let actually_released = self.treasury.crisis_spend(release_amount);
+            let pop = self.agents.len();
+            if actually_released > 0.0 && pop > 0 {
+                let per_agent = actually_released / pop as f64;
+                for agent in self.agents.iter() {
+                    let _ = self.ledger.mint(
+                        &agent.id, per_agent,
+                        TransactionKind::ProofOfSolution,
+                        &format!("Epoch {} {} seasonal treasury release", epoch, current_eco.name()),
+                    );
+                }
+                tracing::info!(
+                    epoch = epoch,
+                    season = current_eco.name(),
+                    released = format!("{:.2}", actually_released),
+                    per_agent = format!("{:.2}", per_agent),
+                    bd_ratio = format!("{:.3}", birth_death_ratio),
+                    "Treasury seasonal release"
+                );
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
         // STEP 1: Resource extraction — proportional foraging per niche
         //
         // Each agent extracts ATP from its role's resource pool.
@@ -606,6 +754,26 @@ impl World {
         // Lower than before (0.15 vs 0.5) so agents can sustain
         // ═══════════════════════════════════════════════════════════════
         self.ledger.metabolic_tick_all();
+
+        // ── Juvenile protection: agents < 5 epochs old get 25% basal rebate ──
+        // Prevents newborns from dying before their first foraging cycle.
+        {
+            use metabolism::atp::costs::BASAL_TICK;
+            let rebate = BASAL_TICK * JUVENILE_BASAL_REBATE;
+            let juvenile_ids: Vec<uuid::Uuid> = self.agents.iter()
+                .filter(|a| epoch.saturating_sub(
+                    self.agent_birth_epoch.get(&a.id).copied().unwrap_or(0)
+                ) < JUVENILE_PROTECTION_EPOCHS)
+                .map(|a| a.id)
+                .collect();
+            for jid in juvenile_ids {
+                let _ = self.ledger.mint(
+                    &jid, rebate,
+                    TransactionKind::ProofOfSolution,
+                    &format!("Epoch {} juvenile metabolic cushion", epoch),
+                );
+            }
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // STEP 2a: ATP decay — 2% balance erosion per epoch
@@ -766,10 +934,13 @@ impl World {
 
         // ═══════════════════════════════════════════════════════════════
         // STEP 5: Mutation under environmental pressure
-        // Pressure modulated by seasonal cycle — higher in harsh seasons
+        // Pressure modulated by seasonal cycle — higher in harsh seasons.
+        // Eco-state further modulates: Spring reduces volatility (safer
+        // offspring), Summer intensifies (diversity burst).
         // ═══════════════════════════════════════════════════════════════
+        let seasonal_pressure = environmental_pressure * current_eco.mutation_multiplier();
         for agent in self.agents.iter_mut() {
-            let m = self.mutation_engine.apply_pressure(agent.id, &mut agent.traits, environmental_pressure);
+            let m = self.mutation_engine.apply_pressure(agent.id, &mut agent.traits, seasonal_pressure);
             mutations += m as u64;
         }
 
@@ -801,6 +972,8 @@ impl World {
             // ─── Replication ───
             let replicator_ids: Vec<_> = outcome.replicators.clone();
             let mut births_this_epoch = 0usize;
+            // Ecology-adjusted replication cost (Spring = 40% cheaper)
+            let effective_replication_cost = REPLICATION_COST * current_eco.fertility_multiplier();
             for parent_id in replicator_ids {
                 if births_this_epoch >= MAX_BIRTHS_PER_EPOCH {
                     break;
@@ -816,7 +989,7 @@ impl World {
                     }
 
                     let parent_balance = self.ledger.balance(&parent.id).unwrap().balance;
-                    if parent_balance >= REPLICATION_COST {
+                    if parent_balance >= effective_replication_cost {
                         let child_entropy: Vec<u8> = (0..64)
                             .map(|j| {
                                 parent.genesis_hash[j % 32]
@@ -829,7 +1002,7 @@ impl World {
                         if let Ok(child) = parent.replicate(&child_entropy) {
                             let _ = self.ledger.burn(
                                 &parent_id,
-                                REPLICATION_COST,
+                                effective_replication_cost,
                                 TransactionKind::ReplicationCost,
                                 "Replication cost",
                             );
@@ -921,6 +1094,8 @@ impl World {
             niche_resources,
             treasury_reserve: self.treasury.reserve,
             treasury_distributed: self.treasury.total_distributed - treasury_distributed_before,
+            eco_state: current_eco,
+            birth_death_ratio,
         };
 
         // Keep rolling window of last 100 epochs

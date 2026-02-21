@@ -1371,6 +1371,8 @@ mod tests {
             niche_resources: std::collections::HashMap::new(),
             treasury_reserve: 15.0,
             treasury_distributed: 0.0,
+            eco_state: crate::world::EcoState::Autumn,
+            birth_death_ratio: (births + 1) as f64 / (deaths + 1) as f64,
         }
     }
 

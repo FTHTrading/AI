@@ -123,6 +123,47 @@ canvas{display:block}
   color:rgba(34,211,238,.2);
 }
 
+/* ── Eco state badge ─────────────────────────────────────────── */
+#eco-badge{
+  position:fixed;top:36px;left:50%;transform:translateX(-50%);
+  pointer-events:none;z-index:10;text-align:center;
+  animation:eco-fade-in .8s ease;
+}
+@keyframes eco-fade-in{from{opacity:0;transform:translateX(-50%) translateY(-4px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+#eco-badge .eco-label{
+  display:inline-block;
+  font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  padding:2px 10px;border-radius:2px;
+  transition:all 1s ease;
+}
+#eco-badge .eco-desc{
+  font-size:9px;letter-spacing:.06em;color:rgba(200,214,229,.2);
+  display:block;margin-top:3px;text-align:center;
+}
+.eco-spring{ color:rgba(52,211,153,.9); border:1px solid rgba(52,211,153,.2); background:rgba(52,211,153,.04); }
+.eco-summer{ color:rgba(251,191,36,.9); border:1px solid rgba(251,191,36,.2); background:rgba(251,191,36,.04); }
+.eco-autumn{ color:rgba(200,214,229,.5); border:1px solid rgba(200,214,229,.1); background:rgba(200,214,229,.02); }
+.eco-winter{ color:rgba(96,165,250,.9); border:1px solid rgba(96,165,250,.2); background:rgba(96,165,250,.04); }
+
+/* ── Seasonal aurora overlay ─────────────────────────────────── */
+#aurora{
+  position:fixed;bottom:0;left:0;right:0;height:30vh;
+  pointer-events:none;z-index:2;
+  opacity:0;transition:opacity 2s ease;
+  background:transparent;
+}
+#aurora.spring{
+  background:radial-gradient(ellipse 80% 100% at 50% 100%, rgba(52,211,153,.07) 0%, transparent 70%);
+  opacity:1;
+  animation:aurora-breathe 8s ease-in-out infinite;
+}
+#aurora.winter{
+  background:radial-gradient(ellipse 80% 100% at 50% 100%, rgba(96,165,250,.06) 0%, transparent 70%);
+  opacity:1;
+  animation:aurora-breathe 6s ease-in-out infinite;
+}
+@keyframes aurora-breathe{0%,100%{opacity:.6}50%{opacity:1}}
+
 /* ── Back link ───────────────────────────────────────────────── */
 #back-link{
   position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:5;
@@ -160,6 +201,11 @@ canvas{display:block}
 </div>
 
 <div id="layer-badge">L1 · Living Surface</div>
+<div id="eco-badge">
+  <span class="eco-label" id="eco-label">Autumn</span>
+  <span class="eco-desc" id="eco-desc">Stable competition</span>
+</div>
+<div id="aurora"></div>
 
 <!-- Vitals -->
 <div id="hud-vitals">
@@ -241,6 +287,27 @@ const TOTAL_SYSTEM_ATP = CIRC_ATP + S.tr_reserve;
 const TREASURY_RATIO = S.tr_reserve / Math.max(TOTAL_SYSTEM_ATP, 1);
 const BIRTH_DEATH_RATIO = S.total_births / Math.max(S.total_deaths, 1);
 const MAX_CONTRACTS = Math.max(...AGENTS.map(a => a.contracts));
+
+// ── Ecological state (mirrors Rust determine_ecostate()) ─────────────────
+// Priority: Spring > Winter > Summer > Autumn
+const ECO_STATE = (() => {
+  if (BIRTH_DEATH_RATIO < 1.0) return 'Spring';
+  if (TREASURY_RATIO > 0.70)   return 'Winter';
+  if (BIRTH_DEATH_RATIO > 1.10) return 'Summer';
+  return 'Autumn';
+})();
+const ECO_META = {
+  Spring: { cls: 'eco-spring', desc: 'Recovery · Fertility boost', aurora: 'spring' },
+  Summer: { cls: 'eco-summer', desc: 'Innovation surge · High mutation', aurora: '' },
+  Autumn: { cls: 'eco-autumn', desc: 'Stable selection · Equilibrium', aurora: '' },
+  Winter: { cls: 'eco-winter', desc: 'Hoarding correction · Redistribution active', aurora: 'winter' },
+}[ECO_STATE];
+
+// Update eco badge immediately
+document.getElementById('eco-label').textContent = ECO_STATE;
+document.getElementById('eco-label').className = 'eco-label ' + ECO_META.cls;
+document.getElementById('eco-desc').textContent = ECO_META.desc;
+if (ECO_META.aurora) document.getElementById('aurora').className = ECO_META.aurora;
 
 setProgress(25);
 
