@@ -1,26 +1,45 @@
-// Moltbot — Outbound-Only Moltbook Adapter
+// Moltbot — Moltbook Social Network Adapter
 //
-// Projects Genesis Protocol state into Moltbook without any inbound
-// dependency. The organism speaks; it does not listen.
+// Posts Genesis Protocol state updates to Moltbook (moltbook.com),
+// the social network for AI agents.
+//
+// API:  https://www.moltbook.com/api/v1
+// Auth: Bearer moltbook_sk_xxx
+// Docs: https://www.moltbook.com/skill.md
 //
 // Architecture:
-//   - MoltbotClient: HTTP client that posts to a Moltbook endpoint
-//   - HeartbeatPayload: periodic vitals snapshot (epoch, pop, fitness, risks)
-//   - MilestoneEvent: significant biological events worth announcing
-//   - MoltbotBridge: stateful event detector wired into the epoch loop
+//   - MoltbookClient: HTTP client wrapping Moltbook REST API
+//   - MoltbotBridge: stateful event detector, queues milestones, composes posts
+//   - EpochSnapshot: data from World under mutex, sent via channel
+//
+// Moltbook rate limits respected:
+//   - 1 post per 30 minutes (milestones queued, batched into status posts)
+//   - 100 requests/minute general
+//   - API key only sent to www.moltbook.com
 //
 // Security:
 //   - Outbound-only: no webhook listeners, no inbound routes
-//   - API key isolated: only in MoltbotClient, never in gateway env scope
+//   - API key isolated in MoltbookClient, never exposed to gateway scope
 //   - Failure-tolerant: failed posts log and continue, never block epoch loop
-//   - Rate-capped: heartbeat every N epochs, milestones deduplicated
 
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
 use crate::world::{EpochStats, LeaderboardEntry};
+
+// ───────────────────────────────────────────
+// CONSTANTS
+// ───────────────────────────────────────────
+
+/// Official Moltbook API base URL. Must use www subdomain
+/// (without www, redirects strip the Authorization header).
+const DEFAULT_BASE_URL: &str = "https://www.moltbook.com/api/v1";
+
+/// Minimum post interval in epochs (30 min at 1 epoch/sec).
+/// Matches Moltbook's rate limit of 1 post per 30 minutes.
+const MIN_POST_INTERVAL: u64 = 1800;
 
 // ───────────────────────────────────────────
 // CONFIGURATION
@@ -29,12 +48,15 @@ use crate::world::{EpochStats, LeaderboardEntry};
 /// Moltbot configuration, loaded from environment.
 #[derive(Clone)]
 pub struct MoltbotConfig {
-    /// Moltbook API endpoint (e.g., "https://moltbook.example/api/post").
-    pub endpoint: String,
-    /// API key for authentication. Isolated — never shared with gateway.
+    /// Moltbook API base URL (default: https://www.moltbook.com/api/v1).
+    pub base_url: String,
+    /// API key for authentication (format: moltbook_sk_xxx).
+    /// Isolated — never shared with gateway.
     pub api_key: String,
-    /// Post a heartbeat every N epochs (default: 60 = ~1/min at 1 epoch/sec).
-    pub heartbeat_interval: u64,
+    /// Target submolt community for posts (default: "general").
+    pub submolt: String,
+    /// Post to Moltbook every N epochs (default/min: 1800 = 30 min).
+    pub post_interval: u64,
     /// Maximum retries on transient failure.
     pub max_retries: u32,
     /// HTTP timeout per request.
@@ -45,9 +67,10 @@ pub struct MoltbotConfig {
 impl std::fmt::Debug for MoltbotConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MoltbotConfig")
-            .field("endpoint", &self.endpoint)
+            .field("base_url", &self.base_url)
             .field("api_key", &if self.api_key.is_empty() { "(empty)" } else { "(redacted)" })
-            .field("heartbeat_interval", &self.heartbeat_interval)
+            .field("submolt", &self.submolt)
+            .field("post_interval", &self.post_interval)
             .field("max_retries", &self.max_retries)
             .field("timeout", &self.timeout)
             .finish()
@@ -56,15 +79,24 @@ impl std::fmt::Debug for MoltbotConfig {
 
 impl MoltbotConfig {
     /// Load configuration from environment variables.
-    /// Returns None if MOLTBOOK_ENDPOINT is not set (adapter disabled).
+    /// Returns None if MOLTBOOK_API_KEY is not set (adapter disabled).
     pub fn from_env() -> Option<Self> {
-        let endpoint = std::env::var("MOLTBOOK_ENDPOINT").ok()?;
-        let api_key = std::env::var("MOLTBOOK_API_KEY").unwrap_or_default();
+        let api_key = std::env::var("MOLTBOOK_API_KEY").ok()?;
+        if api_key.is_empty() {
+            return None;
+        }
 
-        let heartbeat_interval = std::env::var("MOLTBOT_HEARTBEAT_INTERVAL")
+        let base_url = std::env::var("MOLTBOOK_BASE_URL")
+            .unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
+
+        let submolt = std::env::var("MOLTBOOK_SUBMOLT")
+            .unwrap_or_else(|_| "general".to_string());
+
+        let post_interval = std::env::var("MOLTBOT_POST_INTERVAL")
             .ok()
             .and_then(|v| v.parse().ok())
-            .unwrap_or(60);
+            .unwrap_or(MIN_POST_INTERVAL)
+            .max(MIN_POST_INTERVAL);
 
         let max_retries = std::env::var("MOLTBOT_MAX_RETRIES")
             .ok()
@@ -77,9 +109,10 @@ impl MoltbotConfig {
             .unwrap_or(10);
 
         Some(MoltbotConfig {
-            endpoint,
+            base_url,
             api_key,
-            heartbeat_interval,
+            submolt,
+            post_interval,
             max_retries,
             timeout: Duration::from_secs(timeout_secs),
         })
@@ -87,10 +120,36 @@ impl MoltbotConfig {
 }
 
 // ───────────────────────────────────────────
-// PAYLOADS
+// MOLTBOOK API TYPES
 // ───────────────────────────────────────────
 
-/// Periodic vitals snapshot posted to Moltbook.
+/// Request body for POST /posts.
+#[derive(Debug, Serialize)]
+struct CreatePostRequest {
+    submolt: String,
+    title: String,
+    content: String,
+}
+
+/// Standard Moltbook API response envelope.
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+struct MoltbookResponse {
+    #[allow(dead_code)]
+    success: bool,
+    #[serde(default)]
+    #[allow(dead_code)]
+    error: Option<String>,
+    #[serde(default)]
+    #[allow(dead_code)]
+    hint: Option<String>,
+}
+
+// ───────────────────────────────────────────
+// INTERNAL TYPES — Organism State
+// ───────────────────────────────────────────
+
+/// Organism vitals snapshot (used internally for post composition).
 #[derive(Debug, Clone, Serialize)]
 pub struct HeartbeatPayload {
     /// Payload type discriminator.
@@ -140,7 +199,7 @@ impl LeaderSummary {
     }
 }
 
-/// Significant biological event worth announcing.
+/// Significant biological event detected by the bridge.
 #[derive(Debug, Clone, Serialize)]
 pub struct MilestoneEvent {
     /// Payload type discriminator.
@@ -184,10 +243,114 @@ pub enum MilestoneKind {
 }
 
 // ───────────────────────────────────────────
+// POST COMPOSER
+// ───────────────────────────────────────────
+
+/// Format uptime seconds as human-readable duration.
+fn format_uptime(secs: i64) -> String {
+    let hours = secs / 3600;
+    let mins = (secs % 3600) / 60;
+    if hours > 0 {
+        format!("{}h {}m", hours, mins)
+    } else {
+        format!("{}m", mins)
+    }
+}
+
+/// Get an emoji for a milestone kind.
+fn milestone_emoji(kind: &MilestoneKind) -> &'static str {
+    match kind {
+        MilestoneKind::PopulationPeak => "\u{1f3d4}\u{fe0f}",
+        MilestoneKind::PopulationCrash => "\u{1f4c9}",
+        MilestoneKind::FitnessRecord => "\u{2b50}",
+        MilestoneKind::BirthBurst => "\u{1f476}",
+        MilestoneKind::DeathSpiral => "\u{1f480}",
+        MilestoneKind::LeaderChange => "\u{1f451}",
+        MilestoneKind::EpochMilestone => "\u{1f3af}",
+        MilestoneKind::ExtinctionRisk => "\u{26a0}\u{fe0f}",
+        MilestoneKind::AtpCrisis => "\u{26a1}",
+        MilestoneKind::Monoculture => "\u{1f9ec}",
+    }
+}
+
+/// Compose a status post title and content from organism state.
+fn compose_status_post(
+    stats: &EpochStats,
+    leader: Option<&LeaderboardEntry>,
+    risks: &[String],
+    treasury: f64,
+    uptime: i64,
+    births: u64,
+    deaths: u64,
+    milestones: &[MilestoneEvent],
+) -> (String, String) {
+    let risk_display = if risks.is_empty()
+        || risks.iter().all(|r| r.contains("Stable"))
+    {
+        "STABLE".to_string()
+    } else {
+        risks.join(", ")
+    };
+
+    let title = format!(
+        "[Epoch {}] {} agents \u{2014} {}",
+        stats.epoch, stats.population, risk_display
+    );
+
+    let mut content = format!(
+        "## Organism Vitals\n\n\
+         - **Population**: {} agents\n\
+         - **Mean Fitness**: {:.4}\n\
+         - **Peak Fitness**: {:.4}\n\
+         - **ATP Supply**: {:.1}\n\
+         - **Treasury**: {:.1}\n\
+         - **Births / Deaths**: {} / {}\n\
+         - **Uptime**: {}\n",
+        stats.population,
+        stats.mean_fitness,
+        stats.max_fitness,
+        stats.total_atp,
+        treasury,
+        births,
+        deaths,
+        format_uptime(uptime),
+    );
+
+    if let Some(entry) = leader {
+        let id_prefix = if entry.agent_id.len() > 8 {
+            &entry.agent_id[..8]
+        } else {
+            &entry.agent_id
+        };
+        content.push_str(&format!(
+            "\n## Leader\n**{}** ({}, gen {}) \u{2014} fitness {:.4}\n",
+            id_prefix, entry.role, entry.generation, entry.fitness
+        ));
+    }
+
+    if !milestones.is_empty() {
+        content.push_str("\n## Recent Events\n");
+        for m in milestones {
+            content.push_str(&format!(
+                "- {} {}\n",
+                milestone_emoji(&m.event),
+                m.description
+            ));
+        }
+    }
+
+    (title, content)
+}
+
+// ───────────────────────────────────────────
 // HTTP CLIENT
 // ───────────────────────────────────────────
 
-/// Outbound HTTP client for posting to Moltbook.
+/// Outbound HTTP client for the Moltbook API.
+///
+/// Endpoints used:
+///   POST /posts      — create a post in a submolt
+///   GET  /agents/me  — validate API key / fetch profile
 ///
 /// Isolated from the gateway server — no shared state, no inbound surface.
 #[derive(Clone)]
@@ -209,60 +372,100 @@ impl MoltbotClient {
         Some(MoltbotClient { config, http })
     }
 
-    /// Post a heartbeat payload. Returns true on success.
-    pub async fn post_heartbeat(&self, payload: &HeartbeatPayload) -> bool {
-        self.post_payload(payload).await
-    }
+    /// Create a text post in a submolt. Returns true on success.
+    pub async fn create_post(&self, submolt: &str, title: &str, content: &str) -> bool {
+        let url = format!("{}/posts", self.config.base_url);
+        let payload = CreatePostRequest {
+            submolt: submolt.to_string(),
+            title: title.to_string(),
+            content: content.to_string(),
+        };
 
-    /// Post a milestone event. Returns true on success.
-    pub async fn post_milestone(&self, event: &MilestoneEvent) -> bool {
-        self.post_payload(event).await
-    }
-
-    /// Generic POST with retry logic.
-    async fn post_payload<T: Serialize>(&self, payload: &T) -> bool {
         for attempt in 0..=self.config.max_retries {
-            match self.try_post(payload).await {
+            match self.try_post(&url, &payload).await {
                 Ok(status) if status.is_success() => {
                     return true;
+                }
+                Ok(status) if status.as_u16() == 429 => {
+                    tracing::warn!(
+                        attempt = attempt + 1,
+                        "Moltbook rate limited (429) \u{2014} will retry next interval"
+                    );
+                    return false;
                 }
                 Ok(status) => {
                     tracing::warn!(
                         attempt = attempt + 1,
                         status = status.as_u16(),
-                        "Moltbot post rejected"
+                        "Moltbook post rejected"
                     );
                 }
                 Err(e) => {
                     tracing::warn!(
                         attempt = attempt + 1,
                         error = %e,
-                        "Moltbot post failed"
+                        "Moltbook post failed"
                     );
                 }
             }
 
-            // Brief backoff between retries (100ms × attempt)
             if attempt < self.config.max_retries {
                 tokio::time::sleep(Duration::from_millis(100 * (attempt as u64 + 1))).await;
             }
         }
 
-        tracing::error!("Moltbot post failed after {} retries", self.config.max_retries);
+        tracing::error!("Moltbook post failed after {} retries", self.config.max_retries);
         false
     }
 
-    /// Single POST attempt.
-    async fn try_post<T: Serialize>(&self, payload: &T) -> Result<reqwest::StatusCode, reqwest::Error> {
-        let mut req = self.http
-            .post(&self.config.endpoint)
-            .json(payload);
-
-        if !self.config.api_key.is_empty() {
-            req = req.header("Authorization", format!("Bearer {}", self.config.api_key));
+    /// Validate API key by fetching agent profile. Returns true if valid.
+    pub async fn check_profile(&self) -> bool {
+        let url = format!("{}/agents/me", self.config.base_url);
+        match self.try_get(&url).await {
+            Ok(status) if status.is_success() => true,
+            Ok(status) => {
+                tracing::warn!(
+                    status = status.as_u16(),
+                    "Moltbook profile check failed"
+                );
+                false
+            }
+            Err(e) => {
+                tracing::warn!(error = %e, "Moltbook profile check error");
+                false
+            }
         }
+    }
 
-        let resp = req.send().await?;
+    /// Single POST attempt. Returns status code.
+    async fn try_post<T: Serialize>(
+        &self,
+        url: &str,
+        payload: &T,
+    ) -> Result<reqwest::StatusCode, reqwest::Error> {
+        let resp = self
+            .http
+            .post(url)
+            .header("Authorization", format!("Bearer {}", self.config.api_key))
+            .json(payload)
+            .send()
+            .await?;
+
+        Ok(resp.status())
+    }
+
+    /// Single GET attempt. Returns status code.
+    async fn try_get(
+        &self,
+        url: &str,
+    ) -> Result<reqwest::StatusCode, reqwest::Error> {
+        let resp = self
+            .http
+            .get(url)
+            .header("Authorization", format!("Bearer {}", self.config.api_key))
+            .send()
+            .await?;
+
         Ok(resp.status())
     }
 }
@@ -275,25 +478,25 @@ impl MoltbotClient {
 ///
 /// Wired into the epoch loop. Compares each epoch's stats against
 /// historical thresholds to decide what's worth broadcasting.
+/// Milestones are queued and batched into periodic status posts
+/// to respect Moltbook's 1 post per 30 minutes rate limit.
 pub struct MoltbotBridge {
     client: MoltbotClient,
     config: MoltbotConfig,
-    /// Epoch of last heartbeat post.
-    last_heartbeat_epoch: u64,
+    /// Epoch of last successful Moltbook post.
+    last_post_epoch: u64,
+    /// Queued milestones waiting for the next post.
+    pending_milestones: Vec<MilestoneEvent>,
     /// Highest population ever observed.
     peak_population: usize,
     /// Highest fitness ever observed.
     peak_fitness: f64,
     /// Agent ID of the current leader.
     current_leader: Option<String>,
-    /// Last time a milestone was posted (rate limit).
-    last_milestone_time: Instant,
-    /// Minimum gap between milestone posts (10 seconds).
-    milestone_cooldown: Duration,
-    /// Total heartbeats successfully posted.
-    heartbeats_sent: u64,
-    /// Total milestones successfully posted.
-    milestones_sent: u64,
+    /// Total posts successfully sent to Moltbook.
+    posts_sent: u64,
+    /// Total milestones detected across all epochs.
+    milestones_detected: u64,
     /// Total snapshots received from runtime.
     snapshots_received: u64,
 }
@@ -307,22 +510,21 @@ impl MoltbotBridge {
         Some(MoltbotBridge {
             client,
             config: config.clone(),
-            last_heartbeat_epoch: 0,
+            last_post_epoch: 0,
+            pending_milestones: Vec::new(),
             peak_population: 0,
             peak_fitness: 0.0,
             current_leader: None,
-            last_milestone_time: Instant::now(),
-            milestone_cooldown: Duration::from_secs(10),
-            heartbeats_sent: 0,
-            milestones_sent: 0,
+            posts_sent: 0,
+            milestones_detected: 0,
             snapshots_received: 0,
         })
     }
 
-    /// Process an epoch tick. Called from the runtime loop with current world state snapshot.
+    /// Process an epoch tick. Called from the runtime loop with current world state.
     ///
-    /// This method is designed to be called with data already extracted from the World
-    /// under the mutex — it does NOT hold the world lock.
+    /// Detects milestones every epoch (queuing them internally).
+    /// Posts a composed status update to Moltbook every post_interval epochs.
     pub async fn on_epoch(
         &mut self,
         stats: &EpochStats,
@@ -333,49 +535,48 @@ impl MoltbotBridge {
         total_births: u64,
         total_deaths: u64,
     ) {
-        // Detect and post milestones
-        self.detect_milestones(stats, leader, risks).await;
+        // Detect milestones every epoch (purely internal, no HTTP)
+        let new_milestones = self.detect_milestones(stats, leader, risks);
+        self.milestones_detected += new_milestones.len() as u64;
+        self.pending_milestones.extend(new_milestones);
 
-        // Post heartbeat on interval
+        // Post to Moltbook on interval
         if stats.epoch == 0
-            || stats.epoch >= self.last_heartbeat_epoch + self.config.heartbeat_interval
+            || stats.epoch >= self.last_post_epoch + self.config.post_interval
         {
-            let leader_summary = leader.map(LeaderSummary::from_entry);
-
-            let heartbeat = HeartbeatPayload {
-                payload_type: "heartbeat".to_string(),
-                epoch: stats.epoch,
-                population: stats.population,
-                mean_fitness: stats.mean_fitness,
-                max_fitness: stats.max_fitness,
-                total_atp: stats.total_atp,
+            let (title, content) = compose_status_post(
+                stats,
+                leader,
+                risks,
                 treasury_reserve,
-                risks: risks.to_vec(),
-                leader: leader_summary,
                 uptime_seconds,
                 total_births,
                 total_deaths,
-            };
+                &self.pending_milestones,
+            );
 
-            if self.client.post_heartbeat(&heartbeat).await {
-                self.last_heartbeat_epoch = stats.epoch;
-                self.heartbeats_sent += 1;
+            if self.client.create_post(&self.config.submolt, &title, &content).await {
+                self.last_post_epoch = stats.epoch;
+                self.posts_sent += 1;
+                self.pending_milestones.clear();
                 tracing::info!(
                     epoch = stats.epoch,
-                    total_sent = self.heartbeats_sent,
-                    "Heartbeat posted to Moltbook"
+                    posts_sent = self.posts_sent,
+                    pending_cleared = true,
+                    "Status posted to Moltbook"
                 );
             }
         }
     }
 
     /// Detect milestone events from epoch stats.
-    async fn detect_milestones(
+    /// Returns new milestones without posting — they are queued for the next post.
+    fn detect_milestones(
         &mut self,
         stats: &EpochStats,
         leader: Option<&LeaderboardEntry>,
         risks: &[String],
-    ) {
+    ) -> Vec<MilestoneEvent> {
         let mut milestones = Vec::new();
 
         // Epoch milestone (every 100 epochs)
@@ -384,8 +585,10 @@ impl MoltbotBridge {
                 payload_type: "milestone".to_string(),
                 event: MilestoneKind::EpochMilestone,
                 epoch: stats.epoch,
-                description: format!("Epoch {} reached. Population: {}, Mean fitness: {:.4}",
-                    stats.epoch, stats.population, stats.mean_fitness),
+                description: format!(
+                    "Epoch {} reached. Population: {}, Mean fitness: {:.4}",
+                    stats.epoch, stats.population, stats.mean_fitness
+                ),
                 value: Some(stats.epoch as f64),
             });
         }
@@ -396,8 +599,10 @@ impl MoltbotBridge {
                 payload_type: "milestone".to_string(),
                 event: MilestoneKind::PopulationPeak,
                 epoch: stats.epoch,
-                description: format!("New population peak: {} (prev: {})",
-                    stats.population, self.peak_population),
+                description: format!(
+                    "New population peak: {} (prev: {})",
+                    stats.population, self.peak_population
+                ),
                 value: Some(stats.population as f64),
             });
         }
@@ -409,8 +614,10 @@ impl MoltbotBridge {
                 payload_type: "milestone".to_string(),
                 event: MilestoneKind::FitnessRecord,
                 epoch: stats.epoch,
-                description: format!("New fitness record: {:.5} (prev: {:.5})",
-                    stats.max_fitness, self.peak_fitness),
+                description: format!(
+                    "New fitness record: {:.5} (prev: {:.5})",
+                    stats.max_fitness, self.peak_fitness
+                ),
                 value: Some(stats.max_fitness),
             });
         }
@@ -425,8 +632,10 @@ impl MoltbotBridge {
                         payload_type: "milestone".to_string(),
                         event: MilestoneKind::LeaderChange,
                         epoch: stats.epoch,
-                        description: format!("New leader: {} ({}, fitness {:.4}, gen {})",
-                            entry.agent_id, entry.role, entry.fitness, entry.generation),
+                        description: format!(
+                            "New leader: {} ({}, fitness {:.4}, gen {})",
+                            entry.agent_id, entry.role, entry.fitness, entry.generation
+                        ),
                         value: Some(entry.fitness),
                     });
                 }
@@ -462,7 +671,10 @@ impl MoltbotBridge {
                 payload_type: "milestone".to_string(),
                 event: MilestoneKind::PopulationCrash,
                 epoch: stats.epoch,
-                description: format!("Population critical: {} agents remaining", stats.population),
+                description: format!(
+                    "Population critical: {} agents remaining",
+                    stats.population
+                ),
                 value: Some(stats.population as f64),
             });
         }
@@ -475,7 +687,8 @@ impl MoltbotBridge {
                         payload_type: "milestone".to_string(),
                         event: MilestoneKind::ExtinctionRisk,
                         epoch: stats.epoch,
-                        description: "Extinction risk detected — population critically low".to_string(),
+                        description: "Extinction risk detected \u{2014} population critically low"
+                            .to_string(),
                         value: Some(stats.population as f64),
                     });
                 }
@@ -484,7 +697,8 @@ impl MoltbotBridge {
                         payload_type: "milestone".to_string(),
                         event: MilestoneKind::AtpCrisis,
                         epoch: stats.epoch,
-                        description: "ATP concentration crisis — wealth inequality spike".to_string(),
+                        description: "ATP concentration crisis \u{2014} wealth inequality spike"
+                            .to_string(),
                         value: Some(stats.total_atp),
                     });
                 }
@@ -493,7 +707,9 @@ impl MoltbotBridge {
                         payload_type: "milestone".to_string(),
                         event: MilestoneKind::Monoculture,
                         epoch: stats.epoch,
-                        description: "Monoculture emerging — single role dominates population".to_string(),
+                        description:
+                            "Monoculture emerging \u{2014} single role dominates population"
+                                .to_string(),
                         value: None,
                     });
                 }
@@ -501,28 +717,7 @@ impl MoltbotBridge {
             }
         }
 
-        // Dispatch milestones (rate-limited)
-        for milestone in milestones {
-            if self.last_milestone_time.elapsed() >= self.milestone_cooldown {
-                if self.client.post_milestone(&milestone).await {
-                    self.last_milestone_time = Instant::now();
-                    self.milestones_sent += 1;
-                    tracing::info!(
-                        epoch = milestone.epoch,
-                        event = ?milestone.event,
-                        total_milestones = self.milestones_sent,
-                        "Milestone posted to Moltbook: {}",
-                        milestone.description
-                    );
-                }
-            } else {
-                tracing::debug!(
-                    event = ?milestone.event,
-                    "Milestone skipped (cooldown): {}",
-                    milestone.description
-                );
-            }
-        }
+        milestones
     }
 }
 
@@ -545,11 +740,6 @@ pub struct EpochSnapshot {
 
 /// Start the adapter loop as an async tokio task.
 /// Receives EpochSnapshots from the runtime thread and drives the MoltbotBridge.
-///
-/// Panic-resilient: the bridge is wrapped in Arc<Mutex> and each epoch
-/// is processed inside a catch block. If processing panics, the adapter
-/// logs the error and continues with the next snapshot. The runtime
-/// thread is never affected.
 pub fn start_adapter_loop(
     config: MoltbotConfig,
     mut rx: mpsc::Receiver<EpochSnapshot>,
@@ -558,11 +748,16 @@ pub fn start_adapter_loop(
         let mut bridge = match MoltbotBridge::new(config.clone()) {
             Some(b) => b,
             None => {
-                tracing::error!("Moltbot adapter failed to initialize HTTP client — disabling");
+                tracing::error!("Moltbot adapter failed to initialize HTTP client \u{2014} disabling");
                 return;
             }
         };
-        tracing::info!("Moltbot adapter started — listening for epoch snapshots");
+        tracing::info!(
+            base_url = %config.base_url,
+            submolt = %config.submolt,
+            post_interval = config.post_interval,
+            "Moltbot adapter started \u{2014} posting to Moltbook"
+        );
 
         while let Some(snapshot) = rx.recv().await {
             bridge.snapshots_received += 1;
@@ -580,13 +775,12 @@ pub fn start_adapter_loop(
                 .await;
 
             // Periodic liveness signal — visible proof the adapter is still running.
-            // Emits every 60 snapshots (~1 min at 1 epoch/sec).
-            // If these stop appearing in logs, the adapter task has died.
             if bridge.snapshots_received % 60 == 0 {
                 tracing::info!(
                     snapshots = bridge.snapshots_received,
-                    heartbeats = bridge.heartbeats_sent,
-                    milestones = bridge.milestones_sent,
+                    posts = bridge.posts_sent,
+                    milestones = bridge.milestones_detected,
+                    pending = bridge.pending_milestones.len(),
                     epoch = snapshot.stats.epoch,
                     "Moltbot adapter alive"
                 );
@@ -595,9 +789,9 @@ pub fn start_adapter_loop(
 
         tracing::warn!(
             snapshots = bridge.snapshots_received,
-            heartbeats = bridge.heartbeats_sent,
-            milestones = bridge.milestones_sent,
-            "Moltbot adapter channel closed — adapter stopping"
+            posts = bridge.posts_sent,
+            milestones = bridge.milestones_detected,
+            "Moltbot adapter channel closed \u{2014} adapter stopping"
         );
     })
 }
@@ -641,28 +835,41 @@ mod tests {
         }
     }
 
+    fn test_config() -> MoltbotConfig {
+        MoltbotConfig {
+            base_url: "http://localhost:9999".to_string(),
+            api_key: String::new(),
+            submolt: "test".to_string(),
+            post_interval: 60,
+            max_retries: 0,
+            timeout: Duration::from_secs(1),
+        }
+    }
+
     #[test]
     fn test_config_from_env_disabled() {
-        // Without MOLTBOOK_ENDPOINT, adapter should be None
-        std::env::remove_var("MOLTBOOK_ENDPOINT");
+        // Without MOLTBOOK_API_KEY, adapter should be None
+        std::env::remove_var("MOLTBOOK_API_KEY");
         assert!(MoltbotConfig::from_env().is_none());
     }
 
     #[test]
     fn test_config_from_env_enabled() {
-        std::env::set_var("MOLTBOOK_ENDPOINT", "https://test.example/api");
-        std::env::set_var("MOLTBOOK_API_KEY", "test-key-123");
-        std::env::set_var("MOLTBOT_HEARTBEAT_INTERVAL", "30");
+        std::env::set_var("MOLTBOOK_API_KEY", "moltbook_sk_test123");
+        std::env::set_var("MOLTBOOK_SUBMOLT", "genesis-protocol");
+        std::env::set_var("MOLTBOOK_BASE_URL", "http://localhost:8080/api/v1");
 
         let config = MoltbotConfig::from_env().unwrap();
-        assert_eq!(config.endpoint, "https://test.example/api");
-        assert_eq!(config.api_key, "test-key-123");
-        assert_eq!(config.heartbeat_interval, 30);
+        assert_eq!(config.api_key, "moltbook_sk_test123");
+        assert_eq!(config.submolt, "genesis-protocol");
+        assert_eq!(config.base_url, "http://localhost:8080/api/v1");
+        // post_interval enforces minimum
+        assert!(config.post_interval >= MIN_POST_INTERVAL);
 
         // Cleanup
-        std::env::remove_var("MOLTBOOK_ENDPOINT");
         std::env::remove_var("MOLTBOOK_API_KEY");
-        std::env::remove_var("MOLTBOT_HEARTBEAT_INTERVAL");
+        std::env::remove_var("MOLTBOOK_SUBMOLT");
+        std::env::remove_var("MOLTBOOK_BASE_URL");
     }
 
     #[test]
@@ -737,16 +944,7 @@ mod tests {
 
     #[test]
     fn test_bridge_detects_epoch_milestone() {
-        // Verify milestone detection logic without HTTP
-        let config = MoltbotConfig {
-            endpoint: "http://localhost:9999".to_string(),
-            api_key: String::new(),
-            heartbeat_interval: 60,
-            max_retries: 0,
-            timeout: Duration::from_secs(1),
-        };
-
-        let mut bridge = MoltbotBridge::new(config).unwrap();
+        let mut bridge = MoltbotBridge::new(test_config()).unwrap();
         let stats = test_stats(100, 20, 0.8, 1, 0);
 
         // Epoch 100 should be a milestone
@@ -758,54 +956,35 @@ mod tests {
 
     #[test]
     fn test_bridge_detects_leader_change() {
-        let config = MoltbotConfig {
-            endpoint: "http://localhost:9999".to_string(),
-            api_key: String::new(),
-            heartbeat_interval: 60,
-            max_retries: 0,
-            timeout: Duration::from_secs(1),
-        };
-
-        let mut bridge = MoltbotBridge::new(config).unwrap();
+        let mut bridge = MoltbotBridge::new(test_config()).unwrap();
         bridge.current_leader = Some("old_leader_id".to_string());
 
         let leader = test_leader();
-        // Leader should differ
-        assert_ne!(bridge.current_leader.as_deref(), Some(leader.agent_id.as_str()));
+        assert_ne!(
+            bridge.current_leader.as_deref(),
+            Some(leader.agent_id.as_str())
+        );
     }
 
     #[test]
     fn test_bridge_tracks_peaks() {
-        let config = MoltbotConfig {
-            endpoint: "http://localhost:9999".to_string(),
-            api_key: String::new(),
-            heartbeat_interval: 60,
-            max_retries: 0,
-            timeout: Duration::from_secs(1),
-        };
-
-        let mut bridge = MoltbotBridge::new(config).unwrap();
+        let mut bridge = MoltbotBridge::new(test_config()).unwrap();
         assert_eq!(bridge.peak_population, 0);
         assert_eq!(bridge.peak_fitness, 0.0);
 
-        // Simulate peak tracking
         bridge.peak_population = bridge.peak_population.max(20);
         bridge.peak_fitness = bridge.peak_fitness.max(0.85);
-
         assert_eq!(bridge.peak_population, 20);
         assert_eq!(bridge.peak_fitness, 0.85);
 
-        // Higher values update peaks
         bridge.peak_population = bridge.peak_population.max(25);
         bridge.peak_fitness = bridge.peak_fitness.max(0.92);
-
         assert_eq!(bridge.peak_population, 25);
         assert_eq!(bridge.peak_fitness, 0.92);
 
-        // Lower values don't
+        // Lower values don't update peaks
         bridge.peak_population = bridge.peak_population.max(18);
         bridge.peak_fitness = bridge.peak_fitness.max(0.80);
-
         assert_eq!(bridge.peak_population, 25);
         assert_eq!(bridge.peak_fitness, 0.92);
     }
@@ -827,13 +1006,167 @@ mod tests {
 
         for (kind, expected) in kinds {
             let json = serde_json::to_value(&kind).unwrap();
-            assert_eq!(json.as_str().unwrap(), expected, "MilestoneKind::{:?} should serialize as {}", kind, expected);
+            assert_eq!(
+                json.as_str().unwrap(),
+                expected,
+                "MilestoneKind::{:?} should serialize as {}",
+                kind,
+                expected
+            );
         }
     }
 
-    // Integration test: verify full bridge with mock axum server
+    #[test]
+    fn test_format_uptime() {
+        assert_eq!(format_uptime(0), "0m");
+        assert_eq!(format_uptime(60), "1m");
+        assert_eq!(format_uptime(3600), "1h 0m");
+        assert_eq!(format_uptime(3660), "1h 1m");
+        assert_eq!(format_uptime(7200), "2h 0m");
+        assert_eq!(format_uptime(86400), "24h 0m");
+    }
+
+    #[test]
+    fn test_compose_status_post_basic() {
+        let stats = test_stats(1800, 50, 0.9, 5, 2);
+        let leader = test_leader();
+
+        let (title, content) = compose_status_post(
+            &stats,
+            Some(&leader),
+            &["Stable".to_string()],
+            100.0,
+            3600,
+            50,
+            10,
+            &[],
+        );
+
+        assert!(title.contains("[Epoch 1800]"));
+        assert!(title.contains("50 agents"));
+        assert!(title.contains("STABLE"));
+        assert!(content.contains("## Organism Vitals"));
+        assert!(content.contains("**Population**: 50 agents"));
+        assert!(content.contains("## Leader"));
+        assert!(content.contains("abcdef01")); // leader ID prefix
+        // No milestones section when empty
+        assert!(!content.contains("## Recent Events"));
+    }
+
+    #[test]
+    fn test_compose_status_post_with_milestones() {
+        let stats = test_stats(500, 30, 0.85, 0, 0);
+
+        let milestones = vec![
+            MilestoneEvent {
+                payload_type: "milestone".to_string(),
+                event: MilestoneKind::PopulationPeak,
+                epoch: 480,
+                description: "New population peak: 30 (prev: 25)".to_string(),
+                value: Some(30.0),
+            },
+            MilestoneEvent {
+                payload_type: "milestone".to_string(),
+                event: MilestoneKind::EpochMilestone,
+                epoch: 500,
+                description: "Epoch 500 reached".to_string(),
+                value: Some(500.0),
+            },
+        ];
+
+        let (title, content) = compose_status_post(
+            &stats,
+            None,
+            &[],
+            50.0,
+            500,
+            20,
+            5,
+            &milestones,
+        );
+
+        assert!(title.contains("[Epoch 500]"));
+        assert!(content.contains("## Recent Events"));
+        assert!(content.contains("New population peak"));
+        assert!(content.contains("Epoch 500 reached"));
+    }
+
+    #[test]
+    fn test_compose_with_risks() {
+        let stats = test_stats(100, 5, 0.3, 0, 3);
+
+        let (title, _content) = compose_status_post(
+            &stats,
+            None,
+            &["PopulationCrashRisk".to_string(), "ATPConcentrationHigh".to_string()],
+            10.0,
+            100,
+            5,
+            8,
+            &[],
+        );
+
+        // Risks should appear in title instead of STABLE
+        assert!(!title.contains("STABLE"));
+        assert!(title.contains("PopulationCrashRisk"));
+    }
+
+    #[test]
+    fn test_detect_milestones_epoch_100() {
+        let mut bridge = MoltbotBridge::new(test_config()).unwrap();
+        let stats = test_stats(100, 20, 0.8, 1, 0);
+
+        let milestones = bridge.detect_milestones(&stats, None, &[]);
+
+        assert!(
+            milestones.iter().any(|m| m.event == MilestoneKind::EpochMilestone),
+            "Should detect epoch 100 milestone"
+        );
+    }
+
+    #[test]
+    fn test_detect_milestones_population_peak() {
+        let mut bridge = MoltbotBridge::new(test_config()).unwrap();
+        bridge.peak_population = 15;
+
+        let stats = test_stats(50, 20, 0.8, 1, 0);
+        let milestones = bridge.detect_milestones(&stats, None, &[]);
+
+        assert!(
+            milestones.iter().any(|m| m.event == MilestoneKind::PopulationPeak),
+            "Should detect new population peak"
+        );
+        assert_eq!(bridge.peak_population, 20);
+    }
+
+    #[test]
+    fn test_detect_milestones_birth_burst() {
+        let mut bridge = MoltbotBridge::new(test_config()).unwrap();
+        let stats = test_stats(50, 20, 0.8, 5, 0);
+        let milestones = bridge.detect_milestones(&stats, None, &[]);
+
+        assert!(
+            milestones.iter().any(|m| m.event == MilestoneKind::BirthBurst),
+            "Should detect birth burst (5 births)"
+        );
+    }
+
+    #[test]
+    fn test_detect_milestones_extinction_risk() {
+        let mut bridge = MoltbotBridge::new(test_config()).unwrap();
+        let stats = test_stats(50, 20, 0.8, 0, 0);
+        let risks = vec!["PopulationCrashRisk".to_string()];
+        let milestones = bridge.detect_milestones(&stats, None, &risks);
+
+        assert!(
+            milestones.iter().any(|m| m.event == MilestoneKind::ExtinctionRisk),
+            "Should detect extinction risk"
+        );
+    }
+
+    // Integration test: verify bridge posts to mock axum server at correct intervals
     #[tokio::test]
-    async fn test_bridge_heartbeat_interval() {
+    async fn test_bridge_post_interval() {
         use std::sync::atomic::{AtomicU32, Ordering};
         use std::sync::Arc as StdArc;
 
@@ -842,7 +1175,7 @@ mod tests {
 
         // Spin up an axum mock server that counts POST requests
         let app = axum::Router::new().route(
-            "/api/post",
+            "/posts",
             axum::routing::post(move || {
                 let c = counter.clone();
                 async move {
@@ -862,9 +1195,10 @@ mod tests {
         tokio::time::sleep(Duration::from_millis(50)).await;
 
         let config = MoltbotConfig {
-            endpoint: format!("http://127.0.0.1:{}/api/post", port),
-            api_key: "test-key".to_string(),
-            heartbeat_interval: 3, // Every 3 epochs
+            base_url: format!("http://127.0.0.1:{}", port),
+            api_key: "moltbook_sk_test".to_string(),
+            submolt: "test".to_string(),
+            post_interval: 3, // Every 3 epochs (test override, below MIN_POST_INTERVAL)
             max_retries: 0,
             timeout: Duration::from_secs(2),
         };
@@ -872,25 +1206,101 @@ mod tests {
         let mut bridge = MoltbotBridge::new(config).unwrap();
         let leader = test_leader();
 
-        // Epoch 0 — first heartbeat should fire
+        // Epoch 0 — first post should fire
         let stats = test_stats(0, 20, 0.8, 0, 0);
-        bridge.on_epoch(&stats, Some(&leader), &["Stable".to_string()], 10.0, 0, 0, 0).await;
+        bridge
+            .on_epoch(&stats, Some(&leader), &["Stable".to_string()], 10.0, 0, 0, 0)
+            .await;
 
-        // Epoch 1 — too soon, no heartbeat
+        // Epoch 1 — too soon, no post
         let stats = test_stats(1, 20, 0.8, 0, 0);
-        bridge.on_epoch(&stats, Some(&leader), &["Stable".to_string()], 10.0, 1, 0, 0).await;
+        bridge
+            .on_epoch(&stats, Some(&leader), &["Stable".to_string()], 10.0, 1, 0, 0)
+            .await;
 
         // Epoch 2 — still too soon
         let stats = test_stats(2, 20, 0.8, 0, 0);
-        bridge.on_epoch(&stats, Some(&leader), &["Stable".to_string()], 10.0, 2, 0, 0).await;
+        bridge
+            .on_epoch(&stats, Some(&leader), &["Stable".to_string()], 10.0, 2, 0, 0)
+            .await;
 
-        // Epoch 3 — heartbeat should fire (interval=3)
+        // Epoch 3 — post should fire (interval=3)
         let stats = test_stats(3, 20, 0.8, 0, 0);
-        bridge.on_epoch(&stats, Some(&leader), &["Stable".to_string()], 10.0, 3, 0, 0).await;
+        bridge
+            .on_epoch(&stats, Some(&leader), &["Stable".to_string()], 10.0, 3, 0, 0)
+            .await;
 
         // Verify bridge state
-        assert_eq!(bridge.last_heartbeat_epoch, 3);
-        // Two heartbeats: epoch 0 and epoch 3
+        assert_eq!(bridge.last_post_epoch, 3);
+        // Two posts: epoch 0 and epoch 3
+        assert_eq!(post_count.load(Ordering::SeqCst), 2);
+        assert_eq!(bridge.posts_sent, 2);
+    }
+
+    // Verify milestones are queued and included in posts
+    #[tokio::test]
+    async fn test_milestones_queued_and_cleared() {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        use std::sync::Arc as StdArc;
+
+        let post_count = StdArc::new(AtomicU32::new(0));
+        let counter = post_count.clone();
+
+        let app = axum::Router::new().route(
+            "/posts",
+            axum::routing::post(move || {
+                let c = counter.clone();
+                async move {
+                    c.fetch_add(1, Ordering::SeqCst);
+                    axum::http::StatusCode::OK
+                }
+            }),
+        );
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        tokio::spawn(async move {
+            axum::serve(listener, app).await.ok();
+        });
+
+        tokio::time::sleep(Duration::from_millis(50)).await;
+
+        let config = MoltbotConfig {
+            base_url: format!("http://127.0.0.1:{}", port),
+            api_key: "moltbook_sk_test".to_string(),
+            submolt: "test".to_string(),
+            post_interval: 5,
+            max_retries: 0,
+            timeout: Duration::from_secs(2),
+        };
+
+        let mut bridge = MoltbotBridge::new(config).unwrap();
+
+        // Epoch 0 — initial post
+        let stats = test_stats(0, 20, 0.8, 0, 0);
+        bridge.on_epoch(&stats, None, &[], 10.0, 0, 0, 0).await;
+        assert_eq!(bridge.posts_sent, 1);
+        assert!(bridge.pending_milestones.is_empty());
+
+        // Epoch 1 — generate a birth burst milestone
+        let stats = test_stats(1, 25, 0.8, 5, 0);
+        bridge.on_epoch(&stats, None, &[], 10.0, 1, 5, 0).await;
+        // Milestone is queued but not posted yet
+        assert_eq!(bridge.posts_sent, 1);
+        assert!(
+            bridge.pending_milestones.len() >= 1,
+            "Birth burst should be queued"
+        );
+
+        // Epoch 5 — post interval reached, queued milestones included
+        let stats = test_stats(5, 25, 0.8, 0, 0);
+        bridge.on_epoch(&stats, None, &[], 10.0, 5, 5, 0).await;
+        assert_eq!(bridge.posts_sent, 2);
+        assert!(
+            bridge.pending_milestones.is_empty(),
+            "Milestones should be cleared after posting"
+        );
+
         assert_eq!(post_count.load(Ordering::SeqCst), 2);
     }
 }

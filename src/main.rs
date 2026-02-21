@@ -48,13 +48,14 @@ async fn main() {
     // Initialize Moltbot adapter (outbound-only bridge to Moltbook)
     let moltbot_tx = match gateway::moltbot::MoltbotConfig::from_env() {
         Some(config) => {
+            println!("  Moltbot adapter targeting m/{} on {}", config.submolt, config.base_url);
             let (tx, rx) = tokio::sync::mpsc::channel(64);
             gateway::moltbot::start_adapter_loop(config, rx);
-            println!("  Moltbot adapter enabled — projecting state to Moltbook");
+            println!("  Moltbot adapter enabled — posting organism state to Moltbook");
             Some(tx)
         }
         None => {
-            println!("  Moltbot adapter disabled (set MOLTBOOK_ENDPOINT to enable)");
+            println!("  Moltbot adapter disabled (set MOLTBOOK_API_KEY to enable)");
             None
         }
     };
