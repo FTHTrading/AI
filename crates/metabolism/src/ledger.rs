@@ -248,9 +248,11 @@ impl MetabolismLedger {
             .collect()
     }
 
-    /// Get total ATP supply in the economy.
+    /// Get total ATP supply in the economy (computed from actual balances).
     pub fn total_supply(&self) -> f64 {
-        self.total_atp_supply
+        self.balances.values()
+            .map(|b| b.balance.max(0.0))
+            .sum()
     }
 
     /// Number of registered agents.
