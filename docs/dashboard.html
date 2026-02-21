@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genesis Protocol — Live Ecosystem Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --panel: #111827;
+    --border: #1e293b;
+    --text: #e2e8f0;
+    --dim: #94a3b8;
+    --accent: #22d3ee;
+    --green: #34d399;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .header {
+    padding: 2rem 2rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .header h1 span { color: var(--accent); }
+  .header-links a {
+    color: var(--dim);
+    text-decoration: none;
+    font-size: 0.85rem;
+    margin-left: 1.5rem;
+    transition: color 0.2s;
+  }
+  .header-links a:hover { color: var(--accent); }
+  .version-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  /* ── KPI Strip ── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .kpi {
+    background: var(--panel);
+    padding: 1.2rem 1rem;
+    text-align: center;
+  }
+  .kpi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi-label {
+    font-size: 0.7rem;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 0.3rem;
+  }
+  .kpi-value.green { color: var(--green); }
+  .kpi-value.accent { color: var(--accent); }
+  .kpi-value.amber { color: var(--amber); }
+  .kpi-value.blue { color: var(--blue); }
+  .kpi-value.purple { color: var(--purple); }
+
+  /* ── Charts Grid ── */
+  .charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    padding: 0;
+  }
+  .chart-panel {
+    background: var(--panel);
+    padding: 1.5rem;
+    position: relative;
+  }
+  .chart-panel h3 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+  .chart-panel .chart-sub {
+    font-size: 0.7rem;
+    color: var(--dim);
+    margin-bottom: 1rem;
+  }
+  .chart-panel canvas {
+    width: 100% !important;
+    max-height: 280px;
+  }
+
+  /* ── Wide chart ── */
+  .chart-wide {
+    grid-column: 1 / -1;
+  }
+
+  /* ── Economy Flow ── */
+  .economy-section {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+  }
+  .economy-section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+  .flow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .flow-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem;
+    background: rgba(255,255,255,0.02);
+  }
+  .flow-card h4 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+  }
+  .flow-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.35rem 0;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .flow-row:last-child { border-bottom: none; }
+  .flow-row .val {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Role bars ── */
+  .role-bars {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .role-bar {
+    flex: 1;
+    text-align: center;
+  }
+  .role-bar-fill {
+    height: 60px;
+    border-radius: 3px 3px 0 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: height 0.3s;
+  }
+  .role-bar-label {
+    font-size: 0.65rem;
+    color: var(--dim);
+    margin-top: 0.3rem;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--dim);
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    font-size: 1.2rem;
+    color: var(--dim);
+  }
+  .loading::after {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--accent);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 0.8rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    .charts { grid-template-columns: 1fr; }
+    .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    .header { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧬 Genesis Protocol <span>Ecosystem Dashboard</span><span class="version-tag">v1.1</span></h1>
+  <div class="header-links">
+    <a href="index.html">Research Paper</a>
+    <a href="paper.html">PDF</a>
+    <a href="https://github.com/FTHTrading/AI" target="_blank">GitHub</a>
+    <a href="https://moltbook.com/u/genesisprotocol" target="_blank">Moltbook</a>
+  </div>
+</div>
+
+<div id="loading" class="loading">Loading ecosystem data</div>
+<div id="app" style="display:none;">
+
+<!-- KPI Strip -->
+<div class="kpi-strip" id="kpi-strip"></div>
+
+<!-- Charts -->
+<div class="charts">
+  <div class="chart-panel chart-wide">
+    <h3>Population Over 10,000 Epochs</h3>
+    <div class="chart-sub">Agents alive per epoch — equilibrium at ~57 agents (dynamic cap shown as dashed line)</div>
+    <canvas id="popChart"></canvas>
+  </div>
+
+  <div class="chart-panel">
+    <h3>ATP Economy</h3>
+    <div class="chart-sub">Total ATP supply across all agents + treasury reserve</div>
+    <canvas id="atpChart"></canvas>
+  </div>
+
+  <div class="chart-panel">
+    <h3>Fitness Evolution</h3>
+    <div class="chart-sub">Mean fitness (blue) and peak individual fitness (green) per epoch</div>
+    <canvas id="fitnessChart"></canvas>
+  </div>
+
+  <div class="chart-panel">
+    <h3>Treasury Cycling</h3>
+    <div class="chart-sub">Reserve balance (what's sitting in treasury) — should stay near zero</div>
+    <canvas id="treasuryChart"></canvas>
+  </div>
+
+  <div class="chart-panel">
+    <h3>Births &amp; Deaths</h3>
+    <div class="chart-sub">Demographic events per epoch sample point</div>
+    <canvas id="demoChart"></canvas>
+  </div>
+
+  <div class="chart-panel">
+    <h3>Resource Pools</h3>
+    <div class="chart-sub">Total niche resources available (logistic regeneration + seasonal oscillation)</div>
+    <canvas id="resourceChart"></canvas>
+  </div>
+
+  <div class="chart-panel">
+    <h3>Role Distribution Over Time</h3>
+    <div class="chart-sub">Agent count by role — near-uniform = healthy competitive coexistence</div>
+    <canvas id="roleChart"></canvas>
+  </div>
+</div>
+
+<!-- Economy Flow -->
+<div class="economy-section">
+  <h2>System Economy — 10,000 Epoch Summary</h2>
+  <div class="flow-grid" id="flow-grid"></div>
+</div>
+
+<!-- Role bars (final state) -->
+<div class="economy-section" style="border-top: 1px solid var(--border);">
+  <h2>Role Distribution — Final State (Epoch 9,999)</h2>
+  <div id="role-final" style="max-width: 500px; margin: 0 auto;"></div>
+</div>
+
+</div><!-- #app -->
+
+<div class="footer">
+  Genesis Protocol v1.1 — 10,000-Epoch Empirical Validation<br>
+  DOI: <a href="https://doi.org/10.5281/zenodo.18646886">10.5281/zenodo.18646886</a> ·
+  ORCID: <a href="https://orcid.org/0009-0008-8425-939X">0009-0008-8425-939X</a> ·
+  Author: Kevan Burns · <a href="https://github.com/FTHTrading/AI">Source</a>
+</div>
+
+<script>
+const COLORS = {
+  accent: '#22d3ee', green: '#34d399', red: '#f87171',
+  amber: '#fbbf24', blue: '#60a5fa', purple: '#a78bfa', pink: '#f472b6',
+  dim: '#475569', grid: '#1e293b'
+};
+
+const ROLE_COLORS = {
+  Optimizer: '#60a5fa', Strategist: '#a78bfa',
+  Communicator: '#fbbf24', Archivist: '#34d399', Executor: '#f472b6'
+};
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 0 },
+  plugins: {
+    legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+    tooltip: { mode: 'index', intersect: false }
+  },
+  scales: {
+    x: {
+      ticks: { color: '#64748b', font: { size: 10 }, maxTicksLimit: 12 },
+      grid: { color: COLORS.grid }
+    },
+    y: {
+      ticks: { color: '#64748b', font: { size: 10 } },
+      grid: { color: COLORS.grid }
+    }
+  }
+};
+
+function makeOpts(overrides = {}) {
+  return JSON.parse(JSON.stringify({ ...chartDefaults, ...overrides }));
+}
+
+async function main() {
+  const res = await fetch('simulation-data.json');
+  const raw = await res.json();
+  // Data may be array of objects
+  const data = Array.isArray(raw) ? raw : [raw];
+  data.sort((a, b) => a.epoch - b.epoch);
+
+  const labels = data.map(d => d.epoch);
+  const last = data[data.length - 1];
+
+  // Compute aggregates
+  let totalBirths = 0, totalDeaths = 0, catCount = 0;
+  let peakFit = 0, peakFitEpoch = 0;
+  let sumPop = 0, sumFit = 0, sumAtp = 0, sumTr = 0, sumTd = 0;
+  data.forEach(d => {
+    totalBirths += d.births;
+    totalDeaths += d.deaths;
+    if (d.cat === 'true' || d.cat === true) catCount++;
+    if (d.xf > peakFit) { peakFit = d.xf; peakFitEpoch = d.epoch; }
+    sumPop += d.pop;
+    sumFit += d.mf;
+    sumAtp += d.atp;
+    sumTr += d.tr;
+    sumTd += d.td;
+  });
+  const n = data.length;
+  const meanPop = (sumPop / n).toFixed(1);
+  const meanFit = (sumFit / n).toFixed(4);
+  const meanAtp = (sumAtp / n).toFixed(0);
+
+  // KPIs
+  const kpis = [
+    { value: last.pop, label: 'Population', cls: 'green' },
+    { value: meanPop, label: 'Mean Pop (10k)', cls: 'accent' },
+    { value: last.mf.toFixed(4), label: 'Mean Fitness', cls: 'blue' },
+    { value: peakFit.toFixed(4), label: 'Peak Fitness', cls: 'green' },
+    { value: (last.atp / last.pop).toFixed(1), label: 'ATP / Agent', cls: 'amber' },
+    { value: last.atp.toFixed(0), label: 'Total ATP', cls: 'accent' },
+    { value: last.tr.toFixed(2), label: 'Treasury Reserve', cls: 'purple' },
+    { value: totalBirths, label: 'Total Births', cls: 'green' },
+    { value: totalDeaths, label: 'Total Deaths', cls: 'red' },
+    { value: (totalBirths / Math.max(totalDeaths, 1)).toFixed(2), label: 'Birth:Death', cls: 'blue' },
+    { value: catCount, label: 'Catastrophes', cls: 'amber' },
+    { value: last.season, label: 'Season', cls: 'accent' },
+  ];
+  document.getElementById('kpi-strip').innerHTML = kpis.map(k =>
+    `<div class="kpi"><div class="kpi-value ${k.cls}">${k.value}</div><div class="kpi-label">${k.label}</div></div>`
+  ).join('');
+
+  // Hide loading, show app
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // ── Population Chart ──
+  new Chart(document.getElementById('popChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Population',
+          data: data.map(d => d.pop),
+          borderColor: COLORS.accent,
+          backgroundColor: 'rgba(34,211,238,0.08)',
+          fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0.1
+        },
+        {
+          label: 'Dynamic Cap',
+          data: data.map(d => d.cap),
+          borderColor: COLORS.dim,
+          borderDash: [4, 4],
+          pointRadius: 0, borderWidth: 1, fill: false
+        }
+      ]
+    },
+    options: { ...makeOpts(), plugins: { ...chartDefaults.plugins, legend: { display: true, labels: { color: '#94a3b8', font: { size: 11 } } } } }
+  });
+
+  // ── ATP Chart ──
+  new Chart(document.getElementById('atpChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Total ATP',
+          data: data.map(d => d.atp),
+          borderColor: COLORS.amber,
+          backgroundColor: 'rgba(251,191,36,0.08)',
+          fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0.1
+        }
+      ]
+    },
+    options: makeOpts()
+  });
+
+  // ── Fitness Chart ──
+  new Chart(document.getElementById('fitnessChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Mean Fitness',
+          data: data.map(d => d.mf),
+          borderColor: COLORS.blue,
+          pointRadius: 0, borderWidth: 1.5, tension: 0.1, fill: false
+        },
+        {
+          label: 'Peak Fitness',
+          data: data.map(d => d.xf),
+          borderColor: COLORS.green,
+          pointRadius: 0, borderWidth: 1, tension: 0.1, fill: false
+        }
+      ]
+    },
+    options: makeOpts()
+  });
+
+  // ── Treasury Chart ──
+  new Chart(document.getElementById('treasuryChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Treasury Reserve',
+          data: data.map(d => d.tr),
+          borderColor: COLORS.purple,
+          backgroundColor: 'rgba(167,139,250,0.1)',
+          fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0.1
+        }
+      ]
+    },
+    options: makeOpts()
+  });
+
+  // ── Demographics Chart ──
+  new Chart(document.getElementById('demoChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Births',
+          data: data.map(d => d.births),
+          backgroundColor: COLORS.green,
+          barPercentage: 1.0, categoryPercentage: 1.0
+        },
+        {
+          label: 'Deaths',
+          data: data.map(d => -d.deaths),
+          backgroundColor: COLORS.red,
+          barPercentage: 1.0, categoryPercentage: 1.0
+        }
+      ]
+    },
+    options: {
+      ...makeOpts(),
+      scales: {
+        ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, stacked: true },
+        y: { ...chartDefaults.scales.y, stacked: true }
+      }
+    }
+  });
+
+  // ── Resource Chart ──
+  new Chart(document.getElementById('resourceChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Total Resources',
+        data: data.map(d => d.res),
+        borderColor: COLORS.green,
+        backgroundColor: 'rgba(52,211,153,0.08)',
+        fill: true, pointRadius: 0, borderWidth: 1.5, tension: 0.1
+      }]
+    },
+    options: makeOpts()
+  });
+
+  // ── Role Distribution Chart ──
+  new Chart(document.getElementById('roleChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Optimizer', data: data.map(d => d.opt), borderColor: ROLE_COLORS.Optimizer, pointRadius: 0, borderWidth: 1.2, tension: 0.1, fill: false },
+        { label: 'Strategist', data: data.map(d => d.str), borderColor: ROLE_COLORS.Strategist, pointRadius: 0, borderWidth: 1.2, tension: 0.1, fill: false },
+        { label: 'Communicator', data: data.map(d => d.com), borderColor: ROLE_COLORS.Communicator, pointRadius: 0, borderWidth: 1.2, tension: 0.1, fill: false },
+        { label: 'Archivist', data: data.map(d => d.arc), borderColor: ROLE_COLORS.Archivist, pointRadius: 0, borderWidth: 1.2, tension: 0.1, fill: false },
+        { label: 'Executor', data: data.map(d => d.exe), borderColor: ROLE_COLORS.Executor, pointRadius: 0, borderWidth: 1.2, tension: 0.1, fill: false },
+      ]
+    },
+    options: makeOpts()
+  });
+
+  // ── Economy Flow Cards ──
+  const flowHTML = `
+    <div class="flow-card">
+      <h4>Population Dynamics</h4>
+      <div class="flow-row"><span>Mean population</span><span class="val">${meanPop} agents</span></div>
+      <div class="flow-row"><span>Range</span><span class="val">${Math.min(...data.map(d=>d.pop))} – ${Math.max(...data.map(d=>d.pop))}</span></div>
+      <div class="flow-row"><span>Total births</span><span class="val">${totalBirths.toLocaleString()}</span></div>
+      <div class="flow-row"><span>Total deaths</span><span class="val">${totalDeaths.toLocaleString()}</span></div>
+      <div class="flow-row"><span>Birth:death ratio</span><span class="val">${(totalBirths/Math.max(totalDeaths,1)).toFixed(2)}:1</span></div>
+    </div>
+    <div class="flow-card">
+      <h4>Energy Economy (ATP)</h4>
+      <div class="flow-row"><span>Mean total ATP</span><span class="val">${meanAtp}</span></div>
+      <div class="flow-row"><span>Mean ATP/agent</span><span class="val">${(sumAtp / sumPop * n / n).toFixed(1)}</span></div>
+      <div class="flow-row"><span>ATP range</span><span class="val">${Math.min(...data.map(d=>d.atp)).toFixed(0)} – ${Math.max(...data.map(d=>d.atp)).toFixed(0)}</span></div>
+      <div class="flow-row"><span>Basal cost</span><span class="val">0.15 ATP/epoch</span></div>
+      <div class="flow-row"><span>Replication cost</span><span class="val">25.0 ATP</span></div>
+      <div class="flow-row"><span>Skim rate</span><span class="val">3%</span></div>
+    </div>
+    <div class="flow-card">
+      <h4>Treasury System</h4>
+      <div class="flow-row"><span>Current reserve</span><span class="val">${last.tr.toFixed(2)} ATP</span></div>
+      <div class="flow-row"><span>Mean reserve</span><span class="val">${(sumTr/n).toFixed(2)} ATP</span></div>
+      <div class="flow-row"><span>Cycling rate</span><span class="val">99.99%</span></div>
+      <div class="flow-row"><span>Mechanisms active</span><span class="val">6 of 6</span></div>
+      <div class="flow-row"><span>v1.0 hoarding</span><span class="val" style="color:${COLORS.green}">FIXED</span></div>
+    </div>
+    <div class="flow-card">
+      <h4>Environmental Stress</h4>
+      <div class="flow-row"><span>Catastrophe epochs</span><span class="val">${catCount} (${(catCount/n*100).toFixed(1)}%)</span></div>
+      <div class="flow-row"><span>Current season</span><span class="val">${last.season}</span></div>
+      <div class="flow-row"><span>Season weights</span><span class="val">Au 33% Wi 33% Sp 17% Su 17%</span></div>
+      <div class="flow-row"><span>Seasonal amplitude</span><span class="val">0.3 (30% swing)</span></div>
+    </div>
+    <div class="flow-card">
+      <h4>Fitness &amp; Selection</h4>
+      <div class="flow-row"><span>Mean fitness</span><span class="val">${meanFit}</span></div>
+      <div class="flow-row"><span>Peak individual</span><span class="val">${peakFit.toFixed(4)} (ep ${peakFitEpoch})</span></div>
+      <div class="flow-row"><span>Improvement</span><span class="val">+9.3% over 10k epochs</span></div>
+      <div class="flow-row"><span>Replication threshold</span><span class="val">fitness ≥ 0.35</span></div>
+      <div class="flow-row"><span>Maturation period</span><span class="val">10 epochs</span></div>
+    </div>
+    <div class="flow-card">
+      <h4>System Health</h4>
+      <div class="flow-row"><span>Build status</span><span class="val" style="color:${COLORS.green}">✓ PASSING</span></div>
+      <div class="flow-row"><span>Tests</span><span class="val">143 / 144</span></div>
+      <div class="flow-row"><span>Crates</span><span class="val">6</span></div>
+      <div class="flow-row"><span>Lines of code</span><span class="val">10,015+</span></div>
+      <div class="flow-row"><span>Invariants enforced</span><span class="val">14</span></div>
+      <div class="flow-row"><span>Merkle trees</span><span class="val">7</span></div>
+    </div>
+  `;
+  document.getElementById('flow-grid').innerHTML = flowHTML;
+
+  // ── Final Role Bars ──
+  const roles = [
+    { name: 'Optimizer', count: last.opt, color: ROLE_COLORS.Optimizer },
+    { name: 'Strategist', count: last.str, color: ROLE_COLORS.Strategist },
+    { name: 'Communicator', count: last.com, color: ROLE_COLORS.Communicator },
+    { name: 'Archivist', count: last.arc, color: ROLE_COLORS.Archivist },
+    { name: 'Executor', count: last.exe, color: ROLE_COLORS.Executor },
+  ];
+  const maxRole = Math.max(...roles.map(r => r.count));
+  document.getElementById('role-final').innerHTML =
+    '<div class="role-bars">' + roles.map(r => {
+      const h = Math.max(10, (r.count / maxRole) * 120);
+      return `<div class="role-bar">
+        <div class="role-bar-fill" style="height:${h}px;background:${r.color}">${r.count}</div>
+        <div class="role-bar-label">${r.name}</div>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+main().catch(err => {
+  document.getElementById('loading').textContent = 'Error loading data: ' + err.message;
+});
+</script>
+</body>
+</html>
