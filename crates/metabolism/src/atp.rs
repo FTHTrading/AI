@@ -93,6 +93,22 @@ impl AtpBalance {
     pub fn can_afford(&self, cost: f64) -> bool {
         !self.in_stasis && self.balance >= cost
     }
+
+    /// Apply ATP decay — percentage of balance lost per epoch.
+    /// Returns the amount decayed.
+    pub fn apply_decay(&mut self, rate: f64) -> f64 {
+        if self.balance <= 0.0 || self.in_stasis {
+            return 0.0;
+        }
+        let decay = self.balance * rate;
+        self.balance -= decay;
+        self.lifetime_spent += decay;
+        if self.balance <= STASIS_THRESHOLD {
+            self.in_stasis = true;
+        }
+        self.last_updated = Utc::now();
+        decay
+    }
 }
 
 /// Categories of ATP transactions.
@@ -122,6 +138,12 @@ pub enum TransactionKind {
     ConversionBounty,
     /// Horizontal gene transfer payment.
     GeneTransfer,
+    /// ATP decay (entropy tax on hoarding).
+    Decay,
+    /// Wealth tax flowing to treasury.
+    WealthTax,
+    /// Fitness penalty (starvation tax on unfit agents).
+    FitnessPenalty,
 }
 
 impl TransactionKind {

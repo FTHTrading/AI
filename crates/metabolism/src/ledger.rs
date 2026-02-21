@@ -168,14 +168,78 @@ impl MetabolismLedger {
     }
 
     /// Apply metabolic tick to all agents (basal cost of staying alive).
-    pub fn metabolic_tick_all(&mut self) {
+    /// Returns total ATP consumed (for supply tracking).
+    pub fn metabolic_tick_all(&mut self) -> f64 {
         let agent_ids: Vec<AgentID> = self.balances.keys().cloned().collect();
+        let mut total_consumed = 0.0;
         for id in agent_ids {
             if let Some(balance) = self.balances.get_mut(&id) {
-                let rate = 1.0; // Could be per-agent via DNA
+                let rate = 1.0;
+                let before = balance.balance;
                 balance.metabolic_tick(rate);
+                let consumed = before - balance.balance;
+                total_consumed += consumed;
             }
         }
+        self.total_atp_supply -= total_consumed;
+        total_consumed
+    }
+
+    /// Apply ATP decay to all agents — percentage of balance lost per epoch.
+    /// Returns total ATP decayed (removed from supply).
+    pub fn decay_all(&mut self, rate: f64) -> f64 {
+        let agent_ids: Vec<AgentID> = self.balances.keys().cloned().collect();
+        let mut total_decayed = 0.0;
+        for id in agent_ids {
+            if let Some(balance) = self.balances.get_mut(&id) {
+                let decayed = balance.apply_decay(rate);
+                total_decayed += decayed;
+            }
+        }
+        self.total_atp_supply -= total_decayed;
+        total_decayed
+    }
+
+    /// Apply wealth tax to all agents above a threshold.
+    /// Returns (total_taxed, per-agent amounts for treasury).
+    pub fn wealth_tax_all(&mut self, threshold: f64, tax_rate: f64) -> f64 {
+        let agent_ids: Vec<AgentID> = self.balances.keys().cloned().collect();
+        let mut total_taxed = 0.0;
+        for id in agent_ids {
+            if let Some(balance) = self.balances.get_mut(&id) {
+                if balance.balance > threshold && !balance.in_stasis {
+                    let excess = balance.balance - threshold;
+                    let tax = excess * tax_rate;
+                    balance.balance -= tax;
+                    balance.lifetime_spent += tax;
+                    total_taxed += tax;
+                }
+            }
+        }
+        // Tax doesn't destroy supply — it flows to treasury
+        // (caller adds to treasury.reserve)
+        total_taxed
+    }
+
+    /// Apply fitness penalty (extra basal cost) to specific agents.
+    /// Returns total ATP penalized.
+    pub fn apply_fitness_penalty(&mut self, agent_ids: &[AgentID], penalty: f64) -> f64 {
+        let mut total = 0.0;
+        for id in agent_ids {
+            if let Some(balance) = self.balances.get_mut(id) {
+                if balance.balance > 0.0 && !balance.in_stasis {
+                    let actual = penalty.min(balance.balance);
+                    balance.balance -= actual;
+                    balance.lifetime_spent += actual;
+                    if balance.balance <= 0.0 {
+                        balance.in_stasis = true;
+                    }
+                    total += actual;
+                }
+            }
+        }
+        self.total_atp_supply -= total;
+        total
     }
 
     /// Get all agents currently in stasis.

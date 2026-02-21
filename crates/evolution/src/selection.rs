@@ -18,6 +18,8 @@ pub struct SelectionOutcome {
     pub stasis_candidates: Vec<uuid::Uuid>,
     /// Agents terminated (prolonged stasis).
     pub terminated: Vec<uuid::Uuid>,
+    /// Agents in the bottom fitness percentile (receive fitness penalty).
+    pub unfit: Vec<uuid::Uuid>,
     /// Average population fitness.
     pub mean_fitness: f64,
     /// Best agent fitness.
@@ -42,7 +44,7 @@ impl SelectionEngine {
     pub fn new() -> Self {
         Self {
             replication_threshold: REPLICATION_FITNESS_THRESHOLD,
-            max_stasis_cycles: 10,
+            max_stasis_cycles: 3,
             stasis_counters: std::collections::HashMap::new(),
         }
     }
@@ -68,9 +70,13 @@ impl SelectionEngine {
         let mut max_fitness = f64::NEG_INFINITY;
         let mut min_fitness = f64::INFINITY;
 
+        // Collect (id, fitness) for bottom-percentile culling
+        let mut fitness_list: Vec<(uuid::Uuid, f64)> = Vec::with_capacity(population.len());
+
         for (dna, _atp_balance, is_in_stasis) in population {
             let fitness = dna.fitness();
             fitness_sum += fitness;
+            fitness_list.push((dna.id, fitness));
 
             if fitness > max_fitness {
                 max_fitness = fitness;
@@ -98,12 +104,22 @@ impl SelectionEngine {
             }
         }
 
+        // Identify bottom 10% by fitness for starvation tax
+        fitness_list.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        let bottom_n = (population.len() as f64 * 0.10).ceil() as usize;
+        let unfit: Vec<uuid::Uuid> = fitness_list.iter()
+            .take(bottom_n)
+            .filter(|(id, _)| !terminated.contains(id))
+            .map(|(id, _)| *id)
+            .collect();
+
         let mean_fitness = fitness_sum / population.len() as f64;
 
         Ok(SelectionOutcome {
             replicators,
             stasis_candidates,
             terminated,
+            unfit,
             mean_fitness,
             max_fitness,
             min_fitness,

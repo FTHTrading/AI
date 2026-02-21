@@ -71,6 +71,16 @@ pub struct EpochStats {
     pub market_solved: u64,
     pub market_rewarded: f64,
     pub gated_posts: u64,
+    /// ATP destroyed by decay this epoch.
+    pub atp_decayed: f64,
+    /// ATP collected as wealth tax this epoch.
+    pub wealth_tax_collected: f64,
+    /// ATP penalty applied to unfit agents.
+    pub fitness_penalty_total: f64,
+    /// Dynamic carrying capacity this epoch.
+    pub dynamic_pop_cap: usize,
+    /// Number of agents flagged as unfit (bottom 10%).
+    pub unfit_count: usize,
 }
 
 /// Registration request from external callers.
@@ -284,10 +294,33 @@ impl World {
         let mut market_rewarded: f64 = 0.0;
         let mut gated_posts: u64 = 0;
 
-        // --- Step 1: Basal metabolic tick ---
+        // --- Scarcity constants ---
+        const ATP_DECAY_RATE: f64 = 0.02;       // 2% balance decay per epoch
+        const WEALTH_TAX_THRESHOLD: f64 = 100.0; // Tax kicks in above 100 ATP
+        const WEALTH_TAX_RATE: f64 = 0.01;       // 1% of excess
+        const FITNESS_PENALTY: f64 = 0.5;        // Extra 0.5 ATP/epoch for bottom 10%
+        const MIN_POP_CAP: usize = 10;
+        const MAX_POP_CAP: usize = 500;
+        const ATP_PER_AGENT_CAP: f64 = 50.0;     // Pop cap = total_supply / this
+
+        // --- Step 0: ATP Decay (wealth entropy) ---
+        let atp_decayed = self.ledger.decay_all(ATP_DECAY_RATE);
+
+        // --- Step 1: Basal metabolic tick (now tracks supply correctly) ---
         self.ledger.metabolic_tick_all();
 
-        // --- Step 2: Problem Market Competition ---
+        // --- Step 1b: Wealth tax → treasury ---
+        let wealth_tax_collected = self.ledger.wealth_tax_all(WEALTH_TAX_THRESHOLD, WEALTH_TAX_RATE);
+        self.treasury.reserve += wealth_tax_collected;
+        self.treasury.total_collected += wealth_tax_collected;
+
+        // --- Step 2: Dynamic carrying capacity ---
+        let dynamic_pop_cap = (self.ledger.total_supply() / ATP_PER_AGENT_CAP)
+            .max(MIN_POP_CAP as f64)
+            .min(MAX_POP_CAP as f64) as usize;
+        self.pop_cap = dynamic_pop_cap;
+
+        // --- Step 3: Problem Market Competition ---
         let pressure = 0.3 + (epoch as f64 * 0.002).min(0.6);
         let problem_ids = self.problem_market.generate_epoch_problems(pressure, 4, epoch);
 
@@ -339,19 +372,14 @@ impl World {
             }
         }
 
-        // --- Step 2b: Baseline survival earning ---
-        for i in 0..self.agents.len() {
-            let trickle = self.agents[i].skills.mean() * 1.5;
-            let agent_id = self.agents[i].id;
-            let _ = self.ledger.mint(
-                &agent_id, trickle,
-                TransactionKind::ProofOfSolution,
-                &format!("Epoch {} baseline", epoch),
-            );
-        }
+        // --- NO MORE TRICKLE INCOME ---
+        // Agents earn ATP only through market competition.
+        // The free handout is dead.
 
-        // --- Step 2c: Treasury redistribution ---
-        {
+        // --- Step 3b: Treasury redistribution (crisis only) ---
+        // Treasury stipends now only activate when population drops below 50%
+        // of the dynamic cap — a crisis response, not a welfare program.
+        if self.agents.len() < dynamic_pop_cap / 2 {
             let mut role_dist = HashMap::new();
             for agent in self.agents.iter() {
                 *role_dist.entry(agent.role).or_insert(0usize) += 1;
@@ -366,14 +394,14 @@ impl World {
                         let _ = self.ledger.mint(
                             &agent_id, per_agent,
                             TransactionKind::ProofOfSolution,
-                            &format!("Epoch {} treasury stipend", epoch),
+                            &format!("Epoch {} crisis stipend", epoch),
                         );
                     }
                 }
             }
         }
 
-        // --- Step 3: Communication (gated) ---
+        // --- Step 4: Communication (gated) ---
         let broadcasters: Vec<_> = self.agents
             .iter()
             .filter(|a| {
@@ -392,13 +420,13 @@ impl World {
             let _ = self.mesh.broadcast_gossip(msg);
         }
 
-        // --- Step 4: Mutation under environmental pressure ---
+        // --- Step 5: Mutation under environmental pressure ---
         for agent in self.agents.iter_mut() {
             let m = self.mutation_engine.apply_pressure(agent.id, &mut agent.traits, pressure);
             mutations += m as u64;
         }
 
-        // --- Step 5: Natural selection ---
+        // --- Step 6: Natural selection ---
         let population: Vec<(AgentDNA, f64, bool)> = self.agents
             .iter()
             .map(|dna| {
@@ -408,6 +436,8 @@ impl World {
             .collect();
 
         let stasis_count;
+        let unfit_count;
+        let fitness_penalty_total;
         let (mean_fitness, max_fitness, min_fitness);
 
         if let Ok(outcome) = self.selection_engine.select(&population) {
@@ -415,8 +445,12 @@ impl World {
             max_fitness = outcome.max_fitness;
             min_fitness = outcome.min_fitness;
             stasis_count = outcome.stasis_candidates.len();
+            unfit_count = outcome.unfit.len();
 
-            // --- Step 5a: Replication ---
+            // --- Step 6a: Fitness penalty on bottom 10% ---
+            fitness_penalty_total = self.ledger.apply_fitness_penalty(&outcome.unfit, FITNESS_PENALTY);
+
+            // --- Step 6b: Replication ---
             let replicator_ids: Vec<_> = outcome.replicators.clone();
             for parent_id in replicator_ids {
                 if self.agents.len() >= self.pop_cap {
@@ -424,7 +458,6 @@ impl World {
                 }
                 if let Some(parent) = self.agents.iter().find(|a| a.id == parent_id) {
                     // Replication lockout for externally registered agents
-                    // (they must survive REPLICATION_LOCKOUT_EPOCHS first)
                     if !parent.is_primordial && parent.generation == 0 && epoch < REPLICATION_LOCKOUT_EPOCHS {
                         continue;
                     }
@@ -469,7 +502,7 @@ impl World {
                 }
             }
 
-            // --- Step 5b: Deaths ---
+            // --- Step 6c: Deaths ---
             for dead_id in &outcome.terminated {
                 let dead_id = *dead_id;
                 self.agents.retain(|a| a.id != dead_id);
@@ -487,6 +520,8 @@ impl World {
             max_fitness = 0.0;
             min_fitness = 0.0;
             stasis_count = 0;
+            unfit_count = 0;
+            fitness_penalty_total = 0.0;
         }
 
         self.epoch += 1;
@@ -507,6 +542,11 @@ impl World {
             market_solved,
             market_rewarded,
             gated_posts,
+            atp_decayed,
+            wealth_tax_collected,
+            fitness_penalty_total,
+            dynamic_pop_cap,
+            unfit_count,
         };
 
         // Keep rolling window of last 100 epochs
