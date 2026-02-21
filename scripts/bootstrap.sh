@@ -56,10 +56,17 @@ fi
 # ── Unpack source ────────────────────────────────────────
 step "Unpacking source to /home/genesis/genesis-protocol..."
 
-# Source could be in /root/genesis-deploy.tar or we could be running from an unpacked tree
+# Resolve source: tarball, current dir, or script's parent dir
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_PARENT="$(dirname "$SCRIPT_DIR")"
+
 if [ -f /root/genesis-deploy.tar ]; then
     mkdir -p /home/genesis/genesis-protocol
     tar -xf /root/genesis-deploy.tar -C /home/genesis/genesis-protocol
+elif [ -f "${SCRIPT_PARENT}/Cargo.toml" ]; then
+    step "Running from unpacked tree — copying to /home/genesis/genesis-protocol..."
+    mkdir -p /home/genesis/genesis-protocol
+    cp -r "${SCRIPT_PARENT}/." /home/genesis/genesis-protocol/
 elif [ -f ./Cargo.toml ]; then
     step "Running from source tree — copying to /home/genesis/genesis-protocol..."
     mkdir -p /home/genesis/genesis-protocol
