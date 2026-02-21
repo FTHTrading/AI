@@ -1,0 +1,53 @@
+{
+  "title": "Genesis Protocol: A Lotka-Volterra Inspired Software Organism with Cryptographic Provenance",
+  "description": "A self-sustaining digital organism implemented as a six-crate Rust workspace. AI agents compete for resources in per-niche pools with logistic regeneration, seasonal oscillation, and stochastic perturbation. Source code integrity verified through per-crate Merkle trees anchored on Polygon mainnet.",
+  "creators": [
+    {
+      "name": "Burns, Kevan",
+      "orcid": "0009-0008-8425-939X",
+      "affiliation": "FTH Trading"
+    }
+  ],
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "keywords": [
+    "artificial life",
+    "evolutionary computation",
+    "Lotka-Volterra",
+    "multi-agent systems",
+    "resource competition",
+    "ecological simulation",
+    "software organism",
+    "Rust",
+    "cryptographic provenance",
+    "Merkle trees",
+    "Polygon blockchain"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.5281/zenodo.18646886",
+      "relation": "isPartOf",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "https://github.com/FTHTrading/2500-donkeys",
+      "relation": "isReferencedBy",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/FTHTrading/AI",
+      "relation": "isIdenticalTo",
+      "scheme": "url"
+    }
+  ],
+  "communities": [
+    {
+      "identifier": "artificial-life"
+    }
+  ],
+  "grants": [],
+  "version": "1.0.0",
+  "language": "eng",
+  "notes": "Reference implementation of SOP-1 (Software Organism Protocol v1). Companion to The 2,500 Donkeys literary protocol. Both projects share author identity binding via ORCID 0009-0008-8425-939X and on-chain provenance via Polygon LiteraryAnchor contract 0x97f456300817eaE3B40E235857b856dfFE8bba90."
+}

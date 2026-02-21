@@ -1,0 +1,265 @@
+{
+    "edition_root":  "cd78b3be6a7f569a8a7a24d49a47ccd01af0fa5ab7c8a04baa6f7ee0367d2cc3",
+    "version":  "1.0",
+    "git":  {
+                "branch":  "master",
+                "commit":  "889a560978939d7a40cdf2bebc8c539c0b83b435",
+                "commits":  18,
+                "remote":  "https://github.com/FTHTrading/AI.git"
+            },
+    "crates":  {
+                   "evolution":  {
+                                     "root":  "fd7f0afbd6ab83d59eff5624c5144f28e50be1727156e3fd904f5fe90e3ec775",
+                                     "files":  [
+                                                   {
+                                                       "lines":  19,
+                                                       "file":  "crates/evolution/src/errors.rs",
+                                                       "hash":  "394656b2267ebb45a6e27341ecbf5b79fa2580ff24f75f62435f6878c307ffaf"
+                                                   },
+                                                   {
+                                                       "lines":  256,
+                                                       "file":  "crates/evolution/src/gene_transfer.rs",
+                                                       "hash":  "bbb7a0fde8d200c5c4b55f742337690c343b2731d9808d7c7f6759c481f40b82"
+                                                   },
+                                                   {
+                                                       "lines":  15,
+                                                       "file":  "crates/evolution/src/lib.rs",
+                                                       "hash":  "6ba89323e0c8afe826ab03d7d60a632ae984b4dc51043ffa6f4eff2ce8e9be19"
+                                                   },
+                                                   {
+                                                       "lines":  143,
+                                                       "file":  "crates/evolution/src/mutation.rs",
+                                                       "hash":  "bc6b6c3c5842d72d30629549ebe821ade7184bcdfdaafba825f041d763852df3"
+                                                   },
+                                                   {
+                                                       "lines":  205,
+                                                       "file":  "crates/evolution/src/selection.rs",
+                                                       "hash":  "1e0f89c0dc90d2a97b8e3321d24a387adc60a989112f59626e4b3d737b0cb440"
+                                                   }
+                                               ],
+                                     "leaf_count":  5,
+                                     "role":  "Mutation and Selection"
+                                 },
+                   "genesis-dna":  {
+                                       "root":  "e348c9a9678af25a67e7d9c6cfe21702b588abf21415a316ce33b33d9f6f2197",
+                                       "files":  [
+                                                     {
+                                                         "lines":  22,
+                                                         "file":  "crates/genesis-dna/src/errors.rs",
+                                                         "hash":  "75338cb2f400ad8e959973ddbe5e2c7b7753c4ce63c2508be2bf960b0981f295"
+                                                     },
+                                                     {
+                                                         "lines":  228,
+                                                         "file":  "crates/genesis-dna/src/genome.rs",
+                                                         "hash":  "4aa77b4ba3be79bfb15b9c3de46dba5148c7d9569a6c8685d4bf249d13835f6a"
+                                                     },
+                                                     {
+                                                         "lines":  25,
+                                                         "file":  "crates/genesis-dna/src/lib.rs",
+                                                         "hash":  "8d298089525e1a0eb7a23eb824b19a6973e92a4f52df368cd32f04f8728b4708"
+                                                     },
+                                                     {
+                                                         "lines":  112,
+                                                         "file":  "crates/genesis-dna/src/lineage.rs",
+                                                         "hash":  "c0314ea7e1676c898868599efc05421c8e596e178ab63f947f7e7df6dba2f42b"
+                                                     },
+                                                     {
+                                                         "lines":  100,
+                                                         "file":  "crates/genesis-dna/src/roles.rs",
+                                                         "hash":  "d4234939a31e838bd9685a0fcfebb1dfb8c5d2651e8b79c029a202cf6f8ef384"
+                                                     },
+                                                     {
+                                                         "lines":  200,
+                                                         "file":  "crates/genesis-dna/src/skills.rs",
+                                                         "hash":  "c12fae8d590cc085ff24cef1821d2e24173da41a413895dad2904ccd14a9f5fa"
+                                                     },
+                                                     {
+                                                         "lines":  231,
+                                                         "file":  "crates/genesis-dna/src/traits.rs",
+                                                         "hash":  "5a28ab90535abf548d9048ef4978e1fa8460435c14180e6abb35baa4d878b512"
+                                                     }
+                                                 ],
+                                       "leaf_count":  7,
+                                       "role":  "Genome and Identity"
+                                   },
+                   "gateway":  {
+                                   "root":  "9ec9925dc0f2df9d07d73603cdb8a99e0c07356e70a5bd9ef1446501f01732e8",
+                                   "files":  [
+                                                 {
+                                                     "lines":  15,
+                                                     "file":  "crates/gateway/src/lib.rs",
+                                                     "hash":  "fbc25e45ec14de64828a023156b617d645fdbd841492bc88ab79a834b0c39cfd"
+                                                 },
+                                                 {
+                                                     "lines":  2155,
+                                                     "file":  "crates/gateway/src/moltbot.rs",
+                                                     "hash":  "bb38bfb32bc7c20ded44d6443c8c4ccbfe1916b96bc7e51acb2f360b4fb7b87f"
+                                                 },
+                                                 {
+                                                     "lines":  94,
+                                                     "file":  "crates/gateway/src/persistence.rs",
+                                                     "hash":  "08e9dde98fc053671f54e2385829fe8d6cc98c525da11cebe037ab28f92c6d43"
+                                                 },
+                                                 {
+                                                     "lines":  131,
+                                                     "file":  "crates/gateway/src/runtime.rs",
+                                                     "hash":  "15355bb96fc9bd29c88222b9975bf42a45155d2a15661b612af667ee5cbcc617"
+                                                 },
+                                                 {
+                                                     "lines":  1167,
+                                                     "file":  "crates/gateway/src/server.rs",
+                                                     "hash":  "b01d9060be86aa8e838746ea5ef5013009f7014952d0fc1b935d0c1f3db1c00c"
+                                                 },
+                                                 {
+                                                     "lines":  532,
+                                                     "file":  "crates/gateway/src/shield.rs",
+                                                     "hash":  "b0217923937582271a9b10fe80e6112f32f9f5889a05857ecdbd119abbdf3c3c"
+                                                 },
+                                                 {
+                                                     "lines":  1078,
+                                                     "file":  "crates/gateway/src/world.rs",
+                                                     "hash":  "464966c82cd1a576bb0dc34998d51bab0ea61b7c47d15c49d3ebd933133893a5"
+                                                 }
+                                             ],
+                                   "leaf_count":  7,
+                                   "role":  "Server and World Engine"
+                               },
+                   "ecosystem":  {
+                                     "root":  "88b9298b76f6d4e207fb0f55303282ad7421111171a4fbcfd264f74f037e19dc",
+                                     "files":  [
+                                                   {
+                                                       "lines":  22,
+                                                       "file":  "crates/ecosystem/src/errors.rs",
+                                                       "hash":  "54ae1495f9d1feb162c662a41c6914b57419debade6e1fdf668d06ac267d1f8e"
+                                                   },
+                                                   {
+                                                       "lines":  20,
+                                                       "file":  "crates/ecosystem/src/lib.rs",
+                                                       "hash":  "04a03acb0d927e6490dae7af626b4de95fe7e180bc77a0fe3f064d9b5626669d"
+                                                   },
+                                                   {
+                                                       "lines":  171,
+                                                       "file":  "crates/ecosystem/src/mesh.rs",
+                                                       "hash":  "41d09cc80a6e5f12a095cbdf9d765a005e492842658f1bebbcd529f1d8e57d84"
+                                                   },
+                                                   {
+                                                       "lines":  143,
+                                                       "file":  "crates/ecosystem/src/messages.rs",
+                                                       "hash":  "d89c087ae1195d268f7a1d2bf4feff2901a67373ce905ee9aab7993055a48782"
+                                                   },
+                                                   {
+                                                       "lines":  275,
+                                                       "file":  "crates/ecosystem/src/problem_market.rs",
+                                                       "hash":  "61760611cca8f446d9ab98875210519a360851a58a2b9731cb1528a62cbf1a4d"
+                                                   },
+                                                   {
+                                                       "lines":  150,
+                                                       "file":  "crates/ecosystem/src/publication_gate.rs",
+                                                       "hash":  "f43da8b02408880bfab8b2c66e29263029aa729b3108c615cb0b93830f89ae07"
+                                                   },
+                                                   {
+                                                       "lines":  245,
+                                                       "file":  "crates/ecosystem/src/registry.rs",
+                                                       "hash":  "021baaed07802b1cc7f8423bbcebd72c3b3c5a7abea69c087c91b43c6010a037"
+                                                   },
+                                                   {
+                                                       "lines":  196,
+                                                       "file":  "crates/ecosystem/src/telemetry.rs",
+                                                       "hash":  "7bf6d055020b14cfa7f69efd7bba4bea6e8214658bcc57bbeb3c884e24564641"
+                                                   }
+                                               ],
+                                     "leaf_count":  8,
+                                     "role":  "Communication and Markets"
+                                 },
+                   "metabolism":  {
+                                      "root":  "f739fd3aab927ce26847aa6a311ba5d7df64af1c451ce4df331361db4ec5e290",
+                                      "files":  [
+                                                    {
+                                                        "lines":  249,
+                                                        "file":  "crates/metabolism/src/atp.rs",
+                                                        "hash":  "4f317f7b4d5886e9fb228f84a1cf214e4a13654bc29a120e03b00e6e0fcee7bd"
+                                                    },
+                                                    {
+                                                        "lines":  25,
+                                                        "file":  "crates/metabolism/src/errors.rs",
+                                                        "hash":  "3d75a2962dde8e3c0e5be7541f47b4c71ebf0f740cb3158a41e1a9872a6a84df"
+                                                    },
+                                                    {
+                                                        "lines":  334,
+                                                        "file":  "crates/metabolism/src/ledger.rs",
+                                                        "hash":  "40879ad00d5ac85a41dc5ec1faee5e7f8d9249e8176cf45c61546eb1bf8dba92"
+                                                    },
+                                                    {
+                                                        "lines":  17,
+                                                        "file":  "crates/metabolism/src/lib.rs",
+                                                        "hash":  "e7ff7923a956820eb1446a2c5f3f3484c7754612e86b560787087890fcebe309"
+                                                    },
+                                                    {
+                                                        "lines":  176,
+                                                        "file":  "crates/metabolism/src/proof.rs",
+                                                        "hash":  "28780d4e9646067823d68e507b5eaa905a215d70165d378c267a4ad5981eabc7"
+                                                    },
+                                                    {
+                                                        "lines":  218,
+                                                        "file":  "crates/metabolism/src/treasury.rs",
+                                                        "hash":  "2c4b4032823f94387428298e35be832d492636fdb092928aa894687fd8029a02"
+                                                    }
+                                                ],
+                                      "leaf_count":  6,
+                                      "role":  "Energy and Economics"
+                                  },
+                   "apostle":  {
+                                   "root":  "ab727d8401a8275836a29309a344021e0414def4cd753b747cdfdf4926e87944",
+                                   "files":  [
+                                                 {
+                                                     "lines":  122,
+                                                     "file":  "crates/apostle/src/conversion.rs",
+                                                     "hash":  "b6e5c4b9164aaf937562b48d9e1a85b294fbdfec3ebfd786f2d62b1e28874953"
+                                                 },
+                                                 {
+                                                     "lines":  22,
+                                                     "file":  "crates/apostle/src/errors.rs",
+                                                     "hash":  "0b15543d17c9c401d59c1e4746f5c077f0ba494ff7daff7730d08b0710068859"
+                                                 },
+                                                 {
+                                                     "lines":  15,
+                                                     "file":  "crates/apostle/src/lib.rs",
+                                                     "hash":  "9b6affb820389f30c526d910e6af4038c9c99bde5db596540376020cdc74e012"
+                                                 },
+                                                 {
+                                                     "lines":  239,
+                                                     "file":  "crates/apostle/src/pitcher.rs",
+                                                     "hash":  "dcd8ba52d7654eb010d39a7200ce6ca19de9ffa3d3fe0c66c78be7c9a2bf8547"
+                                                 },
+                                                 {
+                                                     "lines":  137,
+                                                     "file":  "crates/apostle/src/targets.rs",
+                                                     "hash":  "20ac120c920441121d0e19034955c697a6fb50c780e32dd6316f9bbc3cca2217"
+                                                 }
+                                             ],
+                                   "leaf_count":  5,
+                                   "role":  "Outbound Intelligence"
+                               }
+               },
+    "generated":  "2026-02-21T15:52:59Z",
+    "tests":  {
+                  "root":  "6fa7782e6959b9ae5bafbf0651109bacf85b46f7070e95d10f39232aaf4926cd",
+                  "files":  [
+                                {
+                                    "lines":  511,
+                                    "file":  "crates/gateway/tests/load_sim.rs",
+                                    "hash":  "6fa7782e6959b9ae5bafbf0651109bacf85b46f7070e95d10f39232aaf4926cd"
+                                }
+                            ],
+                  "leaf_count":  1
+              },
+    "crate_roots":  {
+                        "tests":  "6fa7782e6959b9ae5bafbf0651109bacf85b46f7070e95d10f39232aaf4926cd",
+                        "evolution":  "fd7f0afbd6ab83d59eff5624c5144f28e50be1727156e3fd904f5fe90e3ec775",
+                        "genesis-dna":  "e348c9a9678af25a67e7d9c6cfe21702b588abf21415a316ce33b33d9f6f2197",
+                        "gateway":  "9ec9925dc0f2df9d07d73603cdb8a99e0c07356e70a5bd9ef1446501f01732e8",
+                        "ecosystem":  "88b9298b76f6d4e207fb0f55303282ad7421111171a4fbcfd264f74f037e19dc",
+                        "metabolism":  "f739fd3aab927ce26847aa6a311ba5d7df64af1c451ce4df331361db4ec5e290",
+                        "apostle":  "ab727d8401a8275836a29309a344021e0414def4cd753b747cdfdf4926e87944"
+                    }
+}

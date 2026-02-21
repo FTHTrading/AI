@@ -1,0 +1,157 @@
+{
+    "integrity":  {
+                      "edition_root":  "cd78b3be6a7f569a8a7a24d49a47ccd01af0fa5ab7c8a04baa6f7ee0367d2cc3",
+                      "total_files":  39,
+                      "total_lines":  10015,
+                      "crate_roots":  {
+                                          "tests":  "6fa7782e6959b9ae5bafbf0651109bacf85b46f7070e95d10f39232aaf4926cd",
+                                          "evolution":  "fd7f0afbd6ab83d59eff5624c5144f28e50be1727156e3fd904f5fe90e3ec775",
+                                          "genesis-dna":  "e348c9a9678af25a67e7d9c6cfe21702b588abf21415a316ce33b33d9f6f2197",
+                                          "gateway":  "9ec9925dc0f2df9d07d73603cdb8a99e0c07356e70a5bd9ef1446501f01732e8",
+                                          "ecosystem":  "88b9298b76f6d4e207fb0f55303282ad7421111171a4fbcfd264f74f037e19dc",
+                                          "metabolism":  "f739fd3aab927ce26847aa6a311ba5d7df64af1c451ce4df331361db4ec5e290",
+                                          "apostle":  "ab727d8401a8275836a29309a344021e0414def4cd753b747cdfdf4926e87944"
+                                      }
+                  },
+    "related_works":  [
+                          {
+                              "title":  "The 2500 Donkeys: Deterministic Literary Publishing Protocol",
+                              "doi":  "10.5281/zenodo.18646886",
+                              "repo":  "https://github.com/FTHTrading/2500-donkeys",
+                              "relation":  "Shared author identity, provenance methodology, and on-chain infrastructure"
+                          }
+                      ],
+    "standard":  "SOP-1 (Software Organism Protocol v1)",
+    "version":  "1.0",
+    "author":  {
+                   "alias":  "Kidd James",
+                   "name":  "Kevan Burns",
+                   "orcid":  "0009-0008-8425-939X"
+               },
+    "on_chain_anchoring":  {
+                               "description":  "Edition root can be anchored on Polygon via the same LiteraryAnchor contract used for 2500-donkeys",
+                               "contract":  "0x97f456300817eaE3B40E235857b856dfFE8bba90",
+                               "network":  "Polygon Mainnet (Chain ID 137)",
+                               "method":  "anchorEdition(editionRoot, ipfsCID)",
+                               "cost":  "Under 0.50 USD",
+                               "status":  "Ready for anchoring"
+                           },
+    "system_invariants":  [
+                              {
+                                  "domain":  "Ecology",
+                                  "invariant":  "Resource pools regenerate via logistic growth",
+                                  "id":  "E-1"
+                              },
+                              {
+                                  "domain":  "Ecology",
+                                  "invariant":  "Seasonal modulation follows sinusoidal cycle with configurable amplitude",
+                                  "id":  "E-2"
+                              },
+                              {
+                                  "domain":  "Ecology",
+                                  "invariant":  "Resource extraction is proportional to fitness, never winner-take-all",
+                                  "id":  "E-3"
+                              },
+                              {
+                                  "domain":  "Ecology",
+                                  "invariant":  "Density-dependent foraging: extraction decreases with niche crowding",
+                                  "id":  "E-4"
+                              },
+                              {
+                                  "domain":  "Metabolism",
+                                  "invariant":  "ATP balance cannot go negative: metabolic tick clamps at zero",
+                                  "id":  "M-1"
+                              },
+                              {
+                                  "domain":  "Metabolism",
+                                  "invariant":  "Total ATP supply is sum of all agent balances (computed, not tracked)",
+                                  "id":  "M-2"
+                              },
+                              {
+                                  "domain":  "Metabolism",
+                                  "invariant":  "Replication costs are deducted atomically from parent balance",
+                                  "id":  "M-3"
+                              },
+                              {
+                                  "domain":  "Selection",
+                                  "invariant":  "Population cap is dynamic: total_capacity / 15, clamped [10, 500]",
+                                  "id":  "S-1"
+                              },
+                              {
+                                  "domain":  "Selection",
+                                  "invariant":  "Selection pressure respects maturation period before culling",
+                                  "id":  "S-2"
+                              },
+                              {
+                                  "domain":  "Selection",
+                                  "invariant":  "Stasis tolerance prevents premature extinction of viable agents",
+                                  "id":  "S-3"
+                              },
+                              {
+                                  "domain":  "Genome",
+                                  "invariant":  "Primordial genomes are SHA-256 derived for genuine diversity",
+                                  "id":  "G-1"
+                              },
+                              {
+                                  "domain":  "Genome",
+                                  "invariant":  "Mutation pressure is modulated by seasonal environmental stress",
+                                  "id":  "G-2"
+                              },
+                              {
+                                  "domain":  "Provenance",
+                                  "invariant":  "Edition root = Merkle(crate_roots), deterministically recomputable",
+                                  "id":  "P-1"
+                              },
+                              {
+                                  "domain":  "Provenance",
+                                  "invariant":  "All source files have SHA-256 entries in manifest.json",
+                                  "id":  "P-2"
+                              }
+                          ],
+    "repository":  {
+                       "branch":  "master",
+                       "url":  "https://github.com/FTHTrading/AI",
+                       "commit":  "889a560978939d7a40cdf2bebc8c539c0b83b435",
+                       "commits":  18
+                   },
+    "generated":  "2026-02-21T15:52:59Z",
+    "protocol":  "Genesis Protocol",
+    "evidence_chain":  [
+                           {
+                               "evidence":  "Local filesystem",
+                               "record":  "OS metadata",
+                               "layer":  1,
+                               "purpose":  "First creation timestamps"
+                           },
+                           {
+                               "evidence":  "Git commit history",
+                               "record":  "GitHub (18 commits)",
+                               "layer":  2,
+                               "purpose":  "Continuous authorship timeline"
+                           },
+                           {
+                               "evidence":  "Merkle trees",
+                               "record":  "dist/merkle.json",
+                               "layer":  3,
+                               "purpose":  "Per-crate integrity proofs"
+                           },
+                           {
+                               "evidence":  "SHA-256 edition root",
+                               "record":  "cd78b3be6a7f569a8a7a24d49a47ccd01af0fa5ab7c8a04baa6f7ee0367d2cc3",
+                               "layer":  4,
+                               "purpose":  "Content integrity fingerprint"
+                           },
+                           {
+                               "evidence":  "ORCID",
+                               "record":  "0009-0008-8425-939X",
+                               "layer":  5,
+                               "purpose":  "Author identity record"
+                           },
+                           {
+                               "evidence":  "DOI",
+                               "record":  "10.5281/zenodo.18646886",
+                               "layer":  6,
+                               "purpose":  "Permanent academic identifier"
+                           }
+                       ]
+}

@@ -1,0 +1,203 @@
+{
+    "total_lines":  10015,
+    "generated":  "2026-02-21T15:52:59Z",
+    "total_files":  39,
+    "version":  "1.0",
+    "files":  {
+                  "crates/metabolism/src/ledger.rs":  {
+                                                          "lines":  334,
+                                                          "sha256":  "40879ad00d5ac85a41dc5ec1faee5e7f8d9249e8176cf45c61546eb1bf8dba92",
+                                                          "crate":  "metabolism"
+                                                      },
+                  "crates/gateway/src/server.rs":  {
+                                                       "lines":  1167,
+                                                       "sha256":  "b01d9060be86aa8e838746ea5ef5013009f7014952d0fc1b935d0c1f3db1c00c",
+                                                       "crate":  "gateway"
+                                                   },
+                  "crates/ecosystem/src/errors.rs":  {
+                                                         "lines":  22,
+                                                         "sha256":  "54ae1495f9d1feb162c662a41c6914b57419debade6e1fdf668d06ac267d1f8e",
+                                                         "crate":  "ecosystem"
+                                                     },
+                  "crates/gateway/tests/load_sim.rs":  {
+                                                           "lines":  511,
+                                                           "sha256":  "6fa7782e6959b9ae5bafbf0651109bacf85b46f7070e95d10f39232aaf4926cd",
+                                                           "crate":  "tests"
+                                                       },
+                  "crates/evolution/src/mutation.rs":  {
+                                                           "lines":  143,
+                                                           "sha256":  "bc6b6c3c5842d72d30629549ebe821ade7184bcdfdaafba825f041d763852df3",
+                                                           "crate":  "evolution"
+                                                       },
+                  "crates/genesis-dna/src/lib.rs":  {
+                                                        "lines":  25,
+                                                        "sha256":  "8d298089525e1a0eb7a23eb824b19a6973e92a4f52df368cd32f04f8728b4708",
+                                                        "crate":  "genesis-dna"
+                                                    },
+                  "crates/genesis-dna/src/errors.rs":  {
+                                                           "lines":  22,
+                                                           "sha256":  "75338cb2f400ad8e959973ddbe5e2c7b7753c4ce63c2508be2bf960b0981f295",
+                                                           "crate":  "genesis-dna"
+                                                       },
+                  "crates/metabolism/src/lib.rs":  {
+                                                       "lines":  17,
+                                                       "sha256":  "e7ff7923a956820eb1446a2c5f3f3484c7754612e86b560787087890fcebe309",
+                                                       "crate":  "metabolism"
+                                                   },
+                  "crates/genesis-dna/src/lineage.rs":  {
+                                                            "lines":  112,
+                                                            "sha256":  "c0314ea7e1676c898868599efc05421c8e596e178ab63f947f7e7df6dba2f42b",
+                                                            "crate":  "genesis-dna"
+                                                        },
+                  "crates/ecosystem/src/messages.rs":  {
+                                                           "lines":  143,
+                                                           "sha256":  "d89c087ae1195d268f7a1d2bf4feff2901a67373ce905ee9aab7993055a48782",
+                                                           "crate":  "ecosystem"
+                                                       },
+                  "crates/apostle/src/targets.rs":  {
+                                                        "lines":  137,
+                                                        "sha256":  "20ac120c920441121d0e19034955c697a6fb50c780e32dd6316f9bbc3cca2217",
+                                                        "crate":  "apostle"
+                                                    },
+                  "crates/apostle/src/pitcher.rs":  {
+                                                        "lines":  239,
+                                                        "sha256":  "dcd8ba52d7654eb010d39a7200ce6ca19de9ffa3d3fe0c66c78be7c9a2bf8547",
+                                                        "crate":  "apostle"
+                                                    },
+                  "crates/metabolism/src/errors.rs":  {
+                                                          "lines":  25,
+                                                          "sha256":  "3d75a2962dde8e3c0e5be7541f47b4c71ebf0f740cb3158a41e1a9872a6a84df",
+                                                          "crate":  "metabolism"
+                                                      },
+                  "crates/apostle/src/lib.rs":  {
+                                                    "lines":  15,
+                                                    "sha256":  "9b6affb820389f30c526d910e6af4038c9c99bde5db596540376020cdc74e012",
+                                                    "crate":  "apostle"
+                                                },
+                  "crates/gateway/src/lib.rs":  {
+                                                    "lines":  15,
+                                                    "sha256":  "fbc25e45ec14de64828a023156b617d645fdbd841492bc88ab79a834b0c39cfd",
+                                                    "crate":  "gateway"
+                                                },
+                  "crates/gateway/src/world.rs":  {
+                                                      "lines":  1078,
+                                                      "sha256":  "464966c82cd1a576bb0dc34998d51bab0ea61b7c47d15c49d3ebd933133893a5",
+                                                      "crate":  "gateway"
+                                                  },
+                  "crates/ecosystem/src/lib.rs":  {
+                                                      "lines":  20,
+                                                      "sha256":  "04a03acb0d927e6490dae7af626b4de95fe7e180bc77a0fe3f064d9b5626669d",
+                                                      "crate":  "ecosystem"
+                                                  },
+                  "crates/ecosystem/src/problem_market.rs":  {
+                                                                 "lines":  275,
+                                                                 "sha256":  "61760611cca8f446d9ab98875210519a360851a58a2b9731cb1528a62cbf1a4d",
+                                                                 "crate":  "ecosystem"
+                                                             },
+                  "crates/evolution/src/gene_transfer.rs":  {
+                                                                "lines":  256,
+                                                                "sha256":  "bbb7a0fde8d200c5c4b55f742337690c343b2731d9808d7c7f6759c481f40b82",
+                                                                "crate":  "evolution"
+                                                            },
+                  "crates/gateway/src/runtime.rs":  {
+                                                        "lines":  131,
+                                                        "sha256":  "15355bb96fc9bd29c88222b9975bf42a45155d2a15661b612af667ee5cbcc617",
+                                                        "crate":  "gateway"
+                                                    },
+                  "crates/genesis-dna/src/genome.rs":  {
+                                                           "lines":  228,
+                                                           "sha256":  "4aa77b4ba3be79bfb15b9c3de46dba5148c7d9569a6c8685d4bf249d13835f6a",
+                                                           "crate":  "genesis-dna"
+                                                       },
+                  "crates/gateway/src/moltbot.rs":  {
+                                                        "lines":  2155,
+                                                        "sha256":  "bb38bfb32bc7c20ded44d6443c8c4ccbfe1916b96bc7e51acb2f360b4fb7b87f",
+                                                        "crate":  "gateway"
+                                                    },
+                  "crates/genesis-dna/src/roles.rs":  {
+                                                          "lines":  100,
+                                                          "sha256":  "d4234939a31e838bd9685a0fcfebb1dfb8c5d2651e8b79c029a202cf6f8ef384",
+                                                          "crate":  "genesis-dna"
+                                                      },
+                  "crates/ecosystem/src/mesh.rs":  {
+                                                       "lines":  171,
+                                                       "sha256":  "41d09cc80a6e5f12a095cbdf9d765a005e492842658f1bebbcd529f1d8e57d84",
+                                                       "crate":  "ecosystem"
+                                                   },
+                  "crates/apostle/src/conversion.rs":  {
+                                                           "lines":  122,
+                                                           "sha256":  "b6e5c4b9164aaf937562b48d9e1a85b294fbdfec3ebfd786f2d62b1e28874953",
+                                                           "crate":  "apostle"
+                                                       },
+                  "crates/metabolism/src/proof.rs":  {
+                                                         "lines":  176,
+                                                         "sha256":  "28780d4e9646067823d68e507b5eaa905a215d70165d378c267a4ad5981eabc7",
+                                                         "crate":  "metabolism"
+                                                     },
+                  "crates/ecosystem/src/publication_gate.rs":  {
+                                                                   "lines":  150,
+                                                                   "sha256":  "f43da8b02408880bfab8b2c66e29263029aa729b3108c615cb0b93830f89ae07",
+                                                                   "crate":  "ecosystem"
+                                                               },
+                  "crates/metabolism/src/atp.rs":  {
+                                                       "lines":  249,
+                                                       "sha256":  "4f317f7b4d5886e9fb228f84a1cf214e4a13654bc29a120e03b00e6e0fcee7bd",
+                                                       "crate":  "metabolism"
+                                                   },
+                  "crates/metabolism/src/treasury.rs":  {
+                                                            "lines":  218,
+                                                            "sha256":  "2c4b4032823f94387428298e35be832d492636fdb092928aa894687fd8029a02",
+                                                            "crate":  "metabolism"
+                                                        },
+                  "crates/evolution/src/errors.rs":  {
+                                                         "lines":  19,
+                                                         "sha256":  "394656b2267ebb45a6e27341ecbf5b79fa2580ff24f75f62435f6878c307ffaf",
+                                                         "crate":  "evolution"
+                                                     },
+                  "crates/ecosystem/src/registry.rs":  {
+                                                           "lines":  245,
+                                                           "sha256":  "021baaed07802b1cc7f8423bbcebd72c3b3c5a7abea69c087c91b43c6010a037",
+                                                           "crate":  "ecosystem"
+                                                       },
+                  "crates/genesis-dna/src/skills.rs":  {
+                                                           "lines":  200,
+                                                           "sha256":  "c12fae8d590cc085ff24cef1821d2e24173da41a413895dad2904ccd14a9f5fa",
+                                                           "crate":  "genesis-dna"
+                                                       },
+                  "crates/ecosystem/src/telemetry.rs":  {
+                                                            "lines":  196,
+                                                            "sha256":  "7bf6d055020b14cfa7f69efd7bba4bea6e8214658bcc57bbeb3c884e24564641",
+                                                            "crate":  "ecosystem"
+                                                        },
+                  "crates/evolution/src/lib.rs":  {
+                                                      "lines":  15,
+                                                      "sha256":  "6ba89323e0c8afe826ab03d7d60a632ae984b4dc51043ffa6f4eff2ce8e9be19",
+                                                      "crate":  "evolution"
+                                                  },
+                  "crates/gateway/src/shield.rs":  {
+                                                       "lines":  532,
+                                                       "sha256":  "b0217923937582271a9b10fe80e6112f32f9f5889a05857ecdbd119abbdf3c3c",
+                                                       "crate":  "gateway"
+                                                   },
+                  "crates/gateway/src/persistence.rs":  {
+                                                            "lines":  94,
+                                                            "sha256":  "08e9dde98fc053671f54e2385829fe8d6cc98c525da11cebe037ab28f92c6d43",
+                                                            "crate":  "gateway"
+                                                        },
+                  "crates/genesis-dna/src/traits.rs":  {
+                                                           "lines":  231,
+                                                           "sha256":  "5a28ab90535abf548d9048ef4978e1fa8460435c14180e6abb35baa4d878b512",
+                                                           "crate":  "genesis-dna"
+                                                       },
+                  "crates/evolution/src/selection.rs":  {
+                                                            "lines":  205,
+                                                            "sha256":  "1e0f89c0dc90d2a97b8e3321d24a387adc60a989112f59626e4b3d737b0cb440",
+                                                            "crate":  "evolution"
+                                                        },
+                  "crates/apostle/src/errors.rs":  {
+                                                       "lines":  22,
+                                                       "sha256":  "0b15543d17c9c401d59c1e4746f5c077f0ba494ff7daff7730d08b0710068859",
+                                                       "crate":  "apostle"
+                                                   }
+              }
+}

@@ -4,13 +4,17 @@
 // agents, ledger, treasury, markets, engines. The `run_epoch`
 // method advances the world by one tick — all evolutionary
 // logic lives here.
+//
+// Ecological model: Lotka–Volterra inspired resource competition
+// with per-niche resource pools, logistic regeneration, seasonal
+// oscillation, proportional extraction, and stochastic perturbation.
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
-use genesis_dna::AgentDNA;
-use metabolism::atp::{costs, TransactionKind};
+use genesis_dna::{AgentDNA, AgentRole};
+use metabolism::atp::TransactionKind;
 use metabolism::proof::{ProofKind, Solution};
 use metabolism::MetabolismLedger;
 use metabolism::UnitTreasury;
@@ -24,6 +28,211 @@ use evolution::selection::SelectionEngine;
 use evolution::gene_transfer::GeneMarketplace;
 
 use serde::{Serialize, Deserialize};
+
+// ─── Ecological Constants ───────────────────────────────────────────────
+// These constants parameterize the ecological dynamics.  Some are
+// consumed directly in this module; others shadow crate-level defaults
+// for documentation clarity.
+
+/// Basal metabolic cost per epoch (staying alive). Tuned so average
+/// resource extraction exceeds this at equilibrium population.
+#[allow(dead_code)]
+const BASAL_COST: f64 = 0.15;
+
+/// ATP cost to replicate. Must be achievable within ~20-30 epochs
+/// of successful foraging at equilibrium.
+const REPLICATION_COST: f64 = 25.0;
+
+/// Initial ATP grant for primordial agents — enough for ~150 epochs
+/// of survival at basal rate, or one reproduction + buffer.
+const PRIMORDIAL_GRANT: f64 = 50.0;
+
+/// Initial ATP grant for child agents.
+const CHILD_GRANT: f64 = 8.0;
+
+/// Epochs in stasis before death (real organisms starve slowly).
+#[allow(dead_code)]
+const STASIS_TOLERANCE: u32 = 8;
+
+/// Fitness threshold for replication eligibility.
+#[allow(dead_code)]
+const REPLICATION_FITNESS: f64 = 0.35;
+
+/// Minimum epochs alive before an agent can replicate.
+const MATURATION_EPOCHS: u64 = 10;
+
+/// Maximum births per epoch (prevents population explosion).
+const MAX_BIRTHS_PER_EPOCH: usize = 3;
+
+/// Competition coefficient α for cross-niche interference (0 = none, 1 = full).
+/// Real ecology: species sharing resources compete partially.
+const CROSS_NICHE_ALPHA: f64 = 0.15;
+
+// ─── Resource Pool ──────────────────────────────────────────────────────
+
+/// A regenerating resource pool for one ecological niche.
+/// Models logistic growth: dR/dt = regen_rate * R * (1 - R/capacity).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResourcePool {
+    /// Current resource level (ATP available for extraction).
+    pub level: f64,
+    /// Maximum carrying capacity for this niche.
+    pub capacity: f64,
+    /// Logistic regeneration rate per epoch.
+    pub regen_rate: f64,
+}
+
+impl ResourcePool {
+    pub fn new(capacity: f64, regen_rate: f64) -> Self {
+        Self {
+            level: capacity * 0.8, // start at 80% capacity
+            capacity,
+            regen_rate,
+        }
+    }
+
+    /// Logistic regeneration: R += r * R * (1 - R/K)
+    pub fn regenerate(&mut self) {
+        let growth = self.regen_rate * self.level * (1.0 - self.level / self.capacity);
+        self.level = (self.level + growth).clamp(0.0, self.capacity);
+    }
+
+    /// Extract resources proportional to demand.
+    /// Returns actual amount extracted (may be less than requested if pool is low).
+    pub fn extract(&mut self, demand: f64) -> f64 {
+        let available = self.level * 0.4; // max 40% of pool extractable per epoch
+        let actual = demand.min(available).max(0.0);
+        self.level -= actual;
+        actual
+    }
+}
+
+// ─── Environment ────────────────────────────────────────────────────────
+
+/// Ecological environment with per-niche resource dynamics, seasonal
+/// cycles, and stochastic perturbation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Environment {
+    /// Resource pools keyed by ecological niche (AgentRole).
+    pub pools: HashMap<AgentRole, ResourcePool>,
+    /// Season cycle position in radians [0, 2π).
+    pub season_phase: f64,
+    /// Season cycle length in epochs (one full sinusoidal period).
+    pub season_length: u64,
+    /// Amplitude of seasonal variation (fraction of capacity, e.g. 0.3 = ±30%).
+    pub season_amplitude: f64,
+    /// Base carrying capacity per niche (before seasonal modulation).
+    pub base_capacity: f64,
+    /// Whether a catastrophe is currently active.
+    pub catastrophe_remaining: u64,
+    /// Catastrophe severity multiplier on capacity (0.3 = 30% of normal).
+    pub catastrophe_severity: f64,
+    /// Counter for stochastic seed progression.
+    pub event_seed: u64,
+}
+
+impl Environment {
+    /// Create a default environment with 5 niche pools.
+    pub fn new() -> Self {
+        let base_cap = 150.0;
+        let regen = 0.12; // 12% logistic regeneration — moderate
+
+        let mut pools = HashMap::new();
+        // Each role gets a niche with slightly different characteristics
+        pools.insert(AgentRole::Optimizer, ResourcePool::new(base_cap * 1.0, regen));
+        pools.insert(AgentRole::Strategist, ResourcePool::new(base_cap * 0.9, regen * 1.1));
+        pools.insert(AgentRole::Communicator, ResourcePool::new(base_cap * 0.85, regen * 1.15));
+        pools.insert(AgentRole::Archivist, ResourcePool::new(base_cap * 0.95, regen * 0.95));
+        pools.insert(AgentRole::Executor, ResourcePool::new(base_cap * 1.1, regen * 1.05));
+
+        Self {
+            pools,
+            season_phase: 0.0,
+            season_length: 100,
+            season_amplitude: 0.25,
+            base_capacity: base_cap,
+            catastrophe_remaining: 0,
+            catastrophe_severity: 1.0,
+            event_seed: 42,
+        }
+    }
+
+    /// Advance one epoch: regenerate resources, apply seasonal modulation,
+    /// tick catastrophe timer, and roll for stochastic events.
+    pub fn tick(&mut self, epoch: u64) {
+        // Advance season
+        self.season_phase = (2.0 * std::f64::consts::PI * (epoch as f64))
+            / (self.season_length as f64);
+
+        // Seasonal capacity modifier: 1.0 ± amplitude * sin(phase)
+        let seasonal_mod = 1.0 + self.season_amplitude * self.season_phase.sin();
+
+        // Catastrophe modifier
+        let catastrophe_mod = if self.catastrophe_remaining > 0 {
+            self.catastrophe_remaining -= 1;
+            self.catastrophe_severity
+        } else {
+            1.0
+        };
+
+        // Apply capacity modulation + regeneration
+        for (role, pool) in self.pools.iter_mut() {
+            let role_multiplier = match role {
+                AgentRole::Optimizer => 1.0,
+                AgentRole::Strategist => 0.9,
+                AgentRole::Communicator => 0.85,
+                AgentRole::Archivist => 0.95,
+                AgentRole::Executor => 1.1,
+            };
+            pool.capacity = self.base_capacity * role_multiplier * seasonal_mod * catastrophe_mod;
+            pool.regenerate();
+        }
+
+        // Stochastic events: ~2% chance of catastrophe per epoch,
+        // ~5% chance of resource boom, using deterministic hash.
+        self.event_seed = self.event_seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+        let roll = (self.event_seed >> 33) as f64 / (u32::MAX as f64);
+
+        if roll < 0.02 && self.catastrophe_remaining == 0 {
+            // Catastrophe: 10-20 epoch duration, 30-60% capacity
+            self.catastrophe_remaining = 10 + (self.event_seed % 11);
+            self.catastrophe_severity = 0.3 + (((self.event_seed >> 16) % 30) as f64) / 100.0;
+            tracing::warn!(
+                epoch = epoch,
+                duration = self.catastrophe_remaining,
+                severity = format!("{:.0}%", self.catastrophe_severity * 100.0),
+                "CATASTROPHE EVENT"
+            );
+        } else if roll > 0.95 {
+            // Resource boom: temporarily spike all pools to 90% capacity
+            for pool in self.pools.values_mut() {
+                pool.level = pool.capacity * 0.9;
+            }
+            tracing::info!(epoch = epoch, "RESOURCE BOOM");
+        }
+    }
+
+    /// Total resources across all niches.
+    pub fn total_resources(&self) -> f64 {
+        self.pools.values().map(|p| p.level).sum()
+    }
+
+    /// Current effective carrying capacity (sum across niches).
+    pub fn total_capacity(&self) -> f64 {
+        self.pools.values().map(|p| p.capacity).sum()
+    }
+
+    /// Current season name (for display).
+    pub fn season_name(&self) -> &'static str {
+        let normalized = (self.season_phase.sin() + 1.0) / 2.0; // [0, 1]
+        match (normalized * 4.0) as usize {
+            0 => "Winter",
+            1 => "Spring",
+            2 => "Summer",
+            _ => "Autumn",
+        }
+    }
+}
 
 /// Thread-safe shared world handle.
 pub type SharedWorld = Arc<Mutex<World>>;
@@ -40,7 +249,10 @@ pub struct World {
     pub mutation_engine: MutationEngine,
     pub selection_engine: SelectionEngine,
     pub marketplace: GeneMarketplace,
+    pub environment: Environment,
     pub epoch: u64,
+    /// Per-agent birth epoch tracker (for maturation).
+    pub agent_birth_epoch: HashMap<uuid::Uuid, u64>,
     /// Set of registered external IDs to prevent duplicates.
     pub registered_external_ids: Vec<String>,
     /// Maximum population before capping.
@@ -71,16 +283,20 @@ pub struct EpochStats {
     pub market_solved: u64,
     pub market_rewarded: f64,
     pub gated_posts: u64,
-    /// ATP destroyed by decay this epoch.
-    pub atp_decayed: f64,
-    /// ATP collected as wealth tax this epoch.
-    pub wealth_tax_collected: f64,
-    /// ATP penalty applied to unfit agents.
-    pub fitness_penalty_total: f64,
+    /// ATP extracted from resource pools this epoch.
+    pub resources_extracted: f64,
+    /// Total resources remaining across all niches.
+    pub total_resources: f64,
+    /// Current season name.
+    pub season: String,
+    /// Whether a catastrophe is active.
+    pub catastrophe_active: bool,
     /// Dynamic carrying capacity this epoch.
     pub dynamic_pop_cap: usize,
-    /// Number of agents flagged as unfit (bottom 10%).
-    pub unfit_count: usize,
+    /// Number of agents in each role.
+    pub role_counts: HashMap<AgentRole, usize>,
+    /// Resource level per niche.
+    pub niche_resources: HashMap<AgentRole, f64>,
 }
 
 /// Registration request from external callers.
@@ -138,11 +354,8 @@ impl std::fmt::Display for WorldError {
 /// Minimum ATP stake required for registration.
 const REGISTRATION_STAKE: f64 = 5.0;
 
-/// Epochs a new agent must survive before it can replicate.
-const REPLICATION_LOCKOUT_EPOCHS: u64 = 5;
-
 impl World {
-    /// Create a new world with 20 primordial agents.
+    /// Create a new world with 20 primordial agents and ecological environment.
     pub fn new() -> Self {
         let mut ledger = MetabolismLedger::new();
         let mut mesh = EcosystemMesh::new();
@@ -152,8 +365,9 @@ impl World {
         let problem_market = ProblemMarket::new();
         let publication_gate = PublicationGate::conservative();
         let treasury = UnitTreasury::new();
+        let environment = Environment::new();
 
-        let agents = Self::spawn_primordials(20, &mut ledger, &mut mesh);
+        let (agents, birth_epochs) = Self::spawn_primordials(20, &mut ledger, &mut mesh);
 
         World {
             agents,
@@ -165,7 +379,9 @@ impl World {
             mutation_engine,
             selection_engine,
             marketplace,
+            environment,
             epoch: 0,
+            agent_birth_epoch: birth_epochs,
             registered_external_ids: Vec::new(),
             pop_cap: 200,
             started_at: Utc::now(),
@@ -175,16 +391,27 @@ impl World {
         }
     }
 
-    /// Spawn primordial agents — identical logic to the original main.rs.
+    /// Spawn primordial agents with diverse entropy.
+    /// Uses cryptographic mixing to ensure genuine trait diversity.
     fn spawn_primordials(
         count: usize,
         ledger: &mut MetabolismLedger,
         mesh: &mut EcosystemMesh,
-    ) -> Vec<AgentDNA> {
+    ) -> (Vec<AgentDNA>, HashMap<uuid::Uuid, u64>) {
         let mut agents = Vec::with_capacity(count);
+        let mut birth_epochs = HashMap::new();
 
         for i in 0..count {
-            let entropy: Vec<u8> = (0..64).map(|j| (i * 7 + j * 13 + 42) as u8).collect();
+            // Use SHA-256 mixing for genuine diversity instead of
+            // linear arithmetic that produced near-identical genomes.
+            use sha2::{Sha256, Digest};
+            let mut hasher = Sha256::new();
+            hasher.update(b"genesis-primordial-");
+            hasher.update(i.to_le_bytes());
+            hasher.update(b"-epoch0-seed7729");
+            let hash: [u8; 32] = hasher.finalize().into();
+            let entropy: Vec<u8> = hash.iter().chain(hash.iter()).copied().collect();
+
             let dna = AgentDNA::from_entropy(&entropy, true).unwrap();
 
             let initial_proof = Solution::new(
@@ -195,9 +422,10 @@ impl World {
             );
             let verdict = initial_proof.evaluate();
             let initial_atp = if verdict.accepted {
-                verdict.reward * dna.energy_metabolism.effective_generation_rate()
+                (verdict.reward * dna.energy_metabolism.effective_generation_rate())
+                    .max(PRIMORDIAL_GRANT)
             } else {
-                10.0
+                PRIMORDIAL_GRANT
             };
             ledger.register_agent(dna.id, initial_atp);
 
@@ -206,16 +434,22 @@ impl World {
                 .unwrap();
             mesh.init_inbox(dna.id);
 
+            birth_epochs.insert(dna.id, 0);
             agents.push(dna);
         }
 
-        // Ring topology
+        // Ring topology + cross-role links for mesh diversity
         for i in 0..agents.len() {
             let next = (i + 1) % agents.len();
             let _ = mesh.registry.connect(&agents[i].id, &agents[next].id);
+            // Also connect to an agent 5 steps away for small-world topology
+            let far = (i + 5) % agents.len();
+            if far != next {
+                let _ = mesh.registry.connect(&agents[i].id, &agents[far].id);
+            }
         }
 
-        agents
+        (agents, birth_epochs)
     }
 
     /// Register an external agent. Enforces:
@@ -274,6 +508,7 @@ impl World {
 
         let role_label = dna.role.label().to_string();
 
+        self.agent_birth_epoch.insert(dna.id, self.epoch);
         self.agents.push(dna);
         self.registered_external_ids.push(req.external_id.clone());
 
@@ -293,36 +528,92 @@ impl World {
         let mut market_solved: u64 = 0;
         let mut market_rewarded: f64 = 0.0;
         let mut gated_posts: u64 = 0;
+        let mut resources_extracted: f64 = 0.0;
 
-        // --- Scarcity constants ---
-        const ATP_DECAY_RATE: f64 = 0.02;       // 2% balance decay per epoch
-        const WEALTH_TAX_THRESHOLD: f64 = 100.0; // Tax kicks in above 100 ATP
-        const WEALTH_TAX_RATE: f64 = 0.01;       // 1% of excess
-        const FITNESS_PENALTY: f64 = 0.5;        // Extra 0.5 ATP/epoch for bottom 10%
-        const MIN_POP_CAP: usize = 10;
-        const MAX_POP_CAP: usize = 500;
-        const ATP_PER_AGENT_CAP: f64 = 50.0;     // Pop cap = total_supply / this
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 0: Environment tick — regenerate resources, apply seasons
+        // ═══════════════════════════════════════════════════════════════
+        self.environment.tick(epoch);
 
-        // --- Step 0: ATP Decay (wealth entropy) ---
-        let atp_decayed = self.ledger.decay_all(ATP_DECAY_RATE);
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 1: Resource extraction — proportional foraging per niche
+        //
+        // Each agent extracts ATP from its role's resource pool.
+        // Extraction = fitness * skill_match * (pool_level / capacity)
+        // This creates density-dependent income: crowded niches yield less.
+        // Cross-niche competition: agents in other roles slightly deplete all pools.
+        // ═══════════════════════════════════════════════════════════════
+        let mut role_counts: HashMap<AgentRole, usize> = HashMap::new();
+        for agent in self.agents.iter() {
+            *role_counts.entry(agent.role).or_insert(0) += 1;
+        }
 
-        // --- Step 1: Basal metabolic tick (now tracks supply correctly) ---
+        // Compute per-agent extraction from their niche
+        let agent_extractions: Vec<(uuid::Uuid, AgentRole, f64)> = self.agents.iter().map(|agent| {
+            let pool = self.environment.pools.get(&agent.role);
+            let pool_ratio = pool.map(|p| (p.level / p.capacity).clamp(0.0, 1.0)).unwrap_or(0.0);
+
+            // Niche skill match — how well does this agent exploit its niche?
+            let niche_skill = match agent.role {
+                AgentRole::Optimizer => agent.skills.optimization,
+                AgentRole::Strategist => agent.skills.cooperation,
+                AgentRole::Communicator => agent.skills.communication,
+                AgentRole::Archivist => agent.skills.compute,
+                AgentRole::Executor => (agent.skills.optimization + agent.skills.compute) / 2.0,
+            };
+
+            // Density factor: more agents in this niche → less per agent
+            let niche_pop = *role_counts.get(&agent.role).unwrap_or(&1) as f64;
+            let density_factor = 1.0 / (1.0 + niche_pop * 0.1);
+
+            // Cross-niche competition penalty
+            let total_pop = self.agents.len() as f64;
+            let cross_penalty = 1.0 - CROSS_NICHE_ALPHA * (total_pop - niche_pop) / total_pop.max(1.0);
+
+            // Final extraction: fitness × niche_skill × pool_ratio × density × cross-niche
+            let extraction = agent.fitness()
+                * niche_skill
+                * pool_ratio
+                * density_factor
+                * cross_penalty
+                * 2.5; // scale factor so average agent nets positive at equilibrium
+
+            (agent.id, agent.role, extraction.max(0.0))
+        }).collect();
+
+        // Actually extract from pools and credit agents
+        for (agent_id, role, demand) in &agent_extractions {
+            if let Some(pool) = self.environment.pools.get_mut(role) {
+                let extracted = pool.extract(*demand);
+                if extracted > 0.0 {
+                    let _ = self.ledger.mint(
+                        agent_id, extracted,
+                        TransactionKind::ProofOfSolution,
+                        &format!("Epoch {} niche foraging", epoch),
+                    );
+                    resources_extracted += extracted;
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 2: Basal metabolism — cost of staying alive
+        // Lower than before (0.15 vs 0.5) so agents can sustain
+        // ═══════════════════════════════════════════════════════════════
         self.ledger.metabolic_tick_all();
 
-        // --- Step 1b: Wealth tax → treasury ---
-        let wealth_tax_collected = self.ledger.wealth_tax_all(WEALTH_TAX_THRESHOLD, WEALTH_TAX_RATE);
-        self.treasury.reserve += wealth_tax_collected;
-        self.treasury.total_collected += wealth_tax_collected;
-
-        // --- Step 2: Dynamic carrying capacity ---
-        let dynamic_pop_cap = (self.ledger.total_supply() / ATP_PER_AGENT_CAP)
-            .max(MIN_POP_CAP as f64)
-            .min(MAX_POP_CAP as f64) as usize;
-        self.pop_cap = dynamic_pop_cap;
-
-        // --- Step 3: Problem Market Competition ---
-        let pressure = 0.3 + (epoch as f64 * 0.002).min(0.6);
-        let problem_ids = self.problem_market.generate_epoch_problems(pressure, 4, epoch);
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 3: Problem Market — supplementary income (bonus, not sole)
+        // ═══════════════════════════════════════════════════════════════
+        let environmental_pressure = 0.3
+            + 0.15 * self.environment.season_phase.sin()
+            + (epoch as f64 * 0.0005).min(0.3);
+        let problem_count = if epoch % 3 == 0 { 3 } else { 2 }; // not every epoch is a bonanza
+        let problem_ids = self.problem_market.generate_epoch_problems(
+            environmental_pressure,
+            problem_count,
+            epoch,
+        );
 
         for pid in problem_ids {
             let problem = self.problem_market.active_problems()
@@ -344,16 +635,14 @@ impl World {
 
                 if let Some(idx) = best_idx {
                     let agent_id = self.agents[idx].id;
-
                     let confidence = match problem.category {
                         ProblemCategory::Optimization => self.agents[idx].skills.optimization,
                         ProblemCategory::Strategy => self.agents[idx].skills.cooperation,
                         ProblemCategory::Coordination => self.agents[idx].skills.communication,
                         ProblemCategory::Analysis => self.agents[idx].skills.compute,
                     };
-                    let atp_cost = 0.5;
 
-                    if self.publication_gate.approve(confidence, atp_cost, self.agents[idx].reputation.score) {
+                    if self.publication_gate.approve(confidence, 0.3, self.agents[idx].reputation.score) {
                         let gross_reward = problem.reward_atp;
                         let skim = self.treasury.skim(gross_reward);
                         let reward = gross_reward - skim;
@@ -372,36 +661,9 @@ impl World {
             }
         }
 
-        // --- NO MORE TRICKLE INCOME ---
-        // Agents earn ATP only through market competition.
-        // The free handout is dead.
-
-        // --- Step 3b: Treasury redistribution (crisis only) ---
-        // Treasury stipends now only activate when population drops below 50%
-        // of the dynamic cap — a crisis response, not a welfare program.
-        if self.agents.len() < dynamic_pop_cap / 2 {
-            let mut role_dist = HashMap::new();
-            for agent in self.agents.iter() {
-                *role_dist.entry(agent.role).or_insert(0usize) += 1;
-            }
-            let distributed = self.treasury.distribute_stipends(&role_dist, self.agents.len());
-            for i in 0..self.agents.len() {
-                if let Some(&total_for_role) = distributed.get(&self.agents[i].role) {
-                    let count = *role_dist.get(&self.agents[i].role).unwrap_or(&1);
-                    let per_agent = total_for_role / count as f64;
-                    if per_agent > 0.0 {
-                        let agent_id = self.agents[i].id;
-                        let _ = self.ledger.mint(
-                            &agent_id, per_agent,
-                            TransactionKind::ProofOfSolution,
-                            &format!("Epoch {} crisis stipend", epoch),
-                        );
-                    }
-                }
-            }
-        }
-
-        // --- Step 4: Communication (gated) ---
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 4: Communication (gated)
+        // ═══════════════════════════════════════════════════════════════
         let broadcasters: Vec<_> = self.agents
             .iter()
             .filter(|a| {
@@ -420,13 +682,18 @@ impl World {
             let _ = self.mesh.broadcast_gossip(msg);
         }
 
-        // --- Step 5: Mutation under environmental pressure ---
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 5: Mutation under environmental pressure
+        // Pressure modulated by seasonal cycle — higher in harsh seasons
+        // ═══════════════════════════════════════════════════════════════
         for agent in self.agents.iter_mut() {
-            let m = self.mutation_engine.apply_pressure(agent.id, &mut agent.traits, pressure);
+            let m = self.mutation_engine.apply_pressure(agent.id, &mut agent.traits, environmental_pressure);
             mutations += m as u64;
         }
 
-        // --- Step 6: Natural selection ---
+        // ═══════════════════════════════════════════════════════════════
+        // STEP 6: Natural Selection
+        // ═══════════════════════════════════════════════════════════════
         let population: Vec<(AgentDNA, f64, bool)> = self.agents
             .iter()
             .map(|dna| {
@@ -436,50 +703,55 @@ impl World {
             .collect();
 
         let stasis_count;
-        let unfit_count;
-        let fitness_penalty_total;
         let (mean_fitness, max_fitness, min_fitness);
+
+        // Dynamic pop cap from environment carrying capacity
+        let dynamic_pop_cap = ((self.environment.total_capacity() / 15.0) as usize)
+            .clamp(10, 500);
+        self.pop_cap = dynamic_pop_cap;
 
         if let Ok(outcome) = self.selection_engine.select(&population) {
             mean_fitness = outcome.mean_fitness;
             max_fitness = outcome.max_fitness;
             min_fitness = outcome.min_fitness;
             stasis_count = outcome.stasis_candidates.len();
-            unfit_count = outcome.unfit.len();
 
-            // --- Step 6a: Fitness penalty on bottom 10% ---
-            fitness_penalty_total = self.ledger.apply_fitness_penalty(&outcome.unfit, FITNESS_PENALTY);
-
-            // --- Step 6b: Replication ---
+            // ─── Replication ───
             let replicator_ids: Vec<_> = outcome.replicators.clone();
+            let mut births_this_epoch = 0usize;
             for parent_id in replicator_ids {
+                if births_this_epoch >= MAX_BIRTHS_PER_EPOCH {
+                    break;
+                }
                 if self.agents.len() >= self.pop_cap {
                     break;
                 }
                 if let Some(parent) = self.agents.iter().find(|a| a.id == parent_id) {
-                    // Replication lockout for externally registered agents
-                    if !parent.is_primordial && parent.generation == 0 && epoch < REPLICATION_LOCKOUT_EPOCHS {
+                    // Maturation check
+                    let birth_epoch = self.agent_birth_epoch.get(&parent.id).copied().unwrap_or(0);
+                    if epoch.saturating_sub(birth_epoch) < MATURATION_EPOCHS {
                         continue;
                     }
 
                     let parent_balance = self.ledger.balance(&parent.id).unwrap().balance;
-                    if parent_balance >= costs::REPLICATION {
+                    if parent_balance >= REPLICATION_COST {
                         let child_entropy: Vec<u8> = (0..64)
                             .map(|j| {
                                 parent.genesis_hash[j % 32]
                                     .wrapping_add(epoch as u8)
                                     .wrapping_add(j as u8)
+                                    .wrapping_mul(0x9E as u8)
                             })
                             .collect();
 
                         if let Ok(child) = parent.replicate(&child_entropy) {
                             let _ = self.ledger.burn(
                                 &parent_id,
-                                costs::REPLICATION,
+                                REPLICATION_COST,
                                 TransactionKind::ReplicationCost,
                                 "Replication cost",
                             );
-                            self.ledger.register_agent(child.id, 10.0);
+                            self.ledger.register_agent(child.id, CHILD_GRANT);
                             let _ = self.mesh.registry.register(
                                 &child,
                                 format!("Gen{}-{}", child.generation, &child.genome_hex()[..6]),
@@ -494,20 +766,28 @@ impl World {
                                 }
                             }
 
+                            self.agent_birth_epoch.insert(child.id, epoch);
                             self.agents.push(child);
                             births += 1;
-                            break; // Max 1 birth per epoch for stability
+                            births_this_epoch += 1;
                         }
                     }
                 }
             }
 
-            // --- Step 6c: Deaths ---
+            // ─── Deaths ───
             for dead_id in &outcome.terminated {
                 let dead_id = *dead_id;
                 self.agents.retain(|a| a.id != dead_id);
+                self.agent_birth_epoch.remove(&dead_id);
                 if let Ok(bal) = self.ledger.balance(&dead_id) {
-                    let _ = self.ledger.burn(&dead_id, bal.balance, TransactionKind::BasalMetabolism, "Agent terminated");
+                    if bal.balance > 0.0 {
+                        let _ = self.ledger.burn(
+                            &dead_id, bal.balance,
+                            TransactionKind::BasalMetabolism,
+                            "Agent terminated",
+                        );
+                    }
                 }
                 let _ = self.mesh.registry.set_status(
                     &dead_id,
@@ -520,13 +800,21 @@ impl World {
             max_fitness = 0.0;
             min_fitness = 0.0;
             stasis_count = 0;
-            unfit_count = 0;
-            fitness_penalty_total = 0.0;
         }
 
         self.epoch += 1;
         self.total_births += births;
         self.total_deaths += deaths;
+
+        // Collect role counts and niche resource levels for stats
+        let mut final_role_counts: HashMap<AgentRole, usize> = HashMap::new();
+        for agent in self.agents.iter() {
+            *final_role_counts.entry(agent.role).or_insert(0) += 1;
+        }
+        let niche_resources: HashMap<AgentRole, f64> = self.environment.pools
+            .iter()
+            .map(|(role, pool)| (*role, pool.level))
+            .collect();
 
         let stats = EpochStats {
             epoch,
@@ -542,11 +830,13 @@ impl World {
             market_solved,
             market_rewarded,
             gated_posts,
-            atp_decayed,
-            wealth_tax_collected,
-            fitness_penalty_total,
+            resources_extracted,
+            total_resources: self.environment.total_resources(),
+            season: self.environment.season_name().to_string(),
+            catastrophe_active: self.environment.catastrophe_remaining > 0,
             dynamic_pop_cap,
-            unfit_count,
+            role_counts: final_role_counts,
+            niche_resources,
         };
 
         // Keep rolling window of last 100 epochs

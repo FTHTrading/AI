@@ -354,23 +354,26 @@ fn compose_status_post(
          - **Mean Fitness**: {:.4}\n\
          - **Peak Fitness**: {:.4}\n\
          - **ATP Supply**: {:.1}\n\
-         - **ATP Decayed**: {:.1}\n\
-         - **Treasury**: {:.1} (wealth tax: {:.1})\n\
+         - **Resources Extracted**: {:.1}\n\
+         - **Total Resources**: {:.1}\n\
+         - **Season**: {}{}\n\
+         - **Treasury**: {:.1}\n\
          - **Births / Deaths**: {} / {}\n\
-         - **Stasis**: {} | Unfit: {}\n\
+         - **Stasis**: {}\n\
          - **Uptime**: {}\n",
         stats.population,
         stats.dynamic_pop_cap,
         stats.mean_fitness,
         stats.max_fitness,
         stats.total_atp,
-        stats.atp_decayed,
+        stats.resources_extracted,
+        stats.total_resources,
+        stats.season,
+        if stats.catastrophe_active { " \u{26A0}\u{FE0F} CATASTROPHE" } else { "" },
         treasury,
-        stats.wealth_tax_collected,
         births,
         deaths,
         stats.stasis_count,
-        stats.unfit_count,
         format_uptime(uptime),
     );
 
@@ -1359,11 +1362,13 @@ mod tests {
             market_solved: 0,
             market_rewarded: 0.0,
             gated_posts: 0,
-            atp_decayed: 0.0,
-            wealth_tax_collected: 0.0,
-            fitness_penalty_total: 0.0,
+            resources_extracted: 0.0,
+            total_resources: 500.0,
+            season: "Spring".to_string(),
+            catastrophe_active: false,
             dynamic_pop_cap: 200,
-            unfit_count: 0,
+            role_counts: std::collections::HashMap::new(),
+            niche_resources: std::collections::HashMap::new(),
         }
     }
 

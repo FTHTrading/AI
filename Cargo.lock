@@ -446,6 +446,7 @@ dependencies = [
  "genesis-dna",
  "http-body-util",
  "metabolism",
+ "rand",
  "reqwest",
  "serde",
  "serde_json",

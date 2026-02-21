@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::errors::EvolutionError;
 
 /// Minimum fitness threshold for replication eligibility.
-pub const REPLICATION_FITNESS_THRESHOLD: f64 = 0.4;
+pub const REPLICATION_FITNESS_THRESHOLD: f64 = 0.35;
 
 /// Minimum population for selection to operate.
 pub const MIN_POPULATION_SIZE: usize = 2;
@@ -44,7 +44,7 @@ impl SelectionEngine {
     pub fn new() -> Self {
         Self {
             replication_threshold: REPLICATION_FITNESS_THRESHOLD,
-            max_stasis_cycles: 3,
+            max_stasis_cycles: 8,
             stasis_counters: std::collections::HashMap::new(),
         }
     }

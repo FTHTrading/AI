@@ -14,13 +14,13 @@ pub mod costs {
     /// ATP cost per computation cycle (gas equivalent).
     pub const COMPUTATION_CYCLE: f64 = 0.001;
     /// ATP cost to replicate (spawn a child agent).
-    pub const REPLICATION: f64 = 100.0;
+    pub const REPLICATION: f64 = 25.0;
     /// ATP cost per message sent (bandwidth).
     pub const COMMUNICATION: f64 = 0.01;
     /// ATP cost per KB of persistent storage.
     pub const STORAGE_PER_KB: f64 = 0.1;
     /// Basal metabolic cost per time tick (staying alive).
-    pub const BASAL_TICK: f64 = 0.5;
+    pub const BASAL_TICK: f64 = 0.15;
 }
 
 /// The current ATP balance and status of an agent.
