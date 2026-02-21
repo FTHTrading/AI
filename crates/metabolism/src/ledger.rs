@@ -174,10 +174,7 @@ impl MetabolismLedger {
         let mut total_consumed = 0.0;
         for id in agent_ids {
             if let Some(balance) = self.balances.get_mut(&id) {
-                let rate = 1.0;
-                let before = balance.balance;
-                balance.metabolic_tick(rate);
-                let consumed = before - balance.balance;
+                let consumed = balance.metabolic_tick(1.0);
                 total_consumed += consumed;
             }
         }

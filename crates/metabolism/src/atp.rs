@@ -79,14 +79,20 @@ impl AtpBalance {
     }
 
     /// Apply basal metabolic cost (staying alive). May trigger stasis.
-    pub fn metabolic_tick(&mut self, basal_rate: f64) {
+    /// Returns the actual ATP consumed (clamped so balance never goes negative).
+    pub fn metabolic_tick(&mut self, basal_rate: f64) -> f64 {
+        if self.in_stasis || self.balance <= 0.0 {
+            return 0.0;
+        }
         let cost = costs::BASAL_TICK * basal_rate;
-        self.balance -= cost;
-        self.lifetime_spent += cost;
+        let actual = cost.min(self.balance);
+        self.balance -= actual;
+        self.lifetime_spent += actual;
         if self.balance <= STASIS_THRESHOLD {
             self.in_stasis = true;
         }
         self.last_updated = Utc::now();
+        actual
     }
 
     /// Check if the agent can afford a given cost.
