@@ -6,6 +6,8 @@
 //   GET  /status      — ecosystem telemetry (JSON)
 //   GET  /leaderboard — top agents ranked by fitness
 //   GET  /genesis     — human-readable HTML dashboard
+//   GET  /stream      — SSE real-time state stream
+//   GET  /observatory — Three.js "Circle of Life" frontend
 //
 // Defense layers (via Shield module):
 //   - Per-IP rate limiting (read / write split)
@@ -19,16 +21,24 @@
 // All evolutionary flows pass through World::run_epoch().
 
 use std::collections::HashMap;
+use std::convert::Infallible;
+use std::time::Duration;
 
 use axum::{
     extract::{Path, State, DefaultBodyLimit},
     http::StatusCode,
     middleware,
-    response::{Html, IntoResponse},
+    response::{
+        Html, IntoResponse,
+        sse::{Event, KeepAlive, Sse},
+    },
     routing::{get, post},
     Json, Router,
 };
+use futures::stream::Stream;
 use serde::Serialize;
+use tokio_stream::StreamExt as _;
+use tower_http::cors::{CorsLayer, Any};
 
 use crate::shield::{
     self, EmergencyControls, SharedControls,
@@ -83,6 +93,39 @@ pub struct ErrorResponse {
     pub error: String,
 }
 
+// ── SSE stream payload ──────────────────────────────────────────────
+
+/// A single agent's state for the SSE stream.
+#[derive(Serialize, Clone)]
+pub struct SseAgent {
+    pub id: String,
+    pub role: String,
+    pub fitness: f64,
+    pub reputation: f64,
+    pub atp: f64,
+    pub generation: u64,
+    pub is_primordial: bool,
+}
+
+/// Full organism state pushed once per SSE tick.
+#[derive(Serialize, Clone)]
+pub struct SseFrame {
+    pub epoch: u64,
+    pub population: usize,
+    pub avg_fitness: f64,
+    pub total_atp: f64,
+    pub treasury_reserve: f64,
+    pub treasury_collected: f64,
+    pub treasury_distributed: f64,
+    pub total_births: u64,
+    pub total_deaths: u64,
+    pub roles: HashMap<String, usize>,
+    pub risks: Vec<String>,
+    pub agents: Vec<SseAgent>,
+    pub epoch_diff: EpochDiff,
+    pub uptime_seconds: i64,
+}
+
 /// Build the Axum router with all endpoints and defense layers.
 pub fn build_router(world: SharedWorld) -> Router {
     build_router_with_controls(world, default_controls())
@@ -112,11 +155,24 @@ pub fn build_router_with_controls(world: SharedWorld, controls: SharedControls) 
             write_rl.clone(),
             rate_limit_middleware,
         ))
+        .with_state(world.clone());
+
+    // SSE + frontend routes (no rate limiting — long-lived connections)
+    let stream_routes = Router::new()
+        .route("/stream", get(get_sse_stream))
+        .route("/observatory", get(get_observatory))
         .with_state(world);
+
+    // CORS layer: allow the observatory to connect from any origin
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
 
     Router::new()
         .merge(read_routes)
         .merge(write_routes)
+        .merge(stream_routes)
         // Emergency controls applied to all routes
         .route_layer(middleware::from_fn_with_state(
             controls,
@@ -126,6 +182,8 @@ pub fn build_router_with_controls(world: SharedWorld, controls: SharedControls) 
         .route_layer(middleware::from_fn(security_headers_middleware))
         // Request body size limit (32 KB)
         .layer(DefaultBodyLimit::max(shield::MAX_BODY_SIZE))
+        // CORS
+        .layer(cors)
 }
 
 /// Default emergency controls (from env vars or Normal mode).
@@ -529,6 +587,99 @@ async fn get_genesis_dashboard(
     );
 
     Html(html)
+}
+
+// ── SSE Real-time Stream ────────────────────────────────────────────
+
+/// GET /stream — Server-Sent Events, one JSON frame per second.
+///
+/// Streams the full organism state for the frontend observatory.
+/// No rate limiting (single long-lived connection per client).
+async fn get_sse_stream(
+    State(world): State<SharedWorld>,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let stream = tokio_stream::wrappers::IntervalStream::new(
+        tokio::time::interval(Duration::from_secs(1)),
+    )
+    .map(move |_| {
+        let frame = snapshot_sse_frame(&world);
+        let json = serde_json::to_string(&frame).unwrap_or_default();
+        Ok(Event::default().data(json))
+    });
+
+    Sse::new(stream).keep_alive(KeepAlive::default())
+}
+
+/// Build an SseFrame from the current World state.
+/// Acquires and releases the mutex quickly.
+fn snapshot_sse_frame(world: &SharedWorld) -> SseFrame {
+    let w = match world.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+
+    let status = w.telemetry();
+
+    let mut roles = HashMap::new();
+    for agent in &w.agents {
+        *roles.entry(agent.role.label().to_string()).or_insert(0usize) += 1;
+    }
+
+    let avg_fitness = if w.agents.is_empty() {
+        0.0
+    } else {
+        w.agents.iter().map(|a| a.fitness()).sum::<f64>() / w.agents.len() as f64
+    };
+
+    let risks: Vec<String> = status.risks.iter().map(|r| {
+        use ecosystem::telemetry::RiskState;
+        match r {
+            RiskState::Stable => "STABLE".to_string(),
+            RiskState::MonocultureEmerging => "MONOCULTURE".to_string(),
+            RiskState::ATPConcentrationHigh => "ATP_CONCENTRATION".to_string(),
+            RiskState::ReputationDecay => "REPUTATION_DECAY".to_string(),
+            RiskState::PopulationCrashRisk => "POPULATION_CRASH".to_string(),
+        }
+    }).collect();
+
+    let agents: Vec<SseAgent> = w.agents.iter().map(|a| {
+        SseAgent {
+            id: a.genome_hex()[..16].to_string(),
+            role: a.role.label().to_string(),
+            fitness: a.fitness(),
+            reputation: a.reputation.score,
+            atp: w.agent_atp(a),
+            generation: a.generation,
+            is_primordial: a.is_primordial,
+        }
+    }).collect();
+
+    let diff = w.epoch_diff(10);
+    let uptime = w.uptime_seconds();
+
+    SseFrame {
+        epoch: w.epoch,
+        population: w.agents.len(),
+        avg_fitness,
+        total_atp: w.ledger.total_supply(),
+        treasury_reserve: w.treasury.reserve,
+        treasury_collected: w.treasury.total_collected,
+        treasury_distributed: w.treasury.total_distributed,
+        total_births: w.total_births,
+        total_deaths: w.total_deaths,
+        roles,
+        risks,
+        agents,
+        epoch_diff: diff,
+        uptime_seconds: uptime,
+    }
+}
+
+// ── Observatory Frontend ────────────────────────────────────────────
+
+/// GET /observatory — serves the Three.js "Circle of Life" frontend.
+async fn get_observatory() -> impl IntoResponse {
+    Html(include_str!("observatory.html"))
 }
 
 #[cfg(test)]
@@ -956,5 +1107,61 @@ mod tests {
         let text = String::from_utf8(body.to_vec()).unwrap();
         // The response must NOT echo back the requested ID
         assert!(!text.contains("deadbeef"));
+    }
+
+    // ===== SSE + Observatory tests =====
+
+    #[tokio::test]
+    async fn test_observatory_returns_html() {
+        let world = test_world();
+        let app = build_router(world);
+
+        let req = Request::builder()
+            .uri("/observatory")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = app.oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+        let text = String::from_utf8(body.to_vec()).unwrap();
+        assert!(text.contains("Genesis Protocol"));
+        assert!(text.contains("three.js"));
+    }
+
+    #[tokio::test]
+    async fn test_sse_stream_returns_200() {
+        let world = test_world();
+        let app = build_router(world);
+
+        let req = Request::builder()
+            .uri("/stream")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = app.oneshot(req).await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+        // SSE content type
+        let ct = resp.headers().get("content-type").unwrap().to_str().unwrap();
+        assert!(ct.contains("text/event-stream"), "expected SSE content type, got: {}", ct);
+    }
+
+    #[test]
+    fn test_snapshot_sse_frame() {
+        let world = test_world();
+        let frame = snapshot_sse_frame(&world);
+        assert_eq!(frame.population, 20); // primordial agents
+        assert!(frame.total_atp > 0.0);
+        assert!(!frame.agents.is_empty());
+        assert_eq!(frame.agents.len(), 20);
+        // Every agent should have an id and role
+        for agent in &frame.agents {
+            assert!(!agent.id.is_empty());
+            assert!(!agent.role.is_empty());
+        }
+        // Should serialize cleanly
+        let json = serde_json::to_string(&frame).unwrap();
+        assert!(json.contains("epoch"));
+        assert!(json.contains("treasury_reserve"));
     }
 }

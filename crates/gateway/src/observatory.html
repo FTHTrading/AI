@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genesis Protocol — Observatory</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel-bg: rgba(12,12,20,0.85);
+    --border: rgba(255,255,255,0.06);
+    --text: rgba(255,255,255,0.85);
+    --text-dim: rgba(255,255,255,0.45);
+    --accent: #5eead4;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --green: #4ade80;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --orange: #fb923c;
+    --rose: #fb7185;
+    --mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #canvas-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+  }
+
+  canvas { display: block; }
+
+  /* ── HUD Overlay ───────────────────────────────── */
+
+  .hud {
+    position: fixed;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .hud-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    pointer-events: auto;
+  }
+
+  /* Top-left: Core vitals */
+  #vitals {
+    top: 24px; left: 24px;
+    min-width: 260px;
+  }
+
+  #vitals h2 {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .vital-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .vital-row:last-child { border-bottom: none; }
+
+  .vital-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-family: var(--mono);
+  }
+
+  .vital-value {
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .vital-value.positive { color: var(--green); }
+  .vital-value.negative { color: var(--danger); }
+  .vital-value.neutral  { color: var(--text); }
+  .vital-value.accent   { color: var(--accent); }
+
+  /* Top-right: Treasury */
+  #treasury-panel {
+    top: 24px; right: 24px;
+    min-width: 240px;
+  }
+
+  #treasury-panel h2 {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  .treasury-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    margin: 10px 0;
+    overflow: hidden;
+  }
+
+  .treasury-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease;
+  }
+
+  /* Bottom-left: Risk indicators */
+  #risks-panel {
+    bottom: 24px; left: 24px;
+    min-width: 220px;
+  }
+
+  #risks-panel h2 {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .risk-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin: 2px 4px 2px 0;
+  }
+
+  .risk-STABLE           { background: rgba(74,222,128,0.15); color: var(--green); }
+  .risk-MONOCULTURE       { background: rgba(251,191,36,0.15); color: var(--warn); }
+  .risk-ATP_CONCENTRATION { background: rgba(251,146,60,0.15); color: var(--orange); }
+  .risk-REPUTATION_DECAY  { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .risk-POPULATION_CRASH  { background: rgba(248,113,113,0.15); color: var(--danger); }
+
+  /* Bottom-right: Chronicle */
+  #chronicle {
+    bottom: 24px; right: 24px;
+    min-width: 280px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  #chronicle h2 {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .chronicle-entry {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .chronicle-entry .epoch-tag {
+    color: var(--accent);
+    margin-right: 6px;
+  }
+
+  /* Bottom-center: Connection status */
+  #connection {
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-family: var(--mono);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(12,12,20,0.7);
+    border: 1px solid var(--border);
+  }
+
+  #connection.live { color: var(--green); border-color: rgba(74,222,128,0.2); }
+  #connection.dead { color: var(--danger); border-color: rgba(248,113,113,0.2); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<!-- HUD: Core Vitals -->
+<div id="vitals" class="hud hud-panel">
+  <h2>Genesis Protocol</h2>
+  <div class="vital-row">
+    <span class="vital-label">Epoch</span>
+    <span class="vital-value accent" id="v-epoch">—</span>
+  </div>
+  <div class="vital-row">
+    <span class="vital-label">Population</span>
+    <span class="vital-value" id="v-pop">—</span>
+  </div>
+  <div class="vital-row">
+    <span class="vital-label">Avg Fitness</span>
+    <span class="vital-value" id="v-fitness">—</span>
+  </div>
+  <div class="vital-row">
+    <span class="vital-label">ATP Supply</span>
+    <span class="vital-value" id="v-atp">—</span>
+  </div>
+  <div class="vital-row">
+    <span class="vital-label">Births / Deaths</span>
+    <span class="vital-value" id="v-birth-death">—</span>
+  </div>
+  <div class="vital-row">
+    <span class="vital-label">Uptime</span>
+    <span class="vital-value neutral" id="v-uptime">—</span>
+  </div>
+</div>
+
+<!-- HUD: Treasury -->
+<div id="treasury-panel" class="hud hud-panel">
+  <h2>Treasury</h2>
+  <div class="vital-row">
+    <span class="vital-label">Reserve</span>
+    <span class="vital-value accent" id="t-reserve">—</span>
+  </div>
+  <div class="vital-row">
+    <span class="vital-label">Collected</span>
+    <span class="vital-value" id="t-collected">—</span>
+  </div>
+  <div class="vital-row">
+    <span class="vital-label">Distributed</span>
+    <span class="vital-value" id="t-distributed">—</span>
+  </div>
+  <div class="treasury-bar">
+    <div class="treasury-fill" id="t-bar" style="width:0%;background:var(--accent)"></div>
+  </div>
+  <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);text-align:center" id="t-ratio">—</div>
+</div>
+
+<!-- HUD: Risks -->
+<div id="risks-panel" class="hud hud-panel">
+  <h2>Risk State</h2>
+  <div id="risk-badges"></div>
+</div>
+
+<!-- HUD: Chronicle -->
+<div id="chronicle" class="hud hud-panel">
+  <h2>Chronicle</h2>
+  <div id="chronicle-log"></div>
+</div>
+
+<!-- HUD: Connection -->
+<div id="connection" class="hud dead">Connecting...</div>
+
+<!-- Three.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// Genesis Protocol — Circle of Life Observatory
+// ══════════════════════════════════════════════════════════════════
+
+// ── Role colors ──────────────────────────────────────────────────
+const ROLE_COLORS = {
+  'Optimizer':     0x60a5fa,   // blue
+  'Strategist':    0xa78bfa,   // purple
+  'Communicator':  0xfbbf24,   // amber
+  'Archivist':     0x5eead4,   // teal
+  'Executor':      0xfb923c,   // orange
+};
+const DEFAULT_ROLE_COLOR = 0x94a3b8;
+
+// ── Three.js Scene ───────────────────────────────────────────────
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0a0f, 0.0015);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 0, 14);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x0a0a0f, 1);
+container.appendChild(renderer.domElement);
+
+// Background stars
+const starGeometry = new THREE.BufferGeometry();
+const starCount = 2000;
+const starPositions = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount * 3; i++) {
+  starPositions[i] = (Math.random() - 0.5) * 200;
+}
+starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+const starMaterial = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.08,
+  transparent: true,
+  opacity: 0.4,
+});
+scene.add(new THREE.Points(starGeometry, starMaterial));
+
+// ── The Ring ─────────────────────────────────────────────────────
+const RING_RADIUS = 5;
+const RING_TUBE = 0.12;
+const RING_SEGMENTS = 256;
+
+const ringGeometry = new THREE.TorusGeometry(RING_RADIUS, RING_TUBE, 32, RING_SEGMENTS);
+const ringMaterial = new THREE.MeshPhysicalMaterial({
+  color: 0x1a1a2e,
+  roughness: 0.1,
+  metalness: 0.8,
+  transparent: true,
+  opacity: 0.6,
+  emissive: 0x0a0a1a,
+  emissiveIntensity: 0.3,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.1,
+});
+const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+scene.add(ring);
+
+// Inner glow ring (treasury energy visualization)
+const glowGeometry = new THREE.TorusGeometry(RING_RADIUS - 0.3, 0.04, 16, RING_SEGMENTS);
+const glowMaterial = new THREE.MeshBasicMaterial({
+  color: 0x5eead4,
+  transparent: true,
+  opacity: 0.3,
+});
+const glowRing = new THREE.Mesh(glowGeometry, glowMaterial);
+scene.add(glowRing);
+
+// ── Lighting ─────────────────────────────────────────────────────
+const ambientLight = new THREE.AmbientLight(0x1a1a2e, 0.5);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(0x5eead4, 1.5, 30);
+pointLight.position.set(0, 0, 8);
+scene.add(pointLight);
+
+const rimLight = new THREE.PointLight(0xa78bfa, 0.8, 25);
+rimLight.position.set(-5, 3, 5);
+scene.add(rimLight);
+
+// ── Agent Nodes ──────────────────────────────────────────────────
+// Each agent = sphere on the ring, sized by fitness, colored by role
+const agentGroup = new THREE.Group();
+scene.add(agentGroup);
+
+// Persistent node map: agent ID → mesh
+const agentMeshes = new Map();
+
+function getOrCreateAgentMesh(agent, index, total) {
+  let mesh = agentMeshes.get(agent.id);
+  if (!mesh) {
+    const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+    const color = ROLE_COLORS[agent.role] || DEFAULT_ROLE_COLOR;
+    const material = new THREE.MeshPhysicalMaterial({
+      color: color,
+      roughness: 0.2,
+      metalness: 0.6,
+      transparent: true,
+      opacity: 0.8,
+      emissive: color,
+      emissiveIntensity: 0.3,
+      clearcoat: 0.8,
+      clearcoatRoughness: 0.15,
+    });
+    mesh = new THREE.Mesh(geometry, material);
+    agentGroup.add(mesh);
+    agentMeshes.set(agent.id, mesh);
+  }
+  return mesh;
+}
+
+function updateAgentNodes(agents) {
+  // Remove meshes for agents that no longer exist
+  const currentIds = new Set(agents.map(a => a.id));
+  for (const [id, mesh] of agentMeshes) {
+    if (!currentIds.has(id)) {
+      agentGroup.remove(mesh);
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+      agentMeshes.delete(id);
+    }
+  }
+
+  // Position each agent on the ring
+  const total = agents.length;
+  agents.forEach((agent, i) => {
+    const mesh = getOrCreateAgentMesh(agent, i, total);
+
+    // Angle: evenly distributed around the ring
+    const angle = (i / total) * Math.PI * 2;
+
+    // Target position on the ring
+    const tx = Math.cos(angle) * RING_RADIUS;
+    const ty = Math.sin(angle) * RING_RADIUS;
+    const tz = 0;
+
+    // Smooth lerp to target
+    mesh.position.x += (tx - mesh.position.x) * 0.08;
+    mesh.position.y += (ty - mesh.position.y) * 0.08;
+    mesh.position.z += (tz - mesh.position.z) * 0.08;
+
+    // Scale by fitness (0.5 → 1.5x)
+    const s = 0.6 + agent.fitness * 0.9;
+    mesh.scale.setScalar(s);
+
+    // Emissive intensity by ATP (brighter = more energy)
+    const maxATP = 100;
+    const intensity = Math.min(agent.atp / maxATP, 1.0) * 0.6;
+    mesh.material.emissiveIntensity = 0.15 + intensity;
+
+    // Opacity by fitness
+    mesh.material.opacity = 0.4 + agent.fitness * 0.5;
+  });
+}
+
+// ── Treasury Pulse ───────────────────────────────────────────────
+let treasuryRatio = 0;  // 0..1 how much energy is in treasury vs total
+
+function updateTreasuryVisuals(frame) {
+  const total = frame.total_atp + frame.treasury_reserve;
+  treasuryRatio = total > 0 ? frame.treasury_reserve / total : 0;
+
+  // Treasury glow: brighter when more concentrated
+  glowMaterial.opacity = 0.1 + treasuryRatio * 0.5;
+
+  // Color shifts from teal (healthy) → orange (over-concentrated) → red (sequestered)
+  if (treasuryRatio < 0.3) {
+    glowMaterial.color.setHex(0x5eead4);   // teal — healthy
+  } else if (treasuryRatio < 0.6) {
+    glowMaterial.color.setHex(0xfbbf24);   // amber — accumulating
+  } else if (treasuryRatio < 0.8) {
+    glowMaterial.color.setHex(0xfb923c);   // orange — concentrated
+  } else {
+    glowMaterial.color.setHex(0xf87171);   // red — capital sequestration
+  }
+
+  // Ring emissive responds to population health
+  const popHealth = Math.min(frame.population / 20, 1);
+  ringMaterial.emissiveIntensity = 0.1 + popHealth * 0.4;
+}
+
+// ── Particle Systems ─────────────────────────────────────────────
+// Birth particles: green sparks
+const birthParticles = [];
+// Death particles: red fading wisps
+const deathParticles = [];
+
+function spawnBirthParticle() {
+  const angle = Math.random() * Math.PI * 2;
+  const geometry = new THREE.SphereGeometry(0.04, 8, 8);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0x4ade80,
+    transparent: true,
+    opacity: 1.0,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(
+    Math.cos(angle) * RING_RADIUS,
+    Math.sin(angle) * RING_RADIUS,
+    0
+  );
+  mesh.userData = { life: 1.0, vx: (Math.random() - 0.5) * 0.1, vy: (Math.random() - 0.5) * 0.1 };
+  scene.add(mesh);
+  birthParticles.push(mesh);
+}
+
+function spawnDeathParticle() {
+  const angle = Math.random() * Math.PI * 2;
+  const geometry = new THREE.SphereGeometry(0.03, 8, 8);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xf87171,
+    transparent: true,
+    opacity: 1.0,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(
+    Math.cos(angle) * RING_RADIUS,
+    Math.sin(angle) * RING_RADIUS,
+    0
+  );
+  mesh.userData = { life: 1.0, vx: (Math.random() - 0.5) * 0.05, vy: 0.03 + Math.random() * 0.03 };
+  scene.add(mesh);
+  deathParticles.push(mesh);
+}
+
+function updateParticles(dt) {
+  // Birth particles: expand outward, fade
+  for (let i = birthParticles.length - 1; i >= 0; i--) {
+    const p = birthParticles[i];
+    p.userData.life -= dt * 0.8;
+    p.material.opacity = Math.max(p.userData.life, 0);
+    p.position.x += p.userData.vx;
+    p.position.y += p.userData.vy;
+    p.scale.setScalar(1 + (1 - p.userData.life) * 2);
+    if (p.userData.life <= 0) {
+      scene.remove(p);
+      p.geometry.dispose();
+      p.material.dispose();
+      birthParticles.splice(i, 1);
+    }
+  }
+
+  // Death particles: drift upward, dissolve
+  for (let i = deathParticles.length - 1; i >= 0; i--) {
+    const p = deathParticles[i];
+    p.userData.life -= dt * 0.5;
+    p.material.opacity = Math.max(p.userData.life * 0.6, 0);
+    p.position.x += p.userData.vx;
+    p.position.y += p.userData.vy;
+    p.scale.setScalar(0.5 + (1 - p.userData.life) * 0.5);
+    if (p.userData.life <= 0) {
+      scene.remove(p);
+      p.geometry.dispose();
+      p.material.dispose();
+      deathParticles.splice(i, 1);
+    }
+  }
+}
+
+// ── HUD Update ───────────────────────────────────────────────────
+let prevBirths = null;
+let prevDeaths = null;
+
+function updateHUD(frame) {
+  // Vitals
+  document.getElementById('v-epoch').textContent = frame.epoch.toLocaleString();
+  document.getElementById('v-pop').textContent = frame.population;
+  document.getElementById('v-pop').className = 'vital-value ' +
+    (frame.epoch_diff.population_delta > 0 ? 'positive' :
+     frame.epoch_diff.population_delta < 0 ? 'negative' : 'neutral');
+
+  document.getElementById('v-fitness').textContent = frame.avg_fitness.toFixed(3);
+  document.getElementById('v-fitness').className = 'vital-value ' +
+    (frame.avg_fitness > 0.5 ? 'positive' : frame.avg_fitness > 0.3 ? 'neutral' : 'negative');
+
+  document.getElementById('v-atp').textContent = frame.total_atp.toFixed(1);
+  document.getElementById('v-atp').className = 'vital-value ' +
+    (frame.epoch_diff.atp_delta > 0 ? 'positive' :
+     frame.epoch_diff.atp_delta < 0 ? 'negative' : 'neutral');
+
+  document.getElementById('v-birth-death').textContent =
+    `${frame.total_births} / ${frame.total_deaths}`;
+  const net = frame.total_births - frame.total_deaths;
+  document.getElementById('v-birth-death').className = 'vital-value ' +
+    (net > 0 ? 'positive' : net < 0 ? 'negative' : 'neutral');
+
+  // Uptime
+  const up = frame.uptime_seconds;
+  const d = Math.floor(up / 86400);
+  const h = Math.floor((up % 86400) / 3600);
+  const m = Math.floor((up % 3600) / 60);
+  document.getElementById('v-uptime').textContent = `${d}d ${h}h ${m}m`;
+
+  // Treasury
+  document.getElementById('t-reserve').textContent = frame.treasury_reserve.toFixed(1);
+  document.getElementById('t-collected').textContent = frame.treasury_collected.toFixed(1);
+  document.getElementById('t-distributed').textContent = frame.treasury_distributed.toFixed(1);
+
+  const totalEnergy = frame.total_atp + frame.treasury_reserve;
+  const pct = totalEnergy > 0 ? (frame.treasury_reserve / totalEnergy * 100) : 0;
+  const bar = document.getElementById('t-bar');
+  bar.style.width = pct + '%';
+  // Color the bar by concentration
+  if (pct < 30) bar.style.background = 'var(--accent)';
+  else if (pct < 60) bar.style.background = 'var(--warn)';
+  else if (pct < 80) bar.style.background = 'var(--orange)';
+  else bar.style.background = 'var(--danger)';
+
+  document.getElementById('t-ratio').textContent =
+    `${pct.toFixed(1)}% of energy in treasury`;
+
+  // Risk badges
+  const badgeContainer = document.getElementById('risk-badges');
+  badgeContainer.innerHTML = frame.risks.map(r =>
+    `<span class="risk-badge risk-${r}">${r.replace('_', ' ')}</span>`
+  ).join('');
+
+  // Spawn birth/death particles on delta
+  if (prevBirths !== null) {
+    const newBirths = frame.total_births - prevBirths;
+    const newDeaths = frame.total_deaths - prevDeaths;
+    for (let i = 0; i < Math.min(newBirths, 10); i++) spawnBirthParticle();
+    for (let i = 0; i < Math.min(newDeaths, 10); i++) spawnDeathParticle();
+
+    // Chronicle entries
+    if (newBirths > 0) addChronicle(frame.epoch, `+${newBirths} born`, 'var(--green)');
+    if (newDeaths > 0) addChronicle(frame.epoch, `-${newDeaths} died`, 'var(--danger)');
+  }
+  prevBirths = frame.total_births;
+  prevDeaths = frame.total_deaths;
+}
+
+// ── Chronicle Log ────────────────────────────────────────────────
+const MAX_CHRONICLE = 30;
+
+function addChronicle(epoch, text, color) {
+  const log = document.getElementById('chronicle-log');
+  const entry = document.createElement('div');
+  entry.className = 'chronicle-entry';
+  entry.innerHTML = `<span class="epoch-tag">E${epoch}</span><span style="color:${color}">${text}</span>`;
+  log.insertBefore(entry, log.firstChild);
+
+  // Prune
+  while (log.children.length > MAX_CHRONICLE) {
+    log.removeChild(log.lastChild);
+  }
+}
+
+// ── SSE Connection ───────────────────────────────────────────────
+let latestFrame = null;
+let connected = false;
+
+function connectSSE() {
+  const connEl = document.getElementById('connection');
+  // Determine SSE URL: same origin as the page
+  const sseUrl = window.location.origin + '/stream';
+
+  const es = new EventSource(sseUrl);
+
+  es.onopen = () => {
+    connected = true;
+    connEl.className = 'hud live';
+    connEl.textContent = 'Live';
+  };
+
+  es.onmessage = (event) => {
+    try {
+      latestFrame = JSON.parse(event.data);
+    } catch (e) {
+      console.warn('SSE parse error:', e);
+    }
+  };
+
+  es.onerror = () => {
+    connected = false;
+    connEl.className = 'hud dead';
+    connEl.textContent = 'Reconnecting...';
+    es.close();
+    // Reconnect after 3 seconds
+    setTimeout(connectSSE, 3000);
+  };
+}
+
+// ── Animation Loop ───────────────────────────────────────────────
+const clock = new THREE.Clock();
+let rotationAngle = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const dt = clock.getDelta();
+  const elapsed = clock.getElapsedTime();
+
+  // Gentle ring rotation — speed responds to population
+  const popSpeed = latestFrame ? Math.max(latestFrame.population / 30, 0.1) : 0.3;
+  rotationAngle += dt * 0.15 * popSpeed;
+  ring.rotation.z = rotationAngle;
+  glowRing.rotation.z = rotationAngle * 1.1;  // slightly different speed for parallax
+
+  // Gentle camera breathing
+  camera.position.z = 14 + Math.sin(elapsed * 0.3) * 0.3;
+
+  // Slight ring tilt oscillation
+  ring.rotation.x = Math.sin(elapsed * 0.2) * 0.08;
+  ring.rotation.y = Math.cos(elapsed * 0.15) * 0.05;
+  glowRing.rotation.x = ring.rotation.x;
+  glowRing.rotation.y = ring.rotation.y;
+
+  // Update from latest SSE frame
+  if (latestFrame) {
+    updateAgentNodes(latestFrame.agents);
+    updateTreasuryVisuals(latestFrame);
+    updateHUD(latestFrame);
+    // Rotate agent group with ring
+    agentGroup.rotation.z = rotationAngle;
+    agentGroup.rotation.x = ring.rotation.x;
+    agentGroup.rotation.y = ring.rotation.y;
+  }
+
+  // Particle system
+  updateParticles(dt);
+
+  // Point light pulse
+  pointLight.intensity = 1.2 + Math.sin(elapsed * 2) * 0.3;
+
+  renderer.render(scene, camera);
+}
+
+// ── Resize Handler ───────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ── Boot ─────────────────────────────────────────────────────────
+connectSSE();
+animate();
+
+// Initial chronicle
+addChronicle(0, 'Observatory initialized', 'var(--accent)');
+</script>
+</body>
+</html>
