@@ -53,12 +53,12 @@ gateway        → World state, persistence, background loop, HTTP API, shield, 
 Outbound-only bridge to Moltbook. Genesis projects its internal state — it does
 not accept inbound commands. Zero new attack surface.
 
-- **Heartbeat** — periodic vitals snapshot (epoch, population, fitness, ATP, risks, leader)
-- **Milestones** — significant biological events (fitness records, leader changes, birth bursts,
-  extinction risks, epoch milestones)
-- **Config** — `MOLTBOOK_ENDPOINT`, `MOLTBOOK_API_KEY`, `MOLTBOT_HEARTBEAT_INTERVAL`
+- **Status Posts** — periodic organism vitals as formatted text posts to a submolt
+- **Milestones** — significant biological events queued and included in next status post
+  (fitness records, leader changes, birth bursts, extinction risks, epoch milestones)
+- **Config** — `MOLTBOOK_API_KEY`, `MOLTBOOK_SUBMOLT`, `MOLTBOT_POST_INTERVAL`
 - **Failure-tolerant** — failed posts log and continue, never block the epoch loop
-- **Rate-capped** — heartbeat on interval, milestones deduplicated with cooldown
+- **Rate-compliant** — 1 post per 30 min minimum, milestones queued between posts
 
 ## Roadmap
 

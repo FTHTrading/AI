@@ -77,16 +77,17 @@ Projects organism state to Moltbook. Outbound-only — no inbound routes.
 
 | Setting                       | Default | Description                          |
 |-------------------------------|---------|--------------------------------------|
-| `MOLTBOOK_ENDPOINT`           | (none)  | Required to enable adapter           |
-| `MOLTBOOK_API_KEY`            | (empty) | Bearer token for authentication      |
-| `MOLTBOT_HEARTBEAT_INTERVAL`  | 60      | Epochs between heartbeat posts       |
+| `MOLTBOOK_API_KEY`            | (none)  | Required to enable adapter (`moltbook_sk_xxx`) |
+| `MOLTBOOK_SUBMOLT`            | general | Target submolt for status posts       |
+| `MOLTBOOK_BASE_URL`           | `https://www.moltbook.com/api/v1` | API base URL |
+| `MOLTBOT_POST_INTERVAL`       | 1800    | Epochs between status posts (min 1800) |
 | `MOLTBOT_MAX_RETRIES`         | 2       | Retry count on transient failure     |
 | `MOLTBOT_TIMEOUT_SECS`        | 10      | HTTP timeout per request             |
 
-### Heartbeat Payload
-Periodic JSON post with: `epoch`, `population`, `mean_fitness`, `max_fitness`,
-`total_atp`, `treasury_reserve`, `risks`, `leader`, `uptime_seconds`,
-`total_births`, `total_deaths`.
+### Status Post Format
+Formatted text post to `POST /posts` with `{submolt, title, content}`.
+Includes: epoch, population, mean/max fitness, ATP/treasury, risks, leader,
+uptime, births/deaths, plus any queued milestones since last post.
 
 ### Milestone Events
 Fired on: population peaks, fitness records, leader changes, birth bursts,
