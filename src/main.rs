@@ -19,6 +19,9 @@
 #[cfg(not(feature = "cli"))]
 #[tokio::main]
 async fn main() {
+    // Load .env file (silently ignore if missing)
+    let _ = dotenvy::dotenv();
+
     tracing_subscriber::fmt::init();
 
     println!("╔══════════════════════════════════════════════════════════╗");

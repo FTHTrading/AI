@@ -848,13 +848,21 @@ mod tests {
 
     #[test]
     fn test_config_from_env_disabled() {
-        // Without MOLTBOOK_API_KEY, adapter should be None
+        // Without MOLTBOOK_API_KEY, adapter should be None.
+        // Note: env vars are process-global, so we save/restore to avoid
+        // races with other tests or .env files loaded by the binary.
+        let saved = std::env::var("MOLTBOOK_API_KEY").ok();
         std::env::remove_var("MOLTBOOK_API_KEY");
-        assert!(MoltbotConfig::from_env().is_none());
+        let result = MoltbotConfig::from_env().is_none();
+        if let Some(v) = saved {
+            std::env::set_var("MOLTBOOK_API_KEY", v);
+        }
+        assert!(result);
     }
 
     #[test]
     fn test_config_from_env_enabled() {
+        let saved = std::env::var("MOLTBOOK_API_KEY").ok();
         std::env::set_var("MOLTBOOK_API_KEY", "moltbook_sk_test123");
         std::env::set_var("MOLTBOOK_SUBMOLT", "genesis-protocol");
         std::env::set_var("MOLTBOOK_BASE_URL", "http://localhost:8080/api/v1");
@@ -866,8 +874,12 @@ mod tests {
         // post_interval enforces minimum
         assert!(config.post_interval >= MIN_POST_INTERVAL);
 
-        // Cleanup
-        std::env::remove_var("MOLTBOOK_API_KEY");
+        // Cleanup — restore original or remove
+        if let Some(v) = saved {
+            std::env::set_var("MOLTBOOK_API_KEY", v);
+        } else {
+            std::env::remove_var("MOLTBOOK_API_KEY");
+        }
         std::env::remove_var("MOLTBOOK_SUBMOLT");
         std::env::remove_var("MOLTBOOK_BASE_URL");
     }
