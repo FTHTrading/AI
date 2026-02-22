@@ -11,6 +11,7 @@ members = [
     "crates/genesis-federation",
     "crates/genesis-econometrics",
     "crates/genesis-homeostasis",
+    "crates/genesis-multiverse",
 ]
 resolver = "2"
 
@@ -31,6 +32,7 @@ genesis-replay = { path = "crates/genesis-replay" }
 genesis-federation = { path = "crates/genesis-federation" }
 genesis-econometrics = { path = "crates/genesis-econometrics" }
 genesis-homeostasis = { path = "crates/genesis-homeostasis" }
+genesis-multiverse = { path = "crates/genesis-multiverse" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -55,6 +57,7 @@ apostle.workspace = true
 ecosystem.workspace = true
 evolution.workspace = true
 gateway.workspace = true
+genesis-multiverse.workspace = true
 genesis-replay.workspace = true
 tokio.workspace = true
 tracing = "0.1"

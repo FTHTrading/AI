@@ -550,6 +550,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "genesis-multiverse"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "gateway",
+ "genesis-anchor",
+ "genesis-homeostasis",
+ "hex",
+ "rand",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "genesis-protocol"
 version = "0.1.0"
 dependencies = [
@@ -559,6 +576,7 @@ dependencies = [
  "evolution",
  "gateway",
  "genesis-dna",
+ "genesis-multiverse",
  "genesis-replay",
  "metabolism",
  "serde_json",

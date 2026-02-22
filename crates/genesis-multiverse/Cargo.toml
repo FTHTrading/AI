@@ -1,0 +1,17 @@
+[package]
+name = "genesis-multiverse"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+gateway.workspace = true
+genesis-anchor = { path = "../genesis-anchor" }
+genesis-homeostasis = { path = "../genesis-homeostasis" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+hex.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+rand.workspace = true
+tracing.workspace = true
