@@ -1,0 +1,57 @@
+{
+  "manifest_id": "GEN-EXP-B4C9F562ABED",
+  "config": {
+    "name": "FTH Reserve Stress — Stressed (shock=0.015)",
+    "hypothesis": "Under stressed conditions (shock=0.015), reserve hoarding begins to outperform deployment as shock recovery demands liquidity buffers",
+    "sweep": {
+      "variable": "TreasuryOverflowThreshold",
+      "start": 0.1,
+      "end": 0.9,
+      "step": 0.1
+    },
+    "runs_per_step": 15,
+    "epochs_per_run": 500,
+    "metrics": [
+      "FinalPopulation",
+      "Collapsed",
+      "SurvivalEpochs",
+      "TreasuryRatio",
+      "GiniCoefficient",
+      "MeanFitness",
+      "MeanPopulation",
+      "PopulationVolatility",
+      "TotalBirths",
+      "TotalDeaths",
+      "BirthDeathRatio",
+      "TotalCatastropheDeaths",
+      "TotalEntropyBurned",
+      "RoleEntropy"
+    ],
+    "base_preset": "EarthPrime",
+    "base_pressure_override": {
+      "soft_cap": 180,
+      "entropy_coeff": 0.00002,
+      "catastrophe_base_prob": 0.015,
+      "catastrophe_pop_scale": 0.00001,
+      "gini_wealth_tax_threshold": 0.4,
+      "gini_wealth_tax_rate": 0.02,
+      "treasury_overflow_threshold": 0.5
+    },
+    "base_seed": 20260222
+  },
+  "created_at": "2026-02-22T22:42:05.016333800Z",
+  "result_hash": "29f461317a5e4dd3d2777a3f595f4657296ebe7f27f3b424d47c4ec1fa6f0e3d",
+  "manifest_hash": "de45d9f261f7e7d029fff6afa172f52e80812d1a31572c9d8315ea1ba75d8f4a",
+  "total_worlds": 135,
+  "total_epochs": 67500,
+  "duration_ms": 4955,
+  "findings": [
+    "Optimal treasury threshold by fitness: 0.60 (mean fitness: 0.5575) at shock=0.015",
+    "Peak population stability at threshold = 0.10 (mean pop: 48.7)",
+    "Treasury ratio: 0.0015 at deployment (0.10) vs 0.0009 at hoarding (0.90)",
+    "No collapses observed across entire threshold range",
+    "Mean catastrophe deaths: 6.0 at deployment vs 5.7 at hoarding",
+    "Population volatility: 6.44 at deployment vs 6.57 at hoarding"
+  ],
+  "protocol_version": "0.1.0"
+}

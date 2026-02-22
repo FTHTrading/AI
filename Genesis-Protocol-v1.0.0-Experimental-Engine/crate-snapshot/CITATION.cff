@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+title: "Genesis Protocol: A Lotka-Volterra Inspired Software Organism with Cryptographic Provenance"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Burns
+    given-names: Kevan
+    orcid: "https://orcid.org/0009-0008-8425-939X"
+    alias: "Kidd James"
+    affiliation: "FTH Trading, Norcross, Georgia"
+repository-code: "https://github.com/FTHTrading/AI"
+url: "https://fthtrading.github.io/AI/"
+doi: "10.5281/zenodo.18729652"
+license: MIT
+version: "1.0.0"
+date-released: "2026-02-21"
+keywords:
+  - artificial-life
+  - evolutionary-computation
+  - lotka-volterra
+  - multi-agent-systems
+  - resource-competition
+  - ecological-simulation
+  - software-organism
+  - rust
+  - cryptographic-provenance
+  - merkle-trees
+abstract: >-
+  Genesis Protocol is a self-sustaining digital organism implemented as a
+  six-crate Rust workspace. AI agents are born with SHA-256 derived genomes,
+  compete for resources in per-niche pools with logistic regeneration, face
+  seasonal environmental oscillation and stochastic catastrophe events, and
+  are subject to natural selection pressure. The system implements a
+  Lotka-Volterra inspired ecological model with density-dependent foraging,
+  cross-niche competition, and proportional resource extraction. Source code
+  integrity is verified through per-crate Merkle trees whose edition root
+  can be anchored on Polygon mainnet via the same LiteraryAnchor contract
+  infrastructure used in the 2,500 Donkeys literary protocol
+  (DOI: 10.5281/zenodo.18646886).
+references:
+  - type: software
+    title: "The 2,500 Donkeys: Deterministic Literary Publishing Protocol"
+    authors:
+      - family-names: Burns
+        given-names: Kevan
+    repository-code: "https://github.com/FTHTrading/2500-donkeys"
+    doi: "10.5281/zenodo.18646886"
