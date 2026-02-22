@@ -5,379 +5,366 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Genesis Protocol</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
 :root{
-  --bg:#060b14;--s1:#0d1525;--s2:#111d32;
-  --border:rgba(255,255,255,.07);
-  --text:#e2e8f0;--dim:#64748b;
-  --accent:#38bdf8;--green:#4ade80;--red:#f87171;--yellow:#fbbf24;--purple:#a78bfa;
-  --mono:'Cascadia Code','JetBrains Mono','Fira Code',monospace;
+  --bg:#03070f;--s1:#080f1d;--s2:#0c1628;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.12);
+  --text:#dde6f0;--dim:#4a6080;--dimmer:#2a3a50;
+  --cyan:#38bdf8;--green:#4ade80;--red:#f87171;--amber:#fbbf24;--purple:#a78bfa;
+  --mono:'JetBrains Mono',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;display:flex;flex-direction:column}
 
-/* HEADER */
-#hdr{position:sticky;top:0;z-index:99;background:rgba(6,11,20,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{font-size:10px;font-weight:900;letter-spacing:3px;color:var(--accent);text-transform:uppercase;white-space:nowrap}
-.brand b{color:var(--green)}
-#hdr-mid{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;color:var(--dim)}
-#h-epoch{color:var(--text);font-weight:700}
-#h-uptime{color:var(--dim)}
-#status-pill{padding:2px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:1px}
-.pill-stable{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3)}
-.pill-warn{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.3)}
-.pill-crit{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
-#hdr-right{display:flex;align-items:center;gap:8px}
+/*  TOPBAR  */
+#top{
+  flex-shrink:0;height:44px;
+  background:var(--s1);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:16px;
+}
+.logo{font-size:11px;font-weight:900;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;white-space:nowrap}
+.logo span{color:var(--green)}
+.sep{width:1px;height:20px;background:var(--border)}
+#t-epoch{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);min-width:90px}
+#t-uptime{font-family:var(--mono);font-size:11px;color:var(--dim);min-width:70px}
+#t-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 12px;border-radius:100px;
+  font-size:10px;font-weight:700;letter-spacing:1px;white-space:nowrap;
+  transition:all .3s;
+}
+.pill-stable{background:rgba(74,222,128,.1);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+.pill-warn  {background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.35)}
+.pill-crit  {background:rgba(248,113,113,.1);color:var(--red);  border:1px solid rgba(248,113,113,.3)}
+#top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tbtn{padding:3px 10px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;font-family:var(--mono);transition:all .15s}
+.tbtn:hover,.tbtn.on{background:rgba(56,189,248,.1);color:var(--cyan);border-color:rgba(56,189,248,.35)}
+#t-src{font-size:10px;color:var(--dim);font-family:var(--mono)}
+#t-tick-dot{width:7px;height:7px;border-radius:50%;background:var(--dimmer);transition:background .2s}
+#t-tick-dot.live{background:var(--green)}
 
-/* SOURCE TOGGLE */
-.src-btn{padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .15s}
-.src-btn.active{background:rgba(56,189,248,.15);color:var(--accent);border-color:rgba(56,189,248,.4)}
-#adv-btn{padding:3px 10px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .15s}
-#adv-btn:hover{color:var(--text);border-color:var(--dim)}
+/*  BODY LAYOUT  */
+#body{flex:1;display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:1fr;overflow:hidden;padding:12px;gap:10px;min-height:0}
 
-/* MAIN */
-.main{padding:16px 20px;max-width:1200px;margin:0 auto}
-
-/* METRIC GRID */
-.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
-@media(max-width:900px){.grid5{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:500px){.grid5{grid-template-columns:1fr}}
-
-.card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
-.card-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
-.card-val{font-size:32px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
-.card-sub{font-size:11px;color:var(--dim);font-family:var(--mono);margin-top:4px;height:16px}
-.card-trend{font-size:12px;margin-top:2px;font-family:var(--mono)}
+/*  BIG METRICS ROW  */
+#metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.metric{
+  background:var(--s1);border:1px solid var(--border);border-radius:8px;
+  padding:16px 18px;position:relative;overflow:hidden;
+  transition:border-color .3s;
+}
+.metric::before{content:'';position:absolute;inset:0;border-radius:8px;opacity:0;transition:opacity .3s;pointer-events:none}
+.metric.alert::before{background:rgba(251,191,36,.04);opacity:1}
+.metric.crit ::before{background:rgba(248,113,113,.04);opacity:1}
+.metric-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.metric-val{font-size:40px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-1px;transition:color .3s}
+.metric-sub{margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.metric-delta{margin-top:4px;font-family:var(--mono);font-size:12px;font-weight:700}
 .up{color:var(--green)}.dn{color:var(--red)}.flat{color:var(--dim)}
 
-/* SPARKLINES */
-.charts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-@media(max-width:700px){.charts{grid-template-columns:1fr}}
-.chart-box{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
-.chart-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
-canvas{width:100%;height:60px;display:block}
+/* accent bar at bottom of each metric card */
+.metric-bar{position:absolute;bottom:0;left:0;height:2px;border-radius:0 0 8px 8px;transition:width .5s,background .3s}
 
-/* ADVANCED */
-#adv-panel{display:none}
-#adv-panel.open{display:block}
-.adv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-@media(max-width:700px){.adv-grid{grid-template-columns:1fr}}
-.panel{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
-.panel h4{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.kv{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.025)}
-.kv .k{color:var(--dim);font-size:12px}.kv .v{font-family:var(--mono);font-size:12px}
-.role-row{display:flex;align-items:center;gap:8px;padding:4px 0}
-.rname{width:95px;color:var(--dim);font-size:11px}
-.rbar-wrap{flex:1;height:7px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
-.rbar-fill{height:100%;border-radius:4px}
-.rcount{font-family:var(--mono);font-size:11px;width:20px;text-align:right;color:var(--text)}
+/*  CHARTS ROW  */
+#charts{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-height:0}
+.chart-panel{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;min-height:0}
+.chart-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:8px;flex-shrink:0}
+.chart-panel canvas{flex:1;width:100%;display:block;min-height:0}
 
-/* FOOTER */
-#footer{border-top:1px solid var(--border);padding:7px 20px;display:flex;justify-content:space-between;font-size:10px;color:var(--dim);font-family:var(--mono)}
-#footer a{color:var(--accent);text-decoration:none}
-#last-tick{color:var(--dim)}
+/*  BOTTOM ROW  */
+#bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;flex-shrink:0}
+.bot-panel{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.bot-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.role-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.role-name{width:88px;font-size:11px;color:var(--dim);font-family:var(--mono)}
+.role-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.role-bar{height:100%;border-radius:3px;transition:width .8s}
+.role-n{font-family:var(--mono);font-size:11px;color:var(--text);width:18px;text-align:right}
+.stat-row{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.stat-row .k{font-size:11px;color:var(--dim)}
+.stat-row .v{font-family:var(--mono);font-size:12px;color:var(--text)}
+.stat-row .v.hi{color:var(--green)}
 </style>
 </head>
 <body>
 
-<div id="hdr">
-  <div class="brand">Genesis <b>Protocol</b></div>
-  <div id="hdr-mid">
-    <span id="h-epoch">epoch </span>
-    <span>&middot;</span>
-    <span id="status-pill" class="pill-stable"> STABLE</span>
-    <span>&middot;</span>
-    <span>up <span id="h-uptime"></span></span>
-  </div>
-  <div id="hdr-right">
-    <button class="src-btn" id="btn-live" onclick="setMode('live')">LIVE 1s</button>
-    <button class="src-btn active" id="btn-arch" onclick="setMode('archive')">ARCHIVE</button>
-    <button id="adv-btn" onclick="toggleAdv()">Advanced </button>
+<div id="top">
+  <div class="logo">Genesis <span>Protocol</span></div>
+  <div class="sep"></div>
+  <div id="t-epoch">epoch </div>
+  <div class="sep"></div>
+  <div id="t-pill" class="pill-stable"> STABLE</div>
+  <div class="sep"></div>
+  <div id="t-uptime"></div>
+  <div id="top-right">
+    <div id="t-tick-dot"></div>
+    <div id="t-src">archive</div>
+    <button class="tbtn on"  id="btn-live" onclick="setMode('live')">LIVE 1s</button>
+    <button class="tbtn"     id="btn-arch" onclick="setMode('archive')">ARCHIVE</button>
   </div>
 </div>
 
-<div class="main">
+<div id="body">
 
-  <div class="grid5">
-    <div class="card">
-      <div class="card-label">Population</div>
-      <div class="card-val" id="m-pop" style="color:var(--accent)"></div>
-      <div class="card-sub" id="m-pop-sub"></div>
-      <div class="card-trend" id="m-pop-trend"></div>
+  <div id="metrics">
+    <div class="metric" id="mc-pop">
+      <div class="metric-label">Population</div>
+      <div class="metric-val" id="mv-pop" style="color:var(--cyan)"></div>
+      <div class="metric-sub" id="ms-pop"></div>
+      <div class="metric-delta" id="md-pop"></div>
+      <div class="metric-bar" id="mb-pop" style="background:var(--cyan);width:0%"></div>
     </div>
-    <div class="card">
-      <div class="card-label">Avg Fitness</div>
-      <div class="card-val" id="m-fit" style="color:var(--green)"></div>
-      <div class="card-sub" id="m-fit-sub"></div>
-      <div class="card-trend" id="m-fit-trend"></div>
+    <div class="metric" id="mc-fit">
+      <div class="metric-label">Avg Fitness</div>
+      <div class="metric-val" id="mv-fit"></div>
+      <div class="metric-sub" id="ms-fit"></div>
+      <div class="metric-delta" id="md-fit"></div>
+      <div class="metric-bar" id="mb-fit" style="background:var(--green);width:0%"></div>
     </div>
-    <div class="card">
-      <div class="card-label">B:D Ratio (10ep)</div>
-      <div class="card-val" id="m-bd"></div>
-      <div class="card-sub" id="m-bd-sub"></div>
-      <div class="card-trend" id="m-bd-trend"></div>
+    <div class="metric" id="mc-bd">
+      <div class="metric-label">B:D Ratio</div>
+      <div class="metric-val" id="mv-bd"></div>
+      <div class="metric-sub" id="ms-bd"></div>
+      <div class="metric-delta" id="md-bd"></div>
+      <div class="metric-bar" id="mb-bd" style="width:0%"></div>
     </div>
-    <div class="card">
-      <div class="card-label">ATP Supply</div>
-      <div class="card-val" id="m-atp" style="color:var(--purple)"></div>
-      <div class="card-sub" id="m-atp-sub"></div>
-      <div class="card-trend" id="m-atp-trend"></div>
+    <div class="metric" id="mc-atp">
+      <div class="metric-label">ATP Supply</div>
+      <div class="metric-val" id="mv-atp" style="color:var(--purple)"></div>
+      <div class="metric-sub" id="ms-atp"></div>
+      <div class="metric-delta" id="md-atp"></div>
+      <div class="metric-bar" id="mb-atp" style="background:var(--purple);width:60%"></div>
     </div>
-    <div class="card">
-      <div class="card-label">Mutations/ep (10ep)</div>
-      <div class="card-val" id="m-mut" style="color:var(--yellow)"></div>
-      <div class="card-sub" id="m-mut-sub"></div>
-      <div class="card-trend" id="m-mut-trend"></div>
+    <div class="metric" id="mc-mut">
+      <div class="metric-label">Mutations / ep</div>
+      <div class="metric-val" id="mv-mut" style="color:var(--amber)"></div>
+      <div class="metric-sub" id="ms-mut"></div>
+      <div class="metric-delta" id="md-mut"></div>
+      <div class="metric-bar" id="mb-mut" style="background:var(--amber);width:0%"></div>
     </div>
   </div>
 
-  <div class="charts">
-    <div class="chart-box">
-      <div class="chart-title">Population  rolling buffer</div>
-      <canvas id="c-pop" height="60"></canvas>
+  <div id="charts">
+    <div class="chart-panel">
+      <div class="chart-label">Population  rolling window</div>
+      <canvas id="c-pop"></canvas>
     </div>
-    <div class="chart-box">
-      <div class="chart-title">Avg Fitness  rolling buffer</div>
-      <canvas id="c-fit" height="60"></canvas>
-    </div>
-  </div>
-
-  <div id="adv-panel">
-    <div class="adv-grid">
-      <div class="panel">
-        <h4>Role Distribution</h4>
-        <div id="role-bars"></div>
-      </div>
-      <div class="panel">
-        <h4>Economics</h4>
-        <div class="kv"><span class="k">Treasury Balance</span><span class="v" id="e-tres"></span></div>
-        <div class="kv"><span class="k">Total Collected</span><span class="v" id="e-col"></span></div>
-        <div class="kv"><span class="k">Total Distributed</span><span class="v" id="e-dis"></span></div>
-        <div class="kv"><span class="k">Market Solved</span><span class="v" id="e-sol"></span></div>
-        <div class="kv"><span class="k">Market Rewarded ATP</span><span class="v" id="e-rew"></span></div>
-        <div class="kv"><span class="k">Total Births</span><span class="v" id="e-brt"></span></div>
-        <div class="kv"><span class="k">Total Deaths</span><span class="v" id="e-dth"></span></div>
-        <div class="kv"><span class="k">&Delta; ATP (last 10ep)</span><span class="v" id="e-atpd"></span></div>
-      </div>
+    <div class="chart-panel">
+      <div class="chart-label">Avg Fitness  rolling window</div>
+      <canvas id="c-fit"></canvas>
     </div>
   </div>
 
-</div>
+  <div id="bottom">
+    <div class="bot-panel">
+      <div class="bot-label">Role Distribution</div>
+      <div id="role-bars"></div>
+    </div>
+    <div class="bot-panel">
+      <div class="bot-label">Market</div>
+      <div class="stat-row"><span class="k">Problems Solved</span><span class="v hi" id="b-sol"></span></div>
+      <div class="stat-row"><span class="k">ATP Rewarded</span><span class="v" id="b-rew"></span></div>
+      <div class="stat-row"><span class="k">Total Births</span><span class="v" id="b-brt"></span></div>
+      <div class="stat-row"><span class="k">Total Deaths</span><span class="v" id="b-dth"></span></div>
+      <div class="stat-row"><span class="k">Net Population</span><span class="v hi" id="b-net"></span></div>
+    </div>
+    <div class="bot-panel">
+      <div class="bot-label">Treasury</div>
+      <div class="stat-row"><span class="k">Balance</span><span class="v" id="b-tres"></span></div>
+      <div class="stat-row"><span class="k">Collected</span><span class="v" id="b-col"></span></div>
+      <div class="stat-row"><span class="k">Distributed</span><span class="v" id="b-dis"></span></div>
+      <div class="stat-row"><span class="k">ATP Δ (10ep)</span><span class="v" id="b-atpd"></span></div>
+      <div class="stat-row" style="border:0"><span class="k">Last update</span><span class="v" id="b-ts" style="color:var(--dim);font-size:10px"></span></div>
+    </div>
+  </div>
 
-<div id="footer">
-  <span><a href="https://github.com/FTHTrading/AI" target="_blank">FTHTrading/AI</a> &middot; live=localhost:3000/status &middot; archive=docs/system-state.json</span>
-  <span id="last-tick"></span>
 </div>
 
 <script>
-/*  config  */
-const LIVE_URL    = 'http://localhost:3000/status';
-const ARCHIVE_URL = 'system-state.json';
-const BUFFER_MAX  = 200;
+const LIVE_URL='http://localhost:3000/status';
+const ARCH_URL='system-state.json';
+const BUF=200;
+const RC={Optimizer:'#38bdf8',Strategist:'#a78bfa',Communicator:'#4ade80',Executor:'#fbbf24',Archivist:'#f87171'};
 
-const RC = {Optimizer:'#38bdf8',Strategist:'#a78bfa',Communicator:'#4ade80',Executor:'#fbbf24',Archivist:'#f87171'};
+let mode='live', timer=null;
+const bPop=[], bFit=[];
 
-/*  state  */
-let mode       = 'archive';  // 'live' | 'archive'
-let advOpen    = false;
-let timer      = null;
-let lastGood   = null;  // last valid payload
-const buf_pop  = [];
-const buf_fit  = [];
+const $=id=>document.getElementById(id);
 
-/*  utils  */
-const $     = id => document.getElementById(id);
-const num   = (v,d=2) => (typeof v === 'number' && isFinite(v)) ? v.toFixed(d) : null;
-const fmtK  = v => {
-  if (typeof v !== 'number' || !isFinite(v)) return null;
-  return v >= 1000 ? (v/1000).toFixed(1)+'k' : Math.round(v).toString();
-};
-const safe  = (v, fallback='') => v !== null && v !== undefined ? v : fallback;
-
-function fmtUptime(s) {
-  if (typeof s !== 'number' || !isFinite(s)) return '';
-  const d=Math.floor(s/86400), h=Math.floor((s%86400)/3600), m=Math.floor((s%3600)/60), sec=Math.floor(s%60);
-  if (d>0) return d+'d '+h+'h '+m+'m';
-  if (h>0) return h+'h '+m+'m'+sec+'s';
-  return m+'m '+sec+'s';
+function uptime(s){
+  if(typeof s!=='number'||!isFinite(s))return'';
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60);
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sc).padStart(2,'0');
 }
+function fmtK(v){if(typeof v!=='number'||!isFinite(v))return null;return v>=1000?(v/1000).toFixed(1)+'k':Math.round(v).toString();}
+function chk(v){return typeof v==='number'&&isFinite(v);}
 
-function trend(val, prev) {
-  if (prev === null || val === null) return '';
-  const d = val - prev;
-  if (Math.abs(d) < 0.0001) return '<span class="flat"></span>';
-  return d > 0 ? '<span class="up"> +'+(Math.abs(d)<1?d.toFixed(4):d.toFixed(2))+'</span>'
-               : '<span class="dn"> '+(Math.abs(d)<1?d.toFixed(4):d.toFixed(2))+'</span>';
-}
-
-/*  sparkline  */
-function drawSpark(id, vals, color) {
-  const c = $(id);
-  if (!c || vals.length < 2) return;
-  const W = c.offsetWidth || 500, H = 60;
-  c.width = W; c.height = H;
-  const ctx = c.getContext('2d');
+function spark(id,vals,color){
+  const c=$(id); if(!c||vals.length<2)return;
+  const W=c.clientWidth, H=c.clientHeight;
+  if(!W||!H)return;
+  c.width=W; c.height=H;
+  const ctx=c.getContext('2d');
   ctx.clearRect(0,0,W,H);
-  const mn = Math.min(...vals), mx = Math.max(...vals), rng = mx - mn || 1, pad = 4;
-  // gradient fill
-  const path = new Path2D();
-  vals.forEach((v,i) => {
-    const x = pad + (i/(vals.length-1)) * (W-pad*2);
-    const y = (H-pad) - ((v-mn)/rng) * (H-pad*2);
-    i === 0 ? path.moveTo(x,y) : path.lineTo(x,y);
+  const mn=Math.min(...vals),mx=Math.max(...vals),rng=mx-mn||1,p=3;
+  // fill
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const x=p+(i/(vals.length-1))*(W-p*2);
+    const y=(H-p)-((v-mn)/rng)*(H-p*2);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   });
-  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
-  ctx.stroke(path);
-  // fill under
-  const fill = new Path2D(path);
-  fill.lineTo(pad + (W-pad*2), H); fill.lineTo(pad, H); fill.closePath();
-  const g = ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0, color.replace(')',',0.12)').replace('#','rgba(0x').replace('rgba(0x','rgba(').replace(/rgba\((.{2})(.{2})(.{2}),/,(_,r,g,b)=>`rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},`));
-  g.addColorStop(1, 'transparent');
-  // simpler fill approach
-  ctx.save();
-  ctx.globalAlpha = 0.12;
-  ctx.fillStyle = color;
-  ctx.fill(fill);
-  ctx.restore();
+  const last=p+1*(W-p*2);
+  ctx.lineTo(last,H); ctx.lineTo(p,H); ctx.closePath();
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,color+'22'); g.addColorStop(1,color+'00');
+  ctx.fillStyle=g; ctx.fill();
+  // line
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const x=p+(i/(vals.length-1))*(W-p*2);
+    const y=(H-p)-((v-mn)/rng)*(H-p*2);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.lineJoin='round'; ctx.stroke();
+  // current dot
+  const ly=(H-p)-((vals[vals.length-1]-mn)/rng)*(H-p*2);
+  ctx.beginPath(); ctx.arc(last,ly,3,0,Math.PI*2);
+  ctx.fillStyle=color; ctx.fill();
 }
 
-/*  render  */
-function render(d) {
-  if (!d || typeof d !== 'object') return;
-  lastGood = d;
+function render(d){
+  if(!d||typeof d.epoch!=='number')return;
+  const ed=d.epoch_diff||{};
+  const pop=d.population, fit=d.avg_fitness, atp=d.total_atp;
+  const births=ed.births_in_window, deaths=ed.deaths_in_window;
+  const muts=ed.mutations_in_window, win=ed.window||10;
+  const risks=Array.isArray(d.risks)?d.risks:[];
+  const roles=d.role_distribution||d.roles||{};
 
-  /* normalise: /status and system-state.json have slightly different shapes */
-  const epoch   = d.epoch;
-  const pop     = d.population;
-  const fit     = d.avg_fitness;
-  const atp     = d.total_atp;
-  const uptime  = d.uptime_seconds;
-  const risks   = Array.isArray(d.risks) ? d.risks : [];
-  const ed      = d.epoch_diff || {};
-  const births  = ed.births_in_window;
-  const deaths  = ed.deaths_in_window;
-  const window  = ed.window || 10;
-  const muts    = ed.mutations_in_window;
-  const atp_d   = ed.atp_delta;
-  const fit_d   = ed.fitness_delta;
-  const pop_d   = ed.population_delta;
+  // buffers
+  if(chk(pop)){bPop.push(pop);if(bPop.length>BUF)bPop.shift();}
+  if(chk(fit)){bFit.push(fit);if(bFit.length>BUF)bFit.shift();}
 
-  /* roles: /status uses role_distribution, system-state.json uses roles */
-  const roles = d.role_distribution || d.roles || {};
+  // header
+  $('t-epoch').textContent='epoch '+d.epoch;
+  $('t-uptime').textContent=uptime(d.uptime_seconds);
+  const st=risks.length&&risks[0]!=='STABLE'?risks[0]:'STABLE';
+  const pill=$('t-pill');
+  pill.textContent=' '+st.replace('_',' ');
+  pill.className=st==='STABLE'?'pill-stable':st==='CRITICAL'?'pill-crit':'pill-warn';
 
-  /* buffer for charts */
-  if (typeof pop === 'number' && isFinite(pop)) { buf_pop.push(pop); if (buf_pop.length>BUFFER_MAX) buf_pop.shift(); }
-  if (typeof fit === 'number' && isFinite(fit)) { buf_fit.push(fit); if (buf_fit.length>BUFFER_MAX) buf_fit.shift(); }
+  // tick flash
+  const dot=$('t-tick-dot');
+  dot.classList.add('live'); setTimeout(()=>dot.classList.remove('live'),300);
 
-  /*  header  */
-  $('h-epoch').textContent  = typeof epoch === 'number' ? 'epoch '+epoch : 'epoch ';
-  $('h-uptime').textContent = fmtUptime(uptime);
-  const pill = $('status-pill');
-  const state = risks.length && risks[0] !== 'STABLE' ? risks[0] : 'STABLE';
-  pill.textContent = ' '+state;
-  pill.className   = state==='STABLE'?'pill-stable':(state==='CRITICAL'?'pill-crit':'pill-warn');
-
-  /*  pop card  */
-  $('m-pop').textContent     = typeof pop==='number' ? pop : '';
-  const cap = d.pop_cap;  // only in archive
-  $('m-pop-sub').textContent = typeof cap==='number' ? 'cap '+cap : (typeof pop_d==='number' ? 'Δ10ep: '+(pop_d>=0?'+':'')+pop_d : '');
-  $('m-pop-trend').innerHTML = typeof pop_d==='number' ? trend(pop, pop-(pop_d||0)) : '';
-
-  /*  fitness card  */
-  $('m-fit').textContent     = num(fit,4) || '';
-  $('m-fit-sub').textContent = typeof fit_d==='number' && isFinite(fit_d) ? 'Δ10ep: '+(fit_d>=0?'+':'')+fit_d.toFixed(5) : '';
-  // color by value
-  const fv = typeof fit==='number'?fit:0;
-  $('m-fit').style.color = fv>=0.7?'var(--green)':fv>=0.5?'var(--yellow)':'var(--red)';
-
-  /*  B:D ratio  */
-  let bd = null, bdClass = 'flat', bdSub = '';
-  if (typeof births==='number' && typeof deaths==='number' && isFinite(births) && isFinite(deaths)) {
-    if (deaths === 0) { bd = births > 0 ? '' : '1.00'; bdClass='up'; }
-    else { const r = births/deaths; bd = r.toFixed(2); bdClass = r>=1?'up':'dn'; }
-    bdSub = births+'B / '+deaths+'D ('+window+'ep)';
+  //  POPULATION 
+  $('mv-pop').textContent=chk(pop)?pop:'';
+  const cap=d.pop_cap;
+  $('ms-pop').textContent=chk(cap)?'cap '+cap:(chk(ed.population_delta)?'Δ10ep '+(ed.population_delta>=0?'+':'')+ed.population_delta:'');
+  if(chk(ed.population_delta)){
+    const pd=ed.population_delta;
+    $('md-pop').innerHTML=pd>0?'<span class="up"> +'+pd+'</span>':pd<0?'<span class="dn"> '+pd+'</span>':'<span class="flat"> flat</span>';
   }
-  $('m-bd').textContent     = bd || '';
-  $('m-bd').style.color     = bdClass==='up'?'var(--green)':bdClass==='dn'?'var(--red)':'var(--dim)';
-  $('m-bd-sub').textContent = bdSub;
+  if(chk(pop)&&chk(cap)){$('mb-pop').style.width=Math.min(100,Math.round(pop/cap*100))+'%';}
 
-  /*  ATP  */
-  $('m-atp').textContent     = fmtK(atp) || '';
-  $('m-atp-sub').textContent = typeof atp_d==='number'&&isFinite(atp_d) ? 'Δ10ep: '+(atp_d>=0?'+':'')+atp_d.toFixed(1) : '';
-
-  /*  mutation rate  */
-  let mutr = null;
-  if (typeof muts==='number' && isFinite(muts) && typeof window==='number') {
-    mutr = (muts/window).toFixed(1);
+  //  FITNESS 
+  const fv=chk(fit)?fit:0;
+  const fitColor=fv>=0.7?'var(--green)':fv>=0.5?'var(--amber)':'var(--red)';
+  $('mv-fit').textContent=chk(fit)?fit.toFixed(4):'';
+  $('mv-fit').style.color=fitColor;
+  $('mb-fit').style.background=fitColor;
+  $('mb-fit').style.width=chk(fit)?Math.round(fit*100)+'%':'0%';
+  if(chk(ed.fitness_delta)){
+    const fd=ed.fitness_delta;
+    $('md-fit').innerHTML=fd>0?'<span class="up"> +'+fd.toFixed(5)+'</span>':fd<0?'<span class="dn"> '+fd.toFixed(5)+'</span>':'<span class="flat"></span>';
   }
-  $('m-mut').textContent     = mutr !== null ? mutr+'/ep' : '';
-  $('m-mut-sub').textContent = typeof muts==='number'&&isFinite(muts) ? muts+' total ('+window+'ep)' : '';
 
-  /*  sparklines  */
-  drawSpark('c-pop', buf_pop, '#38bdf8');
-  drawSpark('c-fit', buf_fit, '#4ade80');
+  //  B:D RATIO 
+  let bd=null,bdColor='var(--dim)',bdPct=50;
+  if(chk(births)&&chk(deaths)){
+    if(deaths===0){bd=births>0?'':'1.00';bdColor='var(--green)';bdPct=100;}
+    else{const r=births/deaths;bd=r.toFixed(2);bdColor=r>=1?'var(--green)':'var(--red)';bdPct=Math.min(100,r*50);}
+  }
+  $('mv-bd').textContent=bd||'';
+  $('mv-bd').style.color=bdColor;
+  $('mb-bd').style.background=bdColor;
+  $('mb-bd').style.width=bdPct+'%';
+  $('ms-bd').textContent=chk(births)&&chk(deaths)?births+'B / '+deaths+'D ('+win+'ep)':'';
 
-  /*  advanced  */
-  /* roles */
-  const rv = Object.values(roles); const rmx = rv.length ? Math.max(...rv,1) : 1;
-  $('role-bars').innerHTML = Object.entries(roles)
-    .sort((a,b)=>b[1]-a[1])
-    .map(([r,n])=>'<div class="role-row"><span class="rname">'+r+'</span>'
-      +'<div class="rbar-wrap"><div class="rbar-fill" style="width:'+Math.round(n/rmx*100)+'%;background:'+(RC[r]||'var(--accent)')+'"></div></div>'
-      +'<span class="rcount">'+n+'</span></div>').join('');
+  //  ATP 
+  $('mv-atp').textContent=fmtK(atp)||'';
+  if(chk(ed.atp_delta)){
+    const ad=ed.atp_delta;
+    $('md-atp').innerHTML=ad>=0?'<span class="up"> +'+ad.toFixed(1)+' ATP</span>':'<span class="dn"> '+ad.toFixed(1)+' ATP</span>';
+  }
+  // ATP concentration risk
+  const atpRisk=risks.includes('ATP_CONCENTRATION');
+  $('mc-atp').className='metric'+(atpRisk?' alert':'');
+  $('mc-atp').style.borderColor=atpRisk?'rgba(251,191,36,.3)':'';
 
-  /* economics  only fields that actually exist */
-  const setKv = (id, v) => { $(id).textContent = v !== null && v !== undefined ? v : ''; };
-  setKv('e-tres', num(d.treasury_balance,3) !== null ? num(d.treasury_balance,3)+' ATP' : null);
-  setKv('e-col',  fmtK(d.treasury_collected));
-  setKv('e-dis',  fmtK(d.treasury_distributed));
-  setKv('e-sol',  typeof d.market_solved==='number' ? d.market_solved.toLocaleString() : null);
-  setKv('e-rew',  fmtK(d.market_rewarded));
-  setKv('e-brt',  typeof d.total_births==='number' ? d.total_births.toLocaleString() : null);
-  setKv('e-dth',  typeof d.total_deaths==='number' ? d.total_deaths.toLocaleString() : null);
-  setKv('e-atpd', typeof atp_d==='number'&&isFinite(atp_d) ? (atp_d>=0?'+':'')+atp_d.toFixed(2)+' ATP' : null);
+  //  MUTATIONS 
+  const mutr=chk(muts)&&chk(win)?muts/win:null;
+  $('mv-mut').textContent=mutr!==null?mutr.toFixed(1):'';
+  $('ms-mut').textContent=chk(muts)?muts+' total ('+win+'ep)':'';
+  if(mutr!==null)$('mb-mut').style.width=Math.min(100,mutr*5)+'%';
 
-  /* footer */
-  $('last-tick').textContent = (mode==='live'?'live  ':'archive  ')+'epoch '+(epoch||'')+'  '+new Date().toLocaleTimeString('en-US',{hour12:false});
+  //  SPARKLINES 
+  spark('c-pop',bPop,'#38bdf8');
+  spark('c-fit',bFit,fv>=0.7?'#4ade80':fv>=0.5?'#fbbf24':'#f87171');
+
+  //  ROLES 
+  const rv=Object.values(roles), rmx=rv.length?Math.max(...rv,1):1;
+  $('role-bars').innerHTML=Object.entries(roles).sort((a,b)=>b[1]-a[1])
+    .map(([r,n])=>'<div class="role-row"><span class="role-name">'+r+'</span>'
+      +'<div class="role-bar-wrap"><div class="role-bar" style="width:'+Math.round(n/rmx*100)+'%;background:'+(RC[r]||'#38bdf8')+'"></div></div>'
+      +'<span class="role-n">'+n+'</span></div>').join('');
+
+  //  MARKET 
+  $('b-sol').textContent=chk(d.market_solved)?d.market_solved.toLocaleString():'';
+  $('b-rew').textContent=fmtK(d.market_rewarded)||'';
+  $('b-brt').textContent=chk(d.total_births)?d.total_births.toLocaleString():'';
+  $('b-dth').textContent=chk(d.total_deaths)?d.total_deaths.toLocaleString():'';
+  const net=(d.total_births||0)-(d.total_deaths||0);
+  $('b-net').textContent=(net>=0?'+':'')+net;
+
+  //  TREASURY 
+  $('b-tres').textContent=chk(d.treasury_balance)?d.treasury_balance.toFixed(3)+' ATP':'';
+  $('b-col').textContent=fmtK(d.treasury_collected)||'';
+  $('b-dis').textContent=fmtK(d.treasury_distributed)||'';
+  if(chk(ed.atp_delta))$('b-atpd').textContent=(ed.atp_delta>=0?'+':'')+ed.atp_delta.toFixed(2)+' ATP';
+  $('b-ts').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+  $('t-src').textContent=mode==='live'?'live':'archive';
 }
 
-/*  fetch & validate  */
-async function tick() {
-  const url = mode==='live' ? LIVE_URL+'?t='+Date.now() : ARCHIVE_URL+'?t='+Date.now();
-  try {
-    const r = await fetch(url, {cache:'no-store'});
-    if (!r.ok) throw new Error('HTTP '+r.status);
-    const d = await r.json();
-    // basic schema check  must have epoch and population
-    if (typeof d.epoch !== 'number' || typeof d.population !== 'number') throw new Error('schema mismatch');
+async function tick(){
+  const url=(mode==='live'?LIVE_URL:ARCH_URL)+'?_='+Date.now();
+  try{
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok)throw new Error(r.status);
+    const d=await r.json();
+    if(typeof d.epoch!=='number')throw new Error('bad schema');
     render(d);
-  } catch(e) {
-    // show error in footer but keep last good state visible
-    $('last-tick').textContent = (mode==='live'?'LIVE UNAVAILABLE':'fetch failed')+'  '+e.message+'  '+new Date().toLocaleTimeString();
-    if (mode==='live') {  // auto-fallback suggestion
-      $('last-tick').textContent += '  try ARCHIVE';
-    }
+  }catch(e){
+    $('b-ts').textContent='ERR: '+e.message+' '+new Date().toLocaleTimeString();
+    if(mode==='live'){$('t-src').textContent='live unavailable';}
   }
 }
 
-/*  controls  */
-function setMode(m) {
-  mode = m;
-  $('btn-live').classList.toggle('active', m==='live');
-  $('btn-arch').classList.toggle('active', m==='archive');
+function setMode(m){
+  mode=m;
+  $('btn-live').classList.toggle('on',m==='live');
+  $('btn-arch').classList.toggle('on',m==='archive');
   clearInterval(timer);
   tick();
-  timer = setInterval(tick, m==='live' ? 1000 : 10000);
+  timer=setInterval(tick,m==='live'?1000:10000);
 }
 
-function toggleAdv() {
-  advOpen = !advOpen;
-  $('adv-panel').classList.toggle('open', advOpen);
-  $('adv-btn').textContent = advOpen ? 'Advanced ' : 'Advanced ';
-}
+// resize redraws
+window.addEventListener('resize',()=>{spark('c-pop',bPop,'#38bdf8');spark('c-fit',bFit,'#4ade80');});
 
-/*  start  */
-setMode('archive');
+setMode('live');
 </script>
 </body>
 </html>
