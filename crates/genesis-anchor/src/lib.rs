@@ -9,9 +9,11 @@
 pub mod merkle;
 pub mod anchor;
 pub mod chain;
+pub mod evolution;
 pub mod errors;
 
-pub use anchor::{AnchorEngine, AnchorMode, EpochAnchor, PressureAnchor};
+pub use anchor::{AnchorEngine, AnchorMode, EpochAnchor, PressureAnchor, WorldSummary};
 pub use chain::AnchorChain;
+pub use evolution::{EvolutionEngine, EvolutionAnchor, EvolutionChain, MutationRecord, CrossChainVerification};
 pub use merkle::{MerkleTree, MerkleProof};
 pub use errors::AnchorError;

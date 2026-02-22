@@ -52,6 +52,10 @@ pub struct EpochAnchor {
     pub anchored_at: DateTime<Utc>,
     /// Anchor mode used.
     pub mode: AnchorMode,
+    /// Cross-chain reference: latest evolution chain root at anchor time.
+    /// Not included in epoch_root hash — informational cross-reference.
+    #[serde(default)]
+    pub evolution_root_ref: String,
 }
 
 /// World state summary for hashing — a deterministic snapshot.
@@ -78,6 +82,7 @@ impl WorldSummary {
 }
 
 /// The anchor engine — produces cryptographic anchors at configured intervals.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnchorEngine {
     /// How often to anchor (every N epochs).
     pub interval: u64,
@@ -87,6 +92,12 @@ pub struct AnchorEngine {
     pub storage_path: String,
     /// Last anchor's epoch_root (for chaining).
     pub last_root: String,
+}
+
+impl Default for AnchorEngine {
+    fn default() -> Self {
+        Self::default_engine()
+    }
 }
 
 impl AnchorEngine {
@@ -158,6 +169,7 @@ impl AnchorEngine {
             treasury_reserve: summary.treasury_reserve,
             anchored_at: Utc::now(),
             mode: self.mode,
+            evolution_root_ref: String::new(),
         };
 
         // Update chain

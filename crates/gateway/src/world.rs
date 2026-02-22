@@ -31,7 +31,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::stress::{StressConfig, StressMetrics, PhaseTransitionDetector, role_entropy};
 use genesis_homeostasis::cortex::{AdaptiveCortex, PressureField};
-use genesis_anchor::PressureAnchor;
+use genesis_anchor::{AnchorEngine, EvolutionEngine, MutationRecord, WorldSummary};
 
 // ─── Evolutionary Pressure Configuration ────────────────────────────────
 //
@@ -433,6 +433,12 @@ pub struct World {
     /// Population history window for immune collapse detection.
     #[serde(default)]
     pub population_history: Vec<usize>,
+    /// State chain anchor engine — cryptographic epoch snapshots (Phase 3.5).
+    #[serde(default)]
+    pub anchor_engine: AnchorEngine,
+    /// Evolution chain engine — cryptographic mutation history (Phase 3.5).
+    #[serde(default)]
+    pub evolution_engine: EvolutionEngine,
 }
 
 /// Epoch summary stats returned by run_epoch.
@@ -599,6 +605,8 @@ impl World {
             cortex: AdaptiveCortex::default(),
             peak_treasury: 0.0,
             population_history: Vec::new(),
+            anchor_engine: AnchorEngine::default(),
+            evolution_engine: EvolutionEngine::default(),
         }
     }
 
@@ -1656,12 +1664,19 @@ impl World {
                 // Record cooldowns
                 self.cortex.record_mutations(&response);
 
-                // Anchor the pressure mutation cryptographically
+                // Build mutation records for the evolution chain
+                let mutation_records: Vec<MutationRecord> = response.mutations.iter()
+                    .map(|m| MutationRecord {
+                        field: m.field.name().to_string(),
+                        old_value: m.old_value,
+                        new_value: m.new_value,
+                        trigger: format!("{:?}", m.trigger),
+                        severity: format!("{:?}", m.severity),
+                        rationale: m.rationale.clone(),
+                    })
+                    .collect();
+
                 let after_json = serde_json::to_string(&self.pressure).unwrap_or_default();
-                let summary = response.mutations.iter()
-                    .map(|m| format!("{}:{:.6}->{:.6}", m.field.name(), m.old_value, m.new_value))
-                    .collect::<Vec<_>>()
-                    .join("; ");
 
                 let health_str = match immune_report.overall_health {
                     genesis_homeostasis::ThreatLevel::Normal => "Normal",
@@ -1670,18 +1685,19 @@ impl World {
                     genesis_homeostasis::ThreatLevel::Critical => "Critical",
                 };
 
-                let pressure_anchor = PressureAnchor::create(
+                // Chain-linked evolution anchor (replaces flat PressureAnchor)
+                // Cross-references the latest State Chain epoch root
+                let epoch_root_ref = self.anchor_engine.last_root.clone();
+                if let Err(e) = self.evolution_engine.record(
                     epoch,
                     &before_json,
                     &after_json,
-                    mutation_count,
-                    health_str,
+                    mutation_records,
                     threat_count,
-                    summary,
-                );
-
-                if let Err(e) = pressure_anchor.persist("anchor") {
-                    tracing::warn!(epoch, error = %e, "Failed to persist pressure anchor");
+                    health_str,
+                    &epoch_root_ref,
+                ) {
+                    tracing::warn!(epoch, error = %e, "Failed to persist evolution anchor");
                 }
             }
 
@@ -1690,6 +1706,61 @@ impl World {
                 last.immune_threats = threat_count;
                 last.immune_health = health_level;
                 last.pressure_mutations = mutation_count;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP Φ: State Chain Anchoring
+        //
+        // Every `anchor_engine.interval` epochs (default 100), produce a
+        // cryptographic EpochAnchor: Merkle root of all agent balances,
+        // hashed world summary, chain-linked to previous state anchor.
+        //
+        // Cross-references the latest Evolution Chain root, creating a
+        // bidirectional link between the two chains:
+        //   State Chain ←→ Evolution Chain
+        //
+        // This is the organism's memory of its own physical state.
+        // ═══════════════════════════════════════════════════════════════
+        if self.anchor_engine.should_anchor(epoch) {
+            let balances: Vec<(String, f64)> = self.agents.iter()
+                .filter_map(|a| {
+                    self.ledger.balance(&a.id)
+                        .ok()
+                        .map(|b| (a.id.to_string(), b.balance))
+                })
+                .collect();
+
+            let role_counts_for_anchor: Vec<(String, usize)> = stats.role_counts.iter()
+                .map(|(r, c)| (r.label().to_string(), *c))
+                .collect();
+
+            let summary = WorldSummary {
+                epoch,
+                population: self.agents.len(),
+                total_supply: self.ledger.total_supply(),
+                treasury_reserve: self.treasury.reserve,
+                mean_fitness: stats.mean_fitness,
+                total_births: self.total_births,
+                total_deaths: self.total_deaths,
+                role_counts: role_counts_for_anchor,
+            };
+
+            let mut state_anchor = self.anchor_engine.anchor(epoch, &balances, &summary);
+            // Cross-chain reference: latest evolution chain root
+            state_anchor.evolution_root_ref = self.evolution_engine.last_evolution_root.clone();
+
+            if let Err(e) = self.anchor_engine.persist(&state_anchor) {
+                tracing::warn!(epoch, error = %e, "Failed to persist state anchor");
+            } else {
+                tracing::info!(
+                    epoch,
+                    root = &state_anchor.epoch_root[..16],
+                    population = state_anchor.population,
+                    supply = format!("{:.2}", state_anchor.total_supply),
+                    evolution_ref = &state_anchor.evolution_root_ref[..16],
+                    "STATE CHAIN: Epoch anchor persisted with evolution cross-reference"
+                );
             }
         }
 
