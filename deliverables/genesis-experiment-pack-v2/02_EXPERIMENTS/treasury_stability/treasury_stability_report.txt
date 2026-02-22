@@ -1,0 +1,45 @@
+╔══════════════════════════════════════════════════════════╗
+║  Genesis Experiment: Treasury Stability: Reserve Deploym ║
+╚══════════════════════════════════════════════════════════╝
+
+Hypothesis: An intermediate treasury overflow threshold (0.30-0.50) maximizes population stability and minimizes inequality, while extremes — aggressive deployment or passive hoarding — degrade outcomes
+
+── Protocol ──
+  Variable:      treasury_overflow_threshold
+  Range:         0.100000 → 0.900000 (step 0.100000)
+  Runs/step:     20
+  Epochs/run:    500
+  Base preset:   EarthPrime
+  Base seed:     20260222
+  Total worlds:  180
+  Total epochs:  90000
+  Duration:      6950ms
+
+── Results ──
+
+param_value  collapse_%   final_population     collapsed            survival_epochs      treasury_ratio       gini_coefficient     mean_fitness         mean_population      population_volatility total_births         total_deaths         birth_death_ratio    total_entropy_burned role_entropy        
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0.100000     0.0          53.65    ± 2.41     0.00     ± 0.00     500.00   ± 0.00     0.01     ± 0.02     0.56     ± 0.04     0.55     ± 0.02     49.37    ± 2.05     6.81     ± 0.47     76.15    ± 5.68     42.50    ± 6.09     1.06     ± 0.27     71.37    ± 3.53     2.32     ± 0.01    
+0.200000     0.0          52.85    ± 2.30     0.00     ± 0.00     500.00   ± 0.00     0.00     ± 0.00     0.55     ± 0.03     0.54     ± 0.02     48.26    ± 1.94     6.73     ± 0.52     76.55    ± 5.54     43.70    ± 5.61     1.18     ± 0.38     70.17    ± 4.05     2.32     ± 0.01    
+0.300000     0.0          53.70    ± 2.41     0.00     ± 0.00     500.00   ± 0.00     0.00     ± 0.01     0.55     ± 0.03     0.54     ± 0.03     48.95    ± 1.61     6.80     ± 0.59     75.70    ± 6.14     42.00    ± 6.67     1.10     ± 0.22     70.60    ± 3.76     2.32     ± 0.00    
+0.400000     0.0          53.50    ± 2.44     0.00     ± 0.00     500.00   ± 0.00     0.00     ± 0.00     0.54     ± 0.03     0.54     ± 0.02     48.16    ± 2.18     6.84     ± 0.52     74.95    ± 6.31     41.45    ± 5.73     1.19     ± 0.32     69.37    ± 3.50     2.32     ± 0.00    
+0.500000     0.0          52.90    ± 2.31     0.00     ± 0.00     500.00   ± 0.00     0.00     ± 0.00     0.56     ± 0.02     0.54     ± 0.02     48.58    ± 2.20     6.87     ± 0.69     76.05    ± 7.46     43.15    ± 7.53     1.12     ± 0.39     70.44    ± 3.84     2.32     ± 0.00    
+0.600000     0.0          53.30    ± 2.20     0.00     ± 0.00     500.00   ± 0.00     0.00     ± 0.01     0.54     ± 0.03     0.55     ± 0.02     48.87    ± 1.67     6.83     ± 0.39     77.55    ± 5.28     44.25    ± 5.27     1.08     ± 0.26     70.81    ± 3.31     2.32     ± 0.00    
+0.700000     0.0          53.35    ± 2.25     0.00     ± 0.00     500.00   ± 0.00     0.00     ± 0.00     0.55     ± 0.03     0.54     ± 0.01     48.60    ± 2.60     6.88     ± 0.51     74.90    ± 7.12     41.55    ± 8.08     1.08     ± 0.33     69.87    ± 4.11     2.32     ± 0.01    
+0.800000     0.0          52.65    ± 1.98     0.00     ± 0.00     500.00   ± 0.00     0.00     ± 0.00     0.57     ± 0.03     0.55     ± 0.03     48.50    ± 2.33     6.62     ± 0.31     74.20    ± 6.96     41.55    ± 6.77     1.14     ± 0.31     71.06    ± 4.17     2.32     ± 0.00    
+0.900000     0.0          53.00    ± 2.32     0.00     ± 0.00     500.00   ± 0.00     0.01     ± 0.03     0.55     ± 0.03     0.54     ± 0.02     48.40    ± 2.04     6.88     ± 0.57     79.65    ± 8.74     46.65    ± 8.07     1.12     ± 0.32     69.42    ± 4.12     2.32     ± 0.01    
+
+── Findings ──
+
+  1. Treasury ratio: 0.0057 at aggressive deployment (0.10) vs 0.0073 at hoarding (0.90) (+27.3%)
+  2. Peak population stability at overflow_threshold = 0.10 (mean pop: 49.4)
+  3. Gini coefficient: 0.5552 at deployment (0.10) vs 0.5502 at hoarding (0.90) (-0.9%)
+  4. No collapses observed across entire threshold range
+  5. Mean fitness: 0.5518 at aggressive deployment vs 0.5406 at hoarding
+  6. Population volatility: 6.81 at deployment vs 6.88 at hoarding
+  7. Birth/death ratio: 1.0624 at deployment vs 1.1177 at hoarding
+
+── Verification ──
+
+  Result hash:   8eaf27d368207e2bf7ebf139239ca1a69d571271d3825c88e091de7cd0cc70eb
+

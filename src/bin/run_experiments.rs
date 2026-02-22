@@ -22,6 +22,7 @@ fn main() {
         ("entropy_sweep", FlagshipExperiments::entropy_sweep()),
         ("catastrophe_resilience", FlagshipExperiments::catastrophe_resilience()),
         ("inequality_threshold", FlagshipExperiments::inequality_threshold()),
+        ("treasury_stability", FlagshipExperiments::treasury_stability()),
     ];
 
     let mut all_findings: Vec<(String, Vec<String>)> = Vec::new();
@@ -290,6 +291,112 @@ fn derive_findings(slug: &str, result: &genesis_experiment::ExperimentResult) ->
             if let (Some(first), Some(last)) = (treasury_first, treasury_last) {
                 findings.push(format!(
                     "Treasury ratio: {:.4} at threshold 0.20 vs {:.4} at threshold 0.90",
+                    first, last
+                ));
+            }
+        }
+
+        "treasury_stability" => {
+            // Treasury ratio trajectory across overflow thresholds
+            let treasury_first = result.steps.first()
+                .and_then(|s| s.metric_summaries.get("treasury_ratio"))
+                .map(|s| s.mean);
+            let treasury_last = result.steps.last()
+                .and_then(|s| s.metric_summaries.get("treasury_ratio"))
+                .map(|s| s.mean);
+            if let (Some(first), Some(last)) = (treasury_first, treasury_last) {
+                let change_pct = ((last - first) / first.max(0.001)) * 100.0;
+                findings.push(format!(
+                    "Treasury ratio: {:.4} at aggressive deployment (0.10) vs {:.4} at hoarding (0.90) ({:+.1}%)",
+                    first, last, change_pct
+                ));
+            }
+
+            // Find optimal threshold by population stability
+            let mut best_pop_step = result.steps.first().cloned();
+            let mut best_pop = 0.0f64;
+            for step in &result.steps {
+                let pop = step.metric_summaries.get("mean_population")
+                    .map(|s| s.mean).unwrap_or(0.0);
+                if pop > best_pop {
+                    best_pop = pop;
+                    best_pop_step = Some(step.clone());
+                }
+            }
+            if let Some(ref step) = best_pop_step {
+                findings.push(format!(
+                    "Peak population stability at overflow_threshold = {:.2} (mean pop: {:.1})",
+                    step.parameter_value, best_pop
+                ));
+            }
+
+            // Gini trajectory
+            let gini_first = result.steps.first()
+                .and_then(|s| s.metric_summaries.get("gini_coefficient"))
+                .map(|s| s.mean);
+            let gini_last = result.steps.last()
+                .and_then(|s| s.metric_summaries.get("gini_coefficient"))
+                .map(|s| s.mean);
+            if let (Some(first), Some(last)) = (gini_first, gini_last) {
+                let change_pct = ((last - first) / first.max(0.001)) * 100.0;
+                findings.push(format!(
+                    "Gini coefficient: {:.4} at deployment (0.10) vs {:.4} at hoarding (0.90) ({:+.1}%)",
+                    first, last, change_pct
+                ));
+            }
+
+            // Collapse analysis
+            let any_collapse = result.steps.iter().any(|s| s.collapse_rate > 0.0);
+            if any_collapse {
+                let max_collapse_step = result.steps.iter()
+                    .max_by(|a, b| a.collapse_rate.partial_cmp(&b.collapse_rate).unwrap())
+                    .unwrap();
+                findings.push(format!(
+                    "Highest collapse rate: {:.0}% at overflow_threshold = {:.2}",
+                    max_collapse_step.collapse_rate * 100.0, max_collapse_step.parameter_value
+                ));
+            } else {
+                findings.push("No collapses observed across entire threshold range".into());
+            }
+
+            // Fitness comparison
+            let fit_first = result.steps.first()
+                .and_then(|s| s.metric_summaries.get("mean_fitness"))
+                .map(|s| s.mean);
+            let fit_last = result.steps.last()
+                .and_then(|s| s.metric_summaries.get("mean_fitness"))
+                .map(|s| s.mean);
+            if let (Some(first), Some(last)) = (fit_first, fit_last) {
+                findings.push(format!(
+                    "Mean fitness: {:.4} at aggressive deployment vs {:.4} at hoarding",
+                    first, last
+                ));
+            }
+
+            // Population volatility comparison
+            let vol_first = result.steps.first()
+                .and_then(|s| s.metric_summaries.get("population_volatility"))
+                .map(|s| s.mean);
+            let vol_last = result.steps.last()
+                .and_then(|s| s.metric_summaries.get("population_volatility"))
+                .map(|s| s.mean);
+            if let (Some(first), Some(last)) = (vol_first, vol_last) {
+                findings.push(format!(
+                    "Population volatility: {:.2} at deployment vs {:.2} at hoarding",
+                    first, last
+                ));
+            }
+
+            // Birth/death ratio
+            let bdr_first = result.steps.first()
+                .and_then(|s| s.metric_summaries.get("birth_death_ratio"))
+                .map(|s| s.mean);
+            let bdr_last = result.steps.last()
+                .and_then(|s| s.metric_summaries.get("birth_death_ratio"))
+                .map(|s| s.mean);
+            if let (Some(first), Some(last)) = (bdr_first, bdr_last) {
+                findings.push(format!(
+                    "Birth/death ratio: {:.4} at deployment vs {:.4} at hoarding",
                     first, last
                 ));
             }

@@ -1,0 +1,48 @@
+{
+  "manifest_id": "GEN-EXP-6D92784B8CE4",
+  "config": {
+    "name": "Treasury Stability: Reserve Deployment Policy",
+    "hypothesis": "An intermediate treasury overflow threshold (0.30-0.50) maximizes population stability and minimizes inequality, while extremes — aggressive deployment or passive hoarding — degrade outcomes",
+    "sweep": {
+      "variable": "TreasuryOverflowThreshold",
+      "start": 0.1,
+      "end": 0.9,
+      "step": 0.1
+    },
+    "runs_per_step": 20,
+    "epochs_per_run": 500,
+    "metrics": [
+      "FinalPopulation",
+      "Collapsed",
+      "SurvivalEpochs",
+      "TreasuryRatio",
+      "GiniCoefficient",
+      "MeanFitness",
+      "MeanPopulation",
+      "PopulationVolatility",
+      "TotalBirths",
+      "TotalDeaths",
+      "BirthDeathRatio",
+      "TotalEntropyBurned",
+      "RoleEntropy"
+    ],
+    "base_preset": "EarthPrime",
+    "base_seed": 20260222
+  },
+  "created_at": "2026-02-22T22:11:15.316173400Z",
+  "result_hash": "8eaf27d368207e2bf7ebf139239ca1a69d571271d3825c88e091de7cd0cc70eb",
+  "manifest_hash": "35d5a6116f387e8ffc6d60f908637017e895debf46b1939c96d0d05eadd9bfd2",
+  "total_worlds": 180,
+  "total_epochs": 90000,
+  "duration_ms": 6950,
+  "findings": [
+    "Treasury ratio: 0.0057 at aggressive deployment (0.10) vs 0.0073 at hoarding (0.90) (+27.3%)",
+    "Peak population stability at overflow_threshold = 0.10 (mean pop: 49.4)",
+    "Gini coefficient: 0.5552 at deployment (0.10) vs 0.5502 at hoarding (0.90) (-0.9%)",
+    "No collapses observed across entire threshold range",
+    "Mean fitness: 0.5518 at aggressive deployment vs 0.5406 at hoarding",
+    "Population volatility: 6.81 at deployment vs 6.88 at hoarding",
+    "Birth/death ratio: 1.0624 at deployment vs 1.1177 at hoarding"
+  ],
+  "protocol_version": "0.1.0"
+}

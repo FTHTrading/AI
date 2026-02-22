@@ -138,6 +138,48 @@ impl FlagshipExperiments {
         }
     }
 
+    /// Experiment 4: Treasury Stability
+    ///
+    /// Hypothesis: There exists an optimal treasury overflow threshold that
+    /// maximizes economic stability. Too-aggressive redistribution (low threshold)
+    /// depletes reserves; too-passive hoarding (high threshold) concentrates wealth.
+    ///
+    /// Sweeps treasury_overflow_threshold from 0.10 (deploy early) to 0.90 (hoard).
+    /// 9 steps × 20 runs × 500 epochs = 180 worlds, 90,000 total epochs.
+    pub fn treasury_stability() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "Treasury Stability: Reserve Deployment Policy".into(),
+            hypothesis: "An intermediate treasury overflow threshold (0.30-0.50) maximizes \
+                         population stability and minimizes inequality, while extremes — \
+                         aggressive deployment or passive hoarding — degrade outcomes".into(),
+            sweep: ParameterSweep::new(
+                SweepVariable::TreasuryOverflowThreshold,
+                0.10,
+                0.90,
+                0.10,
+            ),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: vec![
+                Metric::FinalPopulation,
+                Metric::Collapsed,
+                Metric::SurvivalEpochs,
+                Metric::TreasuryRatio,
+                Metric::GiniCoefficient,
+                Metric::MeanFitness,
+                Metric::MeanPopulation,
+                Metric::PopulationVolatility,
+                Metric::TotalBirths,
+                Metric::TotalDeaths,
+                Metric::BirthDeathRatio,
+                Metric::TotalEntropyBurned,
+                Metric::RoleEntropy,
+            ],
+            base_preset: PhysicsPreset::EarthPrime,
+            base_seed: 20260222,
+        }
+    }
+
     /// Quick versions of flagships for testing (fewer runs, fewer epochs).
     pub fn entropy_sweep_quick() -> ExperimentConfig {
         let mut config = Self::entropy_sweep();
@@ -163,12 +205,21 @@ impl FlagshipExperiments {
         config
     }
 
+    pub fn treasury_stability_quick() -> ExperimentConfig {
+        let mut config = Self::treasury_stability();
+        config.name = "Treasury Stability (Quick)".into();
+        config.runs_per_step = 3;
+        config.epochs_per_run = 50;
+        config
+    }
+
     /// List all flagship experiment names.
     pub fn list() -> Vec<&'static str> {
         vec![
             "Entropy Sweep: Cost of Existing",
             "Catastrophe Resilience: Survival Under Fire",
             "Inequality Threshold: When Does Redistribution Help?",
+            "Treasury Stability: Reserve Deployment Policy",
         ]
     }
 }
@@ -240,11 +291,27 @@ mod tests {
     }
 
     #[test]
+    fn treasury_stability_config_valid() {
+        let config = FlagshipExperiments::treasury_stability();
+        assert_eq!(config.sweep.step_count(), 9);
+        assert_eq!(config.total_worlds(), 180);
+        assert!(config.metrics.len() >= 12);
+    }
+
+    #[test]
+    fn quick_treasury_stability_runs() {
+        let config = FlagshipExperiments::treasury_stability_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 9);
+    }
+
+    #[test]
     fn flagship_list() {
         let list = FlagshipExperiments::list();
-        assert_eq!(list.len(), 3);
+        assert_eq!(list.len(), 4);
         assert!(list[0].contains("Entropy"));
         assert!(list[1].contains("Catastrophe"));
         assert!(list[2].contains("Inequality"));
+        assert!(list[3].contains("Treasury"));
     }
 }

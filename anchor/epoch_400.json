@@ -1,13 +1,13 @@
 {
   "epoch": 400,
-  "ledger_root": "86c62bfc927bec191ec79a2217817ef95089c34dcd91dbc6da4cf51376aae35f",
-  "world_root": "95c803d44ddf21d0076964e975b6fcbdbe98f5bfce44406e028c608df33ad32f",
-  "epoch_root": "f2b426bf3af099ef333b47b9e39fe07053020b7963044d15513fc612f8b75e34",
-  "previous_root": "3b47419d5349ccef698a77321e497529ff65cf4e49db48c93bac3285bc8d3ef3",
-  "population": 51,
-  "total_supply": 526.6951837567626,
+  "ledger_root": "7066a6d889fc3d01d1c7ec3d5b615c0237068f2ab401c37f8046c8e20fc48004",
+  "world_root": "b74028622f1105981abf90f4d69d6d20a237870a5b751750ce1b26c56aaadf07",
+  "epoch_root": "e8dfac7f60d6ee4278d339d942e6934fa7ed3740395648facae1ee25240dfdf6",
+  "previous_root": "b278934d7280bb95d464809e2043f696f86231ed475c850cac2937cb6612a0ff",
+  "population": 52,
+  "total_supply": 559.322717769046,
   "treasury_reserve": 0.3999999999999999,
-  "anchored_at": "2026-02-22T21:20:43.743415800Z",
+  "anchored_at": "2026-02-22T22:11:15.304237500Z",
   "mode": "Local",
-  "evolution_root_ref": "8533c4d94af11f7618cc79bc17f94b4871ddd950a74fb8d10588d02895651275"
+  "evolution_root_ref": "a87a1175aa6548b6d134d2a50bd2de63c42cd468fadf6540f9494039f341efab"
 }
