@@ -11,7 +11,7 @@ pub mod anchor;
 pub mod chain;
 pub mod errors;
 
-pub use anchor::{AnchorEngine, AnchorMode, EpochAnchor};
+pub use anchor::{AnchorEngine, AnchorMode, EpochAnchor, PressureAnchor};
 pub use chain::AnchorChain;
 pub use merkle::{MerkleTree, MerkleProof};
 pub use errors::AnchorError;

@@ -223,6 +223,88 @@ impl AnchorEngine {
     }
 }
 
+// ─── Pressure Anchor ────────────────────────────────────────────────────
+//
+// When the adaptive cortex mutates PressureConfig, we create a
+// cryptographic anchor recording the old → new state transition.
+// This makes every pressure mutation an auditable evolutionary artifact.
+
+/// Cryptographic record of a pressure config mutation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PressureAnchor {
+    /// Epoch when the mutation occurred.
+    pub epoch: u64,
+    /// SHA-256 hash of the pressure state before mutation.
+    pub before_hash: String,
+    /// SHA-256 hash of the pressure state after mutation.
+    pub after_hash: String,
+    /// Number of individual field mutations applied.
+    pub mutation_count: usize,
+    /// Overall organism health level at time of mutation.
+    pub health_level: String,
+    /// Number of active threats that triggered this mutation.
+    pub threat_count: usize,
+    /// Human-readable summary of mutations applied.
+    pub summary: String,
+    /// Timestamp of anchoring.
+    pub anchored_at: DateTime<Utc>,
+}
+
+impl PressureAnchor {
+    /// Create a pressure anchor from serializable before/after states.
+    pub fn create(
+        epoch: u64,
+        before_json: &str,
+        after_json: &str,
+        mutation_count: usize,
+        health_level: &str,
+        threat_count: usize,
+        summary: String,
+    ) -> Self {
+        let before_hash = {
+            let mut h = Sha256::new();
+            h.update(before_json.as_bytes());
+            hex::encode(h.finalize())
+        };
+        let after_hash = {
+            let mut h = Sha256::new();
+            h.update(after_json.as_bytes());
+            hex::encode(h.finalize())
+        };
+        Self {
+            epoch,
+            before_hash,
+            after_hash,
+            mutation_count,
+            health_level: health_level.to_string(),
+            threat_count,
+            summary,
+            anchored_at: Utc::now(),
+        }
+    }
+
+    /// Persist pressure anchor to a log file.
+    pub fn persist(&self, storage_path: &str) -> Result<(), AnchorError> {
+        std::fs::create_dir_all(storage_path)?;
+        let path = format!("{}/pressure_mutations.log", storage_path);
+        let line = serde_json::to_string(self)?;
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)?;
+        writeln!(file, "{}", line)?;
+        tracing::info!(
+            epoch = self.epoch,
+            mutations = self.mutation_count,
+            before = &self.before_hash[..12],
+            after = &self.after_hash[..12],
+            "Pressure mutation anchored"
+        );
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

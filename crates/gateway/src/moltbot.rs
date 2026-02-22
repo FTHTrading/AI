@@ -1753,6 +1753,9 @@ mod tests {
             death_rate_100: 0.0,
             entropy_tax_burned: 0.0,
             catastrophe_deaths: 0,
+            immune_threats: 0,
+            immune_health: 0,
+            pressure_mutations: 0,
         }
     }
 

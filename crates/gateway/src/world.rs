@@ -30,6 +30,8 @@ use evolution::gene_transfer::GeneMarketplace;
 use serde::{Serialize, Deserialize};
 
 use crate::stress::{StressConfig, StressMetrics, PhaseTransitionDetector, role_entropy};
+use genesis_homeostasis::cortex::{AdaptiveCortex, PressureField};
+use genesis_anchor::PressureAnchor;
 
 // ─── Evolutionary Pressure Configuration ────────────────────────────────
 //
@@ -422,6 +424,15 @@ pub struct World {
     /// Evolutionary pressure configuration (Phase 2).
     #[serde(default)]
     pub pressure: PressureConfig,
+    /// Adaptive cortex — immune-driven pressure mutation engine (Phase 3).
+    #[serde(default)]
+    pub cortex: AdaptiveCortex,
+    /// Peak treasury observed (for immune depletion detection).
+    #[serde(default)]
+    pub peak_treasury: f64,
+    /// Population history window for immune collapse detection.
+    #[serde(default)]
+    pub population_history: Vec<usize>,
 }
 
 /// Epoch summary stats returned by run_epoch.
@@ -480,6 +491,15 @@ pub struct EpochStats {
     /// Deaths caused by catastrophe events this epoch.
     #[serde(default)]
     pub catastrophe_deaths: u64,
+    /// Number of immune threats detected this epoch.
+    #[serde(default)]
+    pub immune_threats: usize,
+    /// Overall organism health level (0=Normal, 1=Watch, 2=Warning, 3=Critical).
+    #[serde(default)]
+    pub immune_health: u8,
+    /// Number of pressure mutations applied this epoch.
+    #[serde(default)]
+    pub pressure_mutations: usize,
 }
 
 /// Registration request from external callers.
@@ -576,6 +596,9 @@ impl World {
             stress_metrics: None,
             phase_detector: PhaseTransitionDetector::new(),
             pressure: PressureConfig::default(),
+            cortex: AdaptiveCortex::default(),
+            peak_treasury: 0.0,
+            population_history: Vec::new(),
         }
     }
 
@@ -1473,7 +1496,7 @@ impl World {
             season: self.environment.season_name().to_string(),
             catastrophe_active: self.environment.catastrophe_remaining > 0,
             dynamic_pop_cap,
-            role_counts: final_role_counts,
+            role_counts: final_role_counts.clone(),
             niche_resources,
             treasury_reserve: self.treasury.reserve,
             treasury_distributed: self.treasury.total_distributed - treasury_distributed_before,
@@ -1485,6 +1508,9 @@ impl World {
             death_rate_100,
             entropy_tax_burned,
             catastrophe_deaths,
+            immune_threats: 0,  // filled after cortex step
+            immune_health: 0,
+            pressure_mutations: 0,
         };
 
         // Keep rolling window of last 100 epochs
@@ -1492,6 +1518,180 @@ impl World {
             self.epoch_history.pop_front();
         }
         self.epoch_history.push_back(stats.clone());
+
+        // Track population history for immune collapse detection
+        self.population_history.push(stats.population);
+        if self.population_history.len() > 200 {
+            self.population_history.remove(0);
+        }
+
+        // Update peak treasury
+        if self.treasury.reserve > self.peak_treasury {
+            self.peak_treasury = self.treasury.reserve;
+        }
+        self.cortex.update_peak_treasury(self.treasury.reserve);
+
+        // ═══════════════════════════════════════════════════════════════
+        // STEP Ψ: Adaptive Cortex — immune-driven pressure mutation
+        //
+        // Every `cortex.interval` epochs (default 25), run the full
+        // immune diagnostic suite. If threats are detected, the cortex
+        // prescribes bounded mutations to PressureConfig. If healthy,
+        // parameters gently drift toward defaults. All mutations are
+        // anchored as cryptographic artifacts.
+        //
+        // This is where the organism's laws of nature evolve.
+        // ═══════════════════════════════════════════════════════════════
+        if self.cortex.should_adapt(epoch) {
+            // Collect diagnostic inputs
+            let role_counts_str: std::collections::HashMap<String, usize> = final_role_counts
+                .iter()
+                .map(|(r, c)| (r.label().to_string(), *c))
+                .collect();
+
+            let balances: Vec<f64> = self.agents.iter()
+                .filter_map(|a| self.ledger.balance(&a.id).ok().map(|b| b.balance))
+                .collect();
+
+            let transacted_atp = resources_extracted + market_rewarded + entropy_tax_burned;
+
+            let expected_roles = &[
+                "Optimizer", "Strategist", "Communicator", "Archivist", "Executor",
+            ];
+
+            // Run full immune diagnosis
+            let immune_report = genesis_homeostasis::diagnose(
+                epoch,
+                &role_counts_str,
+                &balances,
+                mutations as usize,
+                self.agents.len(),
+                &self.population_history,
+                25,
+                expected_roles,
+                self.treasury.reserve,
+                self.peak_treasury,
+                transacted_atp,
+                self.ledger.total_supply(),
+            );
+
+            // Update stats with immune data
+            let threat_count = immune_report.threat_count();
+            let health_level = match immune_report.overall_health {
+                genesis_homeostasis::ThreatLevel::Normal => 0u8,
+                genesis_homeostasis::ThreatLevel::Watch => 1,
+                genesis_homeostasis::ThreatLevel::Warning => 2,
+                genesis_homeostasis::ThreatLevel::Critical => 3,
+            };
+
+            // Log immune report if threats detected
+            if threat_count > 0 {
+                for event in &immune_report.events {
+                    if event.level != genesis_homeostasis::ThreatLevel::Normal {
+                        tracing::warn!(
+                            epoch,
+                            kind = ?event.kind,
+                            level = ?event.level,
+                            value = format!("{:.3}", event.metric_value),
+                            "{}",
+                            event.message,
+                        );
+                    }
+                }
+            }
+
+            // Prescribe pressure mutations
+            let before_json = serde_json::to_string(&self.pressure).unwrap_or_default();
+            let response = self.cortex.prescribe(
+                &immune_report,
+                self.pressure.soft_cap,
+                self.pressure.entropy_coeff,
+                self.pressure.catastrophe_base_prob,
+                self.pressure.catastrophe_pop_scale,
+                self.pressure.gini_wealth_tax_threshold,
+                self.pressure.gini_wealth_tax_rate,
+                self.pressure.treasury_overflow_threshold,
+            );
+
+            let mutation_count = response.mutations.len();
+
+            // Apply mutations to PressureConfig
+            if response.has_mutations {
+                for m in &response.mutations {
+                    match m.field {
+                        PressureField::SoftCap => {
+                            self.pressure.soft_cap = m.new_value as usize;
+                        }
+                        PressureField::EntropyCoeff => {
+                            self.pressure.entropy_coeff = m.new_value;
+                        }
+                        PressureField::CatastropheBaseProb => {
+                            self.pressure.catastrophe_base_prob = m.new_value;
+                        }
+                        PressureField::CatastrophePopScale => {
+                            self.pressure.catastrophe_pop_scale = m.new_value;
+                        }
+                        PressureField::GiniWealthTaxThreshold => {
+                            self.pressure.gini_wealth_tax_threshold = m.new_value;
+                        }
+                        PressureField::GiniWealthTaxRate => {
+                            self.pressure.gini_wealth_tax_rate = m.new_value;
+                        }
+                        PressureField::TreasuryOverflowThreshold => {
+                            self.pressure.treasury_overflow_threshold = m.new_value;
+                        }
+                    }
+
+                    tracing::info!(
+                        epoch,
+                        field = m.field.name(),
+                        old = format!("{:.6}", m.old_value),
+                        new = format!("{:.6}", m.new_value),
+                        trigger = ?m.trigger,
+                        "PRESSURE MUTATION: {}",
+                        m.rationale,
+                    );
+                }
+
+                // Record cooldowns
+                self.cortex.record_mutations(&response);
+
+                // Anchor the pressure mutation cryptographically
+                let after_json = serde_json::to_string(&self.pressure).unwrap_or_default();
+                let summary = response.mutations.iter()
+                    .map(|m| format!("{}:{:.6}->{:.6}", m.field.name(), m.old_value, m.new_value))
+                    .collect::<Vec<_>>()
+                    .join("; ");
+
+                let health_str = match immune_report.overall_health {
+                    genesis_homeostasis::ThreatLevel::Normal => "Normal",
+                    genesis_homeostasis::ThreatLevel::Watch => "Watch",
+                    genesis_homeostasis::ThreatLevel::Warning => "Warning",
+                    genesis_homeostasis::ThreatLevel::Critical => "Critical",
+                };
+
+                let pressure_anchor = PressureAnchor::create(
+                    epoch,
+                    &before_json,
+                    &after_json,
+                    mutation_count,
+                    health_str,
+                    threat_count,
+                    summary,
+                );
+
+                if let Err(e) = pressure_anchor.persist("anchor") {
+                    tracing::warn!(epoch, error = %e, "Failed to persist pressure anchor");
+                }
+            }
+
+            // Update the stats in history with immune data
+            if let Some(last) = self.epoch_history.back_mut() {
+                last.immune_threats = threat_count;
+                last.immune_health = health_level;
+                last.pressure_mutations = mutation_count;
+            }
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // STEP Ω: Stress metrics recording + phase transition detection
@@ -1521,7 +1721,8 @@ impl World {
             }
         }
 
-        stats
+        // Return the (potentially immune-updated) stats from history
+        self.epoch_history.back().cloned().unwrap_or(stats)
     }
 
     /// Compute current telemetry snapshot.
