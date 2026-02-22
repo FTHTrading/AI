@@ -1493,15 +1493,21 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
   <div class="tts-fab" id="ttsFab" title="Open Narration">🎧</div>
   <div class="tts-body">
     <div class="tts-header">
-      <span class="tts-header-title">🎧 Narration Engine</span>
+      <span class="tts-header-title">🎧 Neural Narrator</span>
       <div class="tts-header-actions">
         <button id="ttsMinimize" title="Minimize">—</button>
       </div>
     </div>
     <div class="tts-voice-info" id="ttsVoiceInfo">
       <span class="tts-voice-quality" id="ttsVoiceQuality">●</span>
-      <span id="ttsVoiceName">Detecting voices…</span>
-      <button id="ttsVoiceCycle" title="Cycle voice" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;padding:2px 4px;">⟳</button>
+      <span id="ttsVoiceName">Piper VITS Neural</span>
+      <select id="ttsVoiceSelect" title="Select voice" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);font-size:10px;padding:2px 6px;border-radius:4px;cursor:pointer;font-family:var(--mono);">
+        <option value="deep" selected>Deep Narrator</option>
+        <option value="narrator">Warm Narrator</option>
+      </select>
+    </div>
+    <div class="tts-server-status" id="ttsServerStatus" style="font-size:9px;color:var(--text-dim);padding:2px 0 6px;font-family:var(--mono);">
+      ⏳ Connecting to narrator…
     </div>
     <div class="tts-now-reading" id="ttsNowReading">
       <strong>Ready</strong> — Select a chapter to begin
@@ -1541,23 +1547,16 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- HIGH-QUALITY TTS NARRATION ENGINE v2                           -->
-<!-- Natural voice selection, sentence-level chunking, prosody      -->
+<!-- PIPER VITS NEURAL NARRATOR ENGINE v3                          -->
+<!-- Deep storyteller voice via local Piper TTS server              -->
+<!-- Web Audio API playback, sentence-level chunking, prosody       -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function() {
   'use strict';
 
-  /* ══════════════════════════════════════════════════════════════
-     Feature detection
-     ══════════════════════════════════════════════════════════════ */
-  if (!('speechSynthesis' in window)) {
-    const panel = document.getElementById('ttsPanel');
-    if (panel) panel.style.display = 'none';
-    return;
-  }
+  const TTS_SERVER = 'http://127.0.0.1:8770';
 
-  const synth = window.speechSynthesis;
   const panel        = document.getElementById('ttsPanel');
   const fab          = document.getElementById('ttsFab');
   const playBtn      = document.getElementById('ttsPlay');
@@ -1569,7 +1568,8 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
   const minimizeBtn  = document.getElementById('ttsMinimize');
   const voiceNameEl  = document.getElementById('ttsVoiceName');
   const voiceQualEl  = document.getElementById('ttsVoiceQuality');
-  const voiceCycleBtn= document.getElementById('ttsVoiceCycle');
+  const voiceSelect  = document.getElementById('ttsVoiceSelect');
+  const serverStatus = document.getElementById('ttsServerStatus');
   const currentIdxEl = document.getElementById('ttsCurrentIdx');
   const totalSegsEl  = document.getElementById('ttsTotalSegs');
 
@@ -1583,137 +1583,121 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
   let speed          = 1.0;
   let layer          = 'story';
   let currentChapter = 'ch1';
-  let bestVoice      = null;
   let highlightedEl  = null;
-  let englishVoices  = [];
-  let voiceIndex     = 0;
   let pauseTimer     = null;
+  let serverOnline   = false;
+
+  // Web Audio API
+  let audioCtx       = null;
+  let currentSource  = null;
+  let currentBuffer  = null;
+  let pauseOffset    = 0;
+  let startTime      = 0;
+
+  // Prefetch cache: segment index → AudioBuffer
+  const audioCache   = new Map();
+  let prefetchAbort  = null;
 
   /* ══════════════════════════════════════════════════════════════
-     VOICE SELECTION — Natural / Neural priority
+     SERVER CONNECTIVITY
      ══════════════════════════════════════════════════════════════ */
 
-  // Voice quality tiers — higher = better
-  function voiceScore(v) {
-    const n = v.name.toLowerCase();
-    const l = v.lang.toLowerCase();
-
-    // Must be English
-    if (!l.startsWith('en')) return -1;
-
-    let score = 0;
-
-    // Tier 1: Neural / Natural voices (Edge, modern Chrome)
-    if (/\bnatural\b/i.test(n))    score += 1000;
-    if (/\bneural\b/i.test(n))     score += 900;
-    if (/\bonline\b/i.test(n))     score += 800;  // "Microsoft … Online (Natural)"
-
-    // Tier 2: Premium named voices known to sound good
-    const premiumNames = [
-      'jenny','aria','guy','davis','amber','ana','andrew','brian',
-      'christopher','emma','eric','michelle','monica','roger','steffan',
-      'samantha','karen','daniel','moira','tessa','fiona','rishi',
-      'allison','ava','susan','tom','zira','david','mark','hazel'
-    ];
-    for (const pn of premiumNames) {
-      if (n.includes(pn)) { score += 500; break; }
-    }
-
-    // Tier 3: Google high-quality
-    if (/google/i.test(n)) score += 400;
-
-    // Tier 4: Microsoft voices (generally decent)
-    if (/microsoft/i.test(n)) score += 300;
-
-    // Tier 5: Apple voices
-    if (/alex|samantha|victoria/i.test(n)) score += 200;
-
-    // Prefer non-local (cloud/remote) voices — they're usually higher quality
-    if (!v.localService) score += 150;
-
-    // Prefer en-US > en-GB > others
-    if (l === 'en-us') score += 50;
-    if (l === 'en-gb') score += 40;
-
-    // Fallback: any English voice
-    if (score === 0) score = 1;
-
-    return score;
+  async function checkServer() {
+    try {
+      const resp = await fetch(TTS_SERVER + '/health', { signal: AbortSignal.timeout(3000) });
+      if (resp.ok) {
+        const data = await resp.json();
+        serverOnline = true;
+        voiceQualEl.style.color = 'var(--accent-green)';
+        voiceQualEl.title = 'Piper VITS Neural — highest quality';
+        serverStatus.textContent = '✓ Neural narrator online';
+        serverStatus.style.color = 'var(--accent-green)';
+        return true;
+      }
+    } catch (e) {}
+    serverOnline = false;
+    voiceQualEl.style.color = 'var(--accent-red)';
+    voiceQualEl.title = 'Narrator server offline';
+    serverStatus.innerHTML = '✗ Start narrator: <code style="font-size:9px;color:var(--accent-warm)">python tts/server.py</code>';
+    serverStatus.style.color = 'var(--accent-red)';
+    return false;
   }
 
-  function loadVoices() {
-    const voices = synth.getVoices();
-    if (!voices.length) return;
+  // Check immediately and every 10s
+  checkServer();
+  setInterval(checkServer, 10000);
 
-    // Filter and sort English voices by quality
-    englishVoices = voices
-      .filter(v => v.lang.toLowerCase().startsWith('en'))
-      .map(v => ({ voice: v, score: voiceScore(v) }))
-      .filter(x => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .map(x => x.voice);
+  /* ══════════════════════════════════════════════════════════════
+     AUDIO CONTEXT
+     ══════════════════════════════════════════════════════════════ */
 
-    if (englishVoices.length) {
-      voiceIndex = 0;
-      bestVoice = englishVoices[0];
-      updateVoiceDisplay();
+  function ensureAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
   }
 
-  function updateVoiceDisplay() {
-    if (!bestVoice) {
-      voiceNameEl.textContent = 'No voice available';
-      voiceQualEl.style.color = 'var(--accent-red)';
-      return;
+  /* ══════════════════════════════════════════════════════════════
+     SYNTHESIS — Fetch audio from Piper server
+     ══════════════════════════════════════════════════════════════ */
+
+  async function synthesize(text, contentType, signal) {
+    const voice = voiceSelect.value || 'deep';
+    const resp = await fetch(TTS_SERVER + '/synthesize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: text,
+        voice: voice,
+        content_type: contentType || 'narrative',
+        speed: speed,
+        silence_ms: 200
+      }),
+      signal: signal
+    });
+
+    if (!resp.ok) {
+      throw new Error('Synthesis failed: ' + resp.status);
     }
 
-    const n = bestVoice.name;
-    const score = voiceScore(bestVoice);
-
-    // Shortened display name
-    let displayName = n.replace(/Microsoft\s+/i, 'MS ')
-                       .replace(/\s+Online\s+\(Natural\)/i, ' Neural')
-                       .replace(/Google\s+/i, 'G ')
-                       .replace(/\s*-\s*English.*$/i, '');
-    if (displayName.length > 28) displayName = displayName.substring(0, 26) + '…';
-    voiceNameEl.textContent = displayName;
-
-    // Quality indicator
-    if (score >= 800) {
-      voiceQualEl.style.color = 'var(--accent-green)';
-      voiceQualEl.title = 'Neural / Natural voice — highest quality';
-    } else if (score >= 400) {
-      voiceQualEl.style.color = 'var(--accent)';
-      voiceQualEl.title = 'High quality voice';
-    } else if (score >= 200) {
-      voiceQualEl.style.color = 'var(--accent-warm)';
-      voiceQualEl.title = 'Standard quality voice';
-    } else {
-      voiceQualEl.style.color = 'var(--accent-red)';
-      voiceQualEl.title = 'Basic voice — try Edge browser for better quality';
-    }
+    const arrayBuffer = await resp.arrayBuffer();
+    const ctx = ensureAudioCtx();
+    return await ctx.decodeAudioData(arrayBuffer);
   }
 
-  // Load voices (sync in Firefox, async in Chrome/Edge)
-  loadVoices();
-  synth.onvoiceschanged = loadVoices;
+  /* ══════════════════════════════════════════════════════════════
+     PREFETCH — Pre-synthesize upcoming segments
+     ══════════════════════════════════════════════════════════════ */
 
-  // Cycle through available voices
-  voiceCycleBtn.addEventListener('click', () => {
-    if (englishVoices.length < 2) return;
-    voiceIndex = (voiceIndex + 1) % englishVoices.length;
-    bestVoice = englishVoices[voiceIndex];
-    updateVoiceDisplay();
-    // If playing, restart current segment with new voice
-    if (isPlaying) {
-      synth.cancel();
-      isPaused = false;
-      speakSegment(currentIdx);
+  async function prefetchAhead(fromIdx, count) {
+    if (prefetchAbort) prefetchAbort.abort();
+    prefetchAbort = new AbortController();
+    const signal = prefetchAbort.signal;
+
+    for (let i = fromIdx; i < Math.min(fromIdx + count, segments.length); i++) {
+      if (signal.aborted) return;
+      if (audioCache.has(i)) continue;
+      const seg = segments[i];
+      if (!seg.text || seg.type === 'pause') continue;
+
+      try {
+        const buf = await synthesize(seg.text, seg.type, signal);
+        if (!signal.aborted) {
+          audioCache.set(i, buf);
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') console.warn('Prefetch failed for seg', i, e);
+      }
     }
-  });
+  }
 
   /* ══════════════════════════════════════════════════════════════
      CONTENT EXTRACTION — Sentence-level chunking
+     (Preserved from v2 with text cleaning)
      ══════════════════════════════════════════════════════════════ */
 
   function extractSegments(chapterId) {
@@ -1737,7 +1721,6 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
           });
         }
 
-        // Process all narrative elements in DOM order
         scene.querySelectorAll('p, blockquote, .epitaph').forEach(node => {
           if (node.classList.contains('epitaph')) {
             const text = cleanText(node);
@@ -1750,7 +1733,6 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
           const text = cleanText(node);
           if (!text || text.length < 4) return;
 
-          // Split into sentences for natural delivery
           const sentences = splitSentences(text);
           sentences.forEach((sent, i) => {
             if (sent.length < 3) return;
@@ -1763,7 +1745,6 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
           });
         });
 
-        // Add scene break pause
         segs.push({ text: '', el: null, type: 'pause', pause: 1000 });
       });
     }
@@ -1829,27 +1810,20 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
       }
     }
 
-    // Remove trailing empty pauses
     while (segs.length && segs[segs.length - 1].type === 'pause') segs.pop();
-
     return segs;
   }
 
   /* ══════════════════════════════════════════════════════════════
-     SENTENCE SPLITTING — Natural phrasing boundaries
+     SENTENCE SPLITTING
      ══════════════════════════════════════════════════════════════ */
 
   function splitSentences(text) {
-    // Split on sentence-ending punctuation followed by space + capital letter
-    // Also handle em-dashes and semicolons as natural pause points for long sentences
     const raw = text.match(/[^.!?]+[.!?]+[\s"]*/g) || [text];
-
     const result = [];
     for (let s of raw) {
       s = s.trim();
       if (!s) continue;
-
-      // If a sentence is very long (>200 chars), split at natural pauses
       if (s.length > 200) {
         const parts = s.split(/\s*[—;]\s*/);
         if (parts.length > 1 && parts.every(p => p.length > 20)) {
@@ -1859,18 +1833,15 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
       }
       result.push(s);
     }
-
     return result;
   }
 
   /* ══════════════════════════════════════════════════════════════
-     TEXT CLEANING — Make text sound natural when spoken
+     TEXT CLEANING
      ══════════════════════════════════════════════════════════════ */
 
   function cleanText(el) {
     const clone = el.cloneNode(true);
-
-    // Remove math/equation elements
     clone.querySelectorAll('.eq-block, .eq-label, .katex, .katex-display').forEach(e => e.remove());
     clone.querySelectorAll('.scene-number').forEach(e => e.remove());
     clone.querySelectorAll('.scene-divider').forEach(e => e.remove());
@@ -1878,31 +1849,22 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
 
     let text = clone.textContent || '';
 
-    // Remove LaTeX artifacts
     text = text.replace(/\$\$[^$]+\$\$/g, '');
-    text = text.replace(/\$([^$]+)\$/g, (_, expr) => {
-      // Convert simple math expressions to spoken form
-      return mathToSpoken(expr);
-    });
+    text = text.replace(/\$([^$]+)\$/g, (_, expr) => mathToSpoken(expr));
     text = text.replace(/\\[a-zA-Z]+\{[^}]*\}/g, '');
     text = text.replace(/[\u200B-\u200D\uFEFF]/g, '');
 
-    // ── Natural language improvements ──
-
-    // Expand abbreviations
     text = text.replace(/\bATP\b/g, 'A T P');
     text = text.replace(/\bDOI\b/g, 'D O I');
     text = text.replace(/\bGen\s+(\d)/g, 'generation $1');
     text = text.replace(/\bEp\s+(\d)/g, 'epoch $1');
     text = text.replace(/\bEpoch\s+(\d+)/g, 'epoch $1');
 
-    // Make hex IDs pronounceable — spell them out
     text = text.replace(/\b([0-9A-F]{4})\b/g, (_, id) => id.split('').join(' '));
     text = text.replace(/\b([0-9A-F]{5,6})\b/g, (_, id) => id.split('').join(' '));
 
-    // Make numbers more natural
     text = text.replace(/(\d+\.\d{5,})/g, (_, n) => parseFloat(n).toFixed(2));
-    text = text.replace(/(\d+),(\d{3})/g, '$1$2'); // remove comma grouping for speech
+    text = text.replace(/(\d+),(\d{3})/g, '$1$2');
     text = text.replace(/\b(\d+)×\b/g, '$1 times');
     text = text.replace(/±/g, ' plus or minus ');
     text = text.replace(/≈/g, ' approximately ');
@@ -1911,24 +1873,18 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
     text = text.replace(/↓/g, ' decreases ');
     text = text.replace(/⚠️?/g, ' warning, ');
 
-    // Clean special characters
     text = text.replace(/—/g, ' — ');
     text = text.replace(/&middot;/g, ', ');
     text = text.replace(/\s{2,}/g, ' ');
     text = text.replace(/☠\s*/g, '');
 
-    // Trim
     text = text.trim();
-
     return text;
   }
 
-  // Convert simple LaTeX math to spoken English
   function mathToSpoken(expr) {
     if (!expr) return '';
     let s = expr.trim();
-
-    // Common patterns
     s = s.replace(/\\bar\{([^}]+)\}/g, '$1 bar');
     s = s.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1 over $2');
     s = s.replace(/\\sqrt\{([^}]+)\}/g, 'square root of $1');
@@ -1946,24 +1902,20 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
     s = s.replace(/\\pm/g, 'plus or minus');
     s = s.replace(/\\implies/g, 'implies');
     s = s.replace(/\\quad/g, ', ');
-    s = s.replace(/\\[a-zA-Z]+/g, ''); // Remove remaining commands
+    s = s.replace(/\\[a-zA-Z]+/g, '');
     s = s.replace(/[{}^_]/g, ' ');
     s = s.replace(/\s{2,}/g, ' ').trim();
-
-    // If it's trivially short (like a single variable), just read it
     if (s.length <= 2) return s;
-
     return s;
   }
 
   /* ══════════════════════════════════════════════════════════════
-     TABLE SUMMARIZATION — Conversational
+     TABLE SUMMARIZATION
      ══════════════════════════════════════════════════════════════ */
 
   function summarizeTable(table) {
     const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
     const rows = table.querySelectorAll('tbody tr');
-
     if (!headers.length || !rows.length) return null;
 
     if (rows.length <= 5) {
@@ -1986,15 +1938,26 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
   }
 
   /* ══════════════════════════════════════════════════════════════
-     SPEAKING — Prosody-aware utterance generation
+     PLAYBACK — Web Audio API with Piper synthesis
      ══════════════════════════════════════════════════════════════ */
 
-  function speakSegment(idx) {
+  function stopCurrentAudio() {
+    if (currentSource) {
+      try { currentSource.stop(); } catch (e) {}
+      currentSource.disconnect();
+      currentSource = null;
+    }
+    currentBuffer = null;
+    pauseOffset = 0;
+  }
+
+  async function speakSegment(idx) {
     if (idx < 0 || idx >= segments.length) {
       stop();
       return;
     }
 
+    stopCurrentAudio();
     currentIdx = idx;
     const seg = segments[idx];
 
@@ -2014,56 +1977,60 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
     highlightElement(seg.el, seg.type);
     scrollToElement(seg.el);
 
-    // Create utterance with prosody appropriate to content type
-    const utterance = new SpeechSynthesisUtterance(seg.text);
-    const prosody = getProsody(seg.type);
-    utterance.rate   = speed * prosody.rateMultiplier;
-    utterance.pitch  = prosody.pitch;
-    utterance.volume = prosody.volume;
-    if (bestVoice) utterance.voice = bestVoice;
-
-    utterance.onend = () => {
-      if (isPlaying && !isPaused) {
-        // Natural pause between segments
-        const pauseMs = Math.round((seg.pause || 300) / speed);
-        pauseTimer = setTimeout(() => speakSegment(idx + 1), pauseMs);
+    try {
+      // Check cache first, otherwise synthesize
+      let audioBuffer;
+      if (audioCache.has(idx)) {
+        audioBuffer = audioCache.get(idx);
+      } else {
+        audioBuffer = await synthesize(seg.text, seg.type);
+        audioCache.set(idx, audioBuffer);
       }
-    };
 
-    utterance.onerror = (e) => {
-      if (e.error !== 'interrupted' && e.error !== 'canceled') {
-        console.warn('TTS error:', e.error);
-        if (isPlaying) {
-          pauseTimer = setTimeout(() => speakSegment(idx + 1), 200);
+      // If we were stopped during synthesis, abort
+      if (!isPlaying || isPaused) return;
+
+      currentBuffer = audioBuffer;
+      playBuffer(audioBuffer, 0, () => {
+        if (isPlaying && !isPaused) {
+          const pauseMs = Math.round((seg.pause || 300) / speed);
+          pauseTimer = setTimeout(() => speakSegment(idx + 1), pauseMs);
         }
+      });
+
+      // Prefetch next 3 segments
+      prefetchAhead(idx + 1, 3);
+
+    } catch (e) {
+      console.warn('Synthesis error:', e);
+      if (isPlaying) {
+        // Try to continue on error
+        pauseTimer = setTimeout(() => speakSegment(idx + 1), 500);
       }
-    };
-
-    synth.speak(utterance);
-  }
-
-  // Content-type prosody profiles for natural narration
-  function getProsody(type) {
-    switch (type) {
-      case 'heading':
-        return { rateMultiplier: 0.92, pitch: 1.08, volume: 1.0 };
-      case 'narrative':
-        return { rateMultiplier: 0.96, pitch: 1.0,  volume: 1.0 };
-      case 'quote':
-        return { rateMultiplier: 0.90, pitch: 0.95, volume: 0.95 };
-      case 'epitaph':
-        return { rateMultiplier: 0.82, pitch: 0.85, volume: 0.90 };
-      case 'science':
-        return { rateMultiplier: 0.93, pitch: 0.97, volume: 1.0 };
-      case 'table':
-        return { rateMultiplier: 0.88, pitch: 0.93, volume: 0.95 };
-      default:
-        return { rateMultiplier: 0.95, pitch: 1.0,  volume: 1.0 };
     }
   }
 
+  function playBuffer(buffer, offset, onEnd) {
+    const ctx = ensureAudioCtx();
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.onended = () => {
+      if (currentSource === source) {
+        currentSource = null;
+        currentBuffer = null;
+        pauseOffset = 0;
+      }
+      if (onEnd) onEnd();
+    };
+    currentSource = source;
+    startTime = ctx.currentTime;
+    pauseOffset = offset;
+    source.start(0, offset);
+  }
+
   /* ══════════════════════════════════════════════════════════════
-     HIGHLIGHTING — Per-sentence tracking
+     HIGHLIGHTING
      ══════════════════════════════════════════════════════════════ */
 
   function highlightElement(el, type) {
@@ -2092,11 +2059,26 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
      ══════════════════════════════════════════════════════════════ */
 
   function play() {
-    if (isPaused) {
-      synth.resume();
-      isPaused = false;
+    if (!serverOnline) {
+      checkServer().then(online => {
+        if (online) play();
+        else alert('Narrator server offline.\n\nStart it with:\n  python tts/server.py');
+      });
+      return;
+    }
+
+    if (isPaused && currentBuffer) {
+      // Resume from pause offset
       isPlaying = true;
+      isPaused = false;
       updatePlayButton();
+      playBuffer(currentBuffer, pauseOffset, () => {
+        if (isPlaying && !isPaused) {
+          const seg = segments[currentIdx];
+          const pauseMs = Math.round((seg?.pause || 300) / speed);
+          pauseTimer = setTimeout(() => speakSegment(currentIdx + 1), pauseMs);
+        }
+      });
       return;
     }
 
@@ -2107,6 +2089,7 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
 
     if (!segments.length) return;
 
+    ensureAudioCtx();
     isPlaying = true;
     isPaused = false;
     updatePlayButton();
@@ -2115,15 +2098,24 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
 
   function pause() {
     clearTimeout(pauseTimer);
-    synth.pause();
     isPaused = true;
     isPlaying = false;
+
+    // Calculate pause offset for resume
+    if (currentSource && audioCtx) {
+      const elapsed = audioCtx.currentTime - startTime + pauseOffset;
+      pauseOffset = elapsed;
+      try { currentSource.stop(); } catch (e) {}
+      currentSource.disconnect();
+      currentSource = null;
+    }
+
     updatePlayButton();
   }
 
   function stop() {
     clearTimeout(pauseTimer);
-    synth.cancel();
+    stopCurrentAudio();
     isPlaying = false;
     isPaused = false;
     updatePlayButton();
@@ -2133,9 +2125,8 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
 
   function next() {
     clearTimeout(pauseTimer);
-    synth.cancel();
+    stopCurrentAudio();
     isPaused = false;
-    // Skip forward, skipping pure pauses
     let nextIdx = currentIdx + 1;
     while (nextIdx < segments.length && segments[nextIdx].type === 'pause') nextIdx++;
 
@@ -2156,9 +2147,8 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
 
   function prev() {
     clearTimeout(pauseTimer);
-    synth.cancel();
+    stopCurrentAudio();
     isPaused = false;
-    // Skip backward, skipping pure pauses
     let prevIdx = currentIdx - 1;
     while (prevIdx > 0 && segments[prevIdx].type === 'pause') prevIdx--;
 
@@ -2230,9 +2220,10 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
   function rebuild() {
     const wasPlaying = isPlaying;
     clearTimeout(pauseTimer);
-    synth.cancel();
+    stopCurrentAudio();
     isPlaying = false;
     isPaused = false;
+    audioCache.clear();
     segments = extractSegments(currentChapter);
     currentIdx = 0;
     highlightElement(null);
@@ -2253,11 +2244,9 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
      EVENT BINDINGS
      ══════════════════════════════════════════════════════════════ */
 
-  // FAB toggle
   fab.addEventListener('click', () => panel.classList.remove('collapsed'));
   minimizeBtn.addEventListener('click', () => panel.classList.add('collapsed'));
 
-  // Play/pause
   playBtn.addEventListener('click', () => {
     if (isPlaying) pause();
     else play();
@@ -2266,15 +2255,27 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
   prevBtn.addEventListener('click', prev);
   nextBtn.addEventListener('click', next);
 
+  // Voice select change — clear cache, restart if playing
+  voiceSelect.addEventListener('change', () => {
+    const name = voiceSelect.value;
+    voiceNameEl.textContent = name === 'deep' ? 'Piper Deep Neural' : 'Piper Warm Neural';
+    audioCache.clear();
+    if (isPlaying) {
+      stopCurrentAudio();
+      isPaused = false;
+      speakSegment(currentIdx);
+    }
+  });
+
   // Speed buttons
   document.querySelectorAll('.tts-speed button').forEach(btn => {
     btn.addEventListener('click', () => {
       speed = parseFloat(btn.dataset.speed);
       document.querySelectorAll('.tts-speed button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      audioCache.clear();
       if (isPlaying) {
-        clearTimeout(pauseTimer);
-        synth.cancel();
+        stopCurrentAudio();
         isPaused = false;
         speakSegment(currentIdx);
       }
@@ -2307,7 +2308,7 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
     const pct = (e.clientX - rect.left) / rect.width;
     const idx = Math.max(0, Math.min(Math.floor(pct * segments.length), segments.length - 1));
     clearTimeout(pauseTimer);
-    synth.cancel();
+    stopCurrentAudio();
     isPaused = false;
     if (isPlaying) {
       speakSegment(idx);
@@ -2322,9 +2323,9 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
     }
   });
 
-  // Keyboard shortcuts: Space = play/pause, Alt+arrows = prev/next
+  // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
     if (e.key === ' ' && e.target === document.body) {
       e.preventDefault();
       if (panel.classList.contains('collapsed')) return;
@@ -2334,38 +2335,11 @@ td .val { font-family: var(--mono); color: var(--accent-warm); font-size: 13px; 
     if (e.key === 'ArrowLeft'  && e.altKey) { e.preventDefault(); prev(); }
   });
 
-  /* ══════════════════════════════════════════════════════════════
-     CHROME KEEPALIVE — Prevents speech from dying at ~15s
-     ══════════════════════════════════════════════════════════════ */
-
-  let keepAlive;
-  function startKeepAlive() {
-    clearInterval(keepAlive);
-    keepAlive = setInterval(() => {
-      if (synth.speaking && !synth.paused) {
-        synth.pause();
-        synth.resume();
-      }
-    }, 10000);
-  }
-
-  const origPlay = play;
-  play = function() {
-    origPlay();
-    startKeepAlive();
-  };
-
-  const origStop = stop;
-  stop = function() {
-    clearInterval(keepAlive);
-    origStop();
-  };
-
   // Cleanup
   window.addEventListener('beforeunload', () => {
     clearTimeout(pauseTimer);
-    clearInterval(keepAlive);
-    synth.cancel();
+    stopCurrentAudio();
+    if (audioCtx) audioCtx.close();
   });
 
 })();
