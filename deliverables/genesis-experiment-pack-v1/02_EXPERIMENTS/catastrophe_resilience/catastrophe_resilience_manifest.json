@@ -1,0 +1,42 @@
+{
+  "manifest_id": "GEN-EXP-47F2FE62E5AE",
+  "config": {
+    "name": "Catastrophe Resilience: Survival Under Fire",
+    "hypothesis": "Moderate catastrophe rates (0.005-0.01) produce more resilient civilizations than either peaceful (0.0) or apocalyptic (0.03) conditions",
+    "sweep": {
+      "variable": "CatastropheBaseProb",
+      "start": 0.0,
+      "end": 0.03,
+      "step": 0.005
+    },
+    "runs_per_step": 20,
+    "epochs_per_run": 500,
+    "metrics": [
+      "FinalPopulation",
+      "Collapsed",
+      "SurvivalEpochs",
+      "TotalCatastropheDeaths",
+      "MeanPopulation",
+      "PopulationVolatility",
+      "TotalImmuneThreats",
+      "TotalPressureMutations",
+      "MeanFitness",
+      "BirthDeathRatio"
+    ],
+    "base_preset": "EarthPrime",
+    "base_seed": 20260222
+  },
+  "created_at": "2026-02-22T21:20:36.024638400Z",
+  "result_hash": "b42e3d10f9de2961eed22e08fde70deef10d69355afdba516d79c0dc597c9f11",
+  "manifest_hash": "5628379db4e8056e7c811a15bc433f94df014186c022fdf2bf71f297f9ee1472",
+  "total_worlds": 140,
+  "total_epochs": 70000,
+  "duration_ms": 6496,
+  "findings": [
+    "Peak mean survival (500.0 epochs) at catastrophe_base_prob = 0.0000",
+    "Collapse rate: 0% at peaceful (0.0) vs 0% at extreme (0.03)",
+    "Mid-range catastrophe (0.0150) produces mean pop 47.7 vs 48.5 at peaceful",
+    "Mean catastrophe deaths at extreme rate: 12.4"
+  ],
+  "protocol_version": "0.1.0"
+}

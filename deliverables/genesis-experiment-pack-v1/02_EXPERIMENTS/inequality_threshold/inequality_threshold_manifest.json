@@ -1,0 +1,44 @@
+{
+  "manifest_id": "GEN-EXP-0A48AB166111",
+  "config": {
+    "name": "Inequality Threshold: When Does Redistribution Help?",
+    "hypothesis": "A Gini wealth tax threshold between 0.35-0.50 optimizes both population stability and mean fitness, while extremes (too aggressive or too passive) reduce long-term outcomes",
+    "sweep": {
+      "variable": "GiniWealthTaxThreshold",
+      "start": 0.2,
+      "end": 0.9,
+      "step": 0.1
+    },
+    "runs_per_step": 20,
+    "epochs_per_run": 500,
+    "metrics": [
+      "FinalPopulation",
+      "Collapsed",
+      "SurvivalEpochs",
+      "GiniCoefficient",
+      "MeanFitness",
+      "TreasuryRatio",
+      "MeanPopulation",
+      "PopulationVolatility",
+      "TotalBirths",
+      "TotalDeaths",
+      "RoleEntropy"
+    ],
+    "base_preset": "EarthPrime",
+    "base_seed": 20260222
+  },
+  "created_at": "2026-02-22T21:20:43.757288900Z",
+  "result_hash": "1236790493826de1db68bdccd0b4d6d2c3050264ffdbc332b589049446f40ecf",
+  "manifest_hash": "10a0b1013861020a8de293c181c455bcf2b1294531fec6275523cce4ebee49a4",
+  "total_worlds": 160,
+  "total_epochs": 80000,
+  "duration_ms": 7724,
+  "findings": [
+    "Optimal population stability at gini_threshold = 0.70 (mean pop: 49.4)",
+    "Gini: 0.5472 at aggressive threshold (0.20) vs 0.7201 at laissez-faire (0.90)",
+    "Mean fitness: 0.5431 at aggressive redistribution vs 0.5490 at laissez-faire",
+    "Collapse rate: 0% (aggressive redistribution) vs 0% (laissez-faire)",
+    "Treasury ratio: 0.0045 at threshold 0.20 vs 0.0008 at threshold 0.90"
+  ],
+  "protocol_version": "0.1.0"
+}

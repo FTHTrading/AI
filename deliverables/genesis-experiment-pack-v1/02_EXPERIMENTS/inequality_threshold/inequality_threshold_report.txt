@@ -1,0 +1,42 @@
+╔══════════════════════════════════════════════════════════╗
+║  Genesis Experiment: Inequality Threshold: When Does Red ║
+╚══════════════════════════════════════════════════════════╝
+
+Hypothesis: A Gini wealth tax threshold between 0.35-0.50 optimizes both population stability and mean fitness, while extremes (too aggressive or too passive) reduce long-term outcomes
+
+── Protocol ──
+  Variable:      gini_wealth_tax_threshold
+  Range:         0.200000 → 0.900000 (step 0.100000)
+  Runs/step:     20
+  Epochs/run:    500
+  Base preset:   EarthPrime
+  Base seed:     20260222
+  Total worlds:  160
+  Total epochs:  80000
+  Duration:      7724ms
+
+── Results ──
+
+param_value  collapse_%   final_population     collapsed            survival_epochs      gini_coefficient     mean_fitness         treasury_ratio       mean_population      population_volatility total_births         total_deaths         role_entropy        
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+0.200000     0.0          52.75    ± 2.17     0.00     ± 0.00     500.00   ± 0.00     0.55     ± 0.04     0.54     ± 0.02     0.00     ± 0.01     48.39    ± 1.54     6.65     ± 0.42     74.15    ± 4.44     41.40    ± 4.84     2.32     ± 0.01    
+0.300000     0.0          54.15    ± 2.46     0.00     ± 0.00     500.00   ± 0.00     0.55     ± 0.04     0.54     ± 0.02     0.00     ± 0.00     49.01    ± 1.89     6.79     ± 0.72     77.20    ± 9.02     43.05    ± 9.02     2.32     ± 0.01    
+0.400000     0.0          53.05    ± 2.28     0.00     ± 0.00     500.00   ± 0.00     0.53     ± 0.02     0.54     ± 0.02     0.00     ± 0.00     48.92    ± 1.88     6.69     ± 0.58     74.70    ± 5.36     41.65    ± 5.28     2.32     ± 0.01    
+0.500000     0.0          53.35    ± 2.28     0.00     ± 0.00     500.00   ± 0.00     0.56     ± 0.03     0.55     ± 0.02     0.00     ± 0.01     48.69    ± 2.32     6.62     ± 0.44     79.15    ± 7.31     45.80    ± 7.11     2.32     ± 0.00    
+0.600000     0.0          53.65    ± 2.37     0.00     ± 0.00     500.00   ± 0.00     0.58     ± 0.02     0.55     ± 0.02     0.00     ± 0.00     48.85    ± 1.49     6.93     ± 0.54     83.80    ± 5.55     50.15    ± 5.50     2.32     ± 0.01    
+0.700000     0.0          53.05    ± 1.76     0.00     ± 0.00     500.00   ± 0.00     0.64     ± 0.02     0.55     ± 0.02     0.00     ± 0.00     49.35    ± 1.93     7.02     ± 0.42     86.75    ± 6.08     53.70    ± 6.45     2.31     ± 0.01    
+0.800000     0.0          52.20    ± 2.09     0.00     ± 0.00     500.00   ± 0.00     0.71     ± 0.01     0.55     ± 0.02     0.00     ± 0.00     48.80    ± 1.60     7.01     ± 0.39     90.45    ± 9.08     58.25    ± 9.11     2.31     ± 0.01    
+0.900000     0.0          52.15    ± 2.41     0.00     ± 0.00     500.00   ± 0.00     0.72     ± 0.01     0.55     ± 0.02     0.00     ± 0.00     48.40    ± 2.40     7.06     ± 0.54     88.30    ± 7.09     56.15    ± 6.67     2.31     ± 0.01    
+
+── Findings ──
+
+  1. Optimal population stability at gini_threshold = 0.70 (mean pop: 49.4)
+  2. Gini: 0.5472 at aggressive threshold (0.20) vs 0.7201 at laissez-faire (0.90)
+  3. Mean fitness: 0.5431 at aggressive redistribution vs 0.5490 at laissez-faire
+  4. Collapse rate: 0% (aggressive redistribution) vs 0% (laissez-faire)
+  5. Treasury ratio: 0.0045 at threshold 0.20 vs 0.0008 at threshold 0.90
+
+── Verification ──
+
+  Result hash:   1236790493826de1db68bdccd0b4d6d2c3050264ffdbc332b589049446f40ecf
+

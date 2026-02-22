@@ -96,6 +96,20 @@ Each experiment exports:
 | Deterministic seed | `20260222` |
 | Result verification | SHA-256 manifest hash per experiment |
 
+---
+
+## Deliverables
+
+**[Genesis Experiment Pack v1](deliverables/genesis-experiment-pack-v1/)** — Portable bundle containing the executive brief, all three flagship experiment outputs (manifests, CSV datasets, reports), reproduction instructions, and SHA-256 integrity verification. Self-contained and independently verifiable.
+
+Rebuild the pack:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build_experiment_pack.ps1
+```
+
+---
+
 ![Rust](https://img.shields.io/badge/rust-edition%202021-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
