@@ -36,7 +36,10 @@ pub fn load_from(path: &str) -> Option<World> {
         return None;
     }
     let data = std::fs::read_to_string(path).ok()?;
-    serde_json::from_str(&data).ok()
+    let mut world: World = serde_json::from_str(&data).ok()?;
+    // Repair environment pools lost from old snapshots
+    world.repair_environment();
+    Some(world)
 }
 
 #[cfg(test)]

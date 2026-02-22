@@ -2,389 +2,84 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Genesis Protocol</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #0a0e14;
-    color: #c8d6e0;
-    font-family: 'Consolas', 'Courier New', monospace;
-    font-size: 14px;
-    padding: 24px 32px;
-    line-height: 1.6;
-    overflow-y: auto;
-  }
-  h1 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #e0e8f0;
-    letter-spacing: 0.08em;
-    margin-bottom: 6px;
-  }
-  .subtitle {
-    font-size: 12px;
-    color: #4a6070;
-    margin-bottom: 28px;
-    letter-spacing: 0.04em;
-  }
-
-  /* ── SECTION HEADERS ── */
-  .section-head {
-    font-size: 13px;
-    font-weight: 600;
-    color: #6a9ab8;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    border-bottom: 1px solid #1a2a38;
-    padding-bottom: 6px;
-    margin: 28px 0 14px 0;
-  }
-  .section-head:first-of-type { margin-top: 0; }
-
-  /* ── KEY-VALUE GRID ── */
-  .kv-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 4px 32px;
-  }
-  .kv-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 3px 0;
-    border-bottom: 1px solid #0e1820;
-  }
-  .kv-label {
-    color: #4a6a80;
-    font-size: 13px;
-  }
-  .kv-val {
-    color: #c8d6e0;
-    font-size: 13px;
-    font-weight: 500;
-    text-align: right;
-  }
-  .kv-val.up   { color: #4caf6e; }
-  .kv-val.down { color: #c0392b; }
-  .kv-val.warn { color: #d4a84b; }
-  .kv-val.gold { color: #ffd700; }
-
-  /* ── AGENT TABLE ── */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 8px;
-    font-size: 13px;
-  }
-  th {
-    text-align: left;
-    color: #4a6a80;
-    font-weight: 500;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 6px 10px;
-    border-bottom: 1px solid #1a2a38;
-    white-space: nowrap;
-  }
-  th.r { text-align: right; }
-  td {
-    padding: 5px 10px;
-    border-bottom: 1px solid #0e1820;
-    white-space: nowrap;
-  }
-  td.r { text-align: right; font-variant-numeric: tabular-nums; }
-  tr:hover { background: rgba(26, 48, 80, 0.15); }
-  .prim-dot {
-    display: inline-block; width: 7px; height: 7px;
-    background: #ffd700; border-radius: 50%; margin-right: 6px;
-    vertical-align: middle;
-  }
-  .role-opt  { color: #5dade2; }
-  .role-exec { color: #58d68d; }
-  .role-comm { color: #f0b27a; }
-  .role-strt { color: #bb8fce; }
-
-  /* status */
-  .status-active  { color: #4caf6e; }
-  .status-stasis  { color: #d4a84b; }
-  .status-new     { color: #5dade2; }
-
-  /* ── EPOCH HISTORY TABLE ── */
-  #history-table {
-    font-size: 12px;
-    margin-top: 8px;
-  }
-  #history-table th { font-size: 10px; }
-  #history-table td { padding: 3px 8px; font-size: 12px; }
-  .birth-cell { color: #4caf6e; font-weight: 600; }
-  .death-cell { color: #c0392b; font-weight: 600; }
-  .stasis-cell { color: #d4a84b; }
-
-  /* ── LAST UPDATED ── */
-  #last-update {
-    position: fixed;
-    top: 10px; right: 16px;
-    font-size: 11px;
-    color: #2a4a5a;
-  }
-  #poll-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #1a3a50;
-    margin-right: 5px;
-    vertical-align: middle;
-    transition: background 0.3s;
-  }
-  #poll-dot.live { background: #4caf6e; }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 700px) {
-    body { padding: 16px; font-size: 12px; }
-    .kv-grid { grid-template-columns: 1fr; }
-    table { font-size: 11px; }
-  }
+body{background:#111;color:#ccc;font:14px/1.8 monospace;padding:20px;max-width:900px;margin:0 auto}
+h2{color:#888;font-size:14px;margin:24px 0 8px;border-bottom:1px solid #222;padding-bottom:4px}
+pre{margin:0;white-space:pre-wrap}
+#t{color:#555;font-size:12px;margin-bottom:16px}
 </style>
 </head>
 <body>
-
-<div id="last-update"><span id="poll-dot"></span><span id="update-text">loading...</span></div>
-
-<h1>GENESIS PROTOCOL</h1>
-<div class="subtitle">Sovereign digital organism — live state from system-state.json</div>
-
-<!-- ── ORGANISM OVERVIEW ── -->
-<div class="section-head">Organism Overview</div>
-<div class="kv-grid" id="overview-grid"></div>
-
-<!-- ── ECONOMICS ── -->
-<div class="section-head">Economics</div>
-<div class="kv-grid" id="econ-grid"></div>
-
-<!-- ── POPULATION ── -->
-<div class="section-head">Population</div>
-<div class="kv-grid" id="pop-grid"></div>
-
-<!-- ── AGENT CENSUS ── -->
-<div class="section-head">Agent Census — <span id="agent-count">0</span> alive</div>
-<table id="agent-table">
-  <thead>
-    <tr>
-      <th></th>
-      <th>Role</th>
-      <th class="r">Gen</th>
-      <th class="r">Reputation</th>
-      <th class="r">Contracts</th>
-      <th class="r">Mutation</th>
-      <th class="r">Basal Cost</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody id="agent-body"></tbody>
-</table>
-
-<!-- ── EPOCH HISTORY (last 100) ── -->
-<div class="section-head">Epoch History — last <span id="hist-count">0</span> ticks</div>
-<table id="history-table">
-  <thead>
-    <tr>
-      <th class="r">Epoch</th>
-      <th class="r">Pop</th>
-      <th class="r">Cap</th>
-      <th class="r">Births</th>
-      <th class="r">Deaths</th>
-      <th class="r">Stasis</th>
-      <th class="r">ATP Circ</th>
-      <th class="r">Avg Fit</th>
-      <th class="r">Max Fit</th>
-      <th class="r">Decay</th>
-      <th class="r">Tax</th>
-    </tr>
-  </thead>
-  <tbody id="history-body"></tbody>
-</table>
-
+<pre style="color:#888;font-size:16px;margin-bottom:4px">GENESIS PROTOCOL</pre>
+<div id="t">loading...</div>
+<div id="out"></div>
 <script>
-const DATA_URL = 'system-state.json';
-const POLL_MS  = 6000;
-let prevData = null;
+async function poll(){
+  try{
+    const r=await fetch('system-state.json?'+Date.now());
+    const d=await r.json();
+    const a=d.agents||[];
+    const h=d.history||[];
+    const last=h[h.length-1]||{};
+    const tb=d.total_births||0;
+    const td=d.total_deaths||0;
+    const bd=td>0?(tb/td).toFixed(3):tb>0?'inf':'0';
+    const l10=h.slice(-10);
+    const rb=l10.reduce((s,e)=>s+e.b,0);
+    const rd=l10.reduce((s,e)=>s+e.d,0);
+    const rbd=rd>0?(rb/rd).toFixed(3):rb>0?'inf':'0';
+    const stasis=a.filter(x=>x.contracts===0&&!x.prim).length;
+    const start=d.started_at?new Date(d.started_at).toLocaleString():'?';
 
-// ── ROLE COLOR CLASS ──
-function roleClass(r) {
-  if (!r) return '';
-  const l = r.toLowerCase();
-  if (l === 'optimizer')     return 'role-opt';
-  if (l === 'executor')      return 'role-exec';
-  if (l === 'communicator')  return 'role-comm';
-  if (l === 'strategist')    return 'role-strt';
-  return '';
-}
+    let s='';
 
-// ── STATUS ──
-function agentStatus(a) {
-  if (a.contracts === 0 && !a.prim) return ['STASIS', 'status-stasis'];
-  if (a.contracts < 20 && !a.prim)  return ['NEW', 'status-new'];
-  return ['ACTIVE', 'status-active'];
-}
+    s+=`EPOCH           ${d.epoch}\n`;
+    s+=`POPULATION      ${a.length} / ${d.pop_cap} cap\n`;
+    s+=`IN STASIS       ${stasis}\n`;
+    s+=`TREASURY        ${(d.tr_reserve||0).toFixed(2)} ATP\n`;
+    s+=`CIRCULATING     ${(last.atp||0).toFixed(1)} ATP\n`;
+    s+=`SKIM RATE       ${((d.tr_skim||0)*100).toFixed(1)}%\n`;
+    s+=`STIPEND         ${(d.tr_stipend||0).toFixed(1)} ATP\n`;
+    s+=`COLLECTED       ${(d.tr_collected||0).toFixed(2)}\n`;
+    s+=`DISTRIBUTED     ${(d.tr_distributed||0).toFixed(2)}\n`;
+    s+=`\n`;
+    s+=`TOTAL BIRTHS    ${tb}\n`;
+    s+=`TOTAL DEATHS    ${td}\n`;
+    s+=`B:D ALL TIME    ${bd}\n`;
+    s+=`B:D LAST 10     ${rbd}  (${rb}b ${rd}d)\n`;
+    s+=`AVG FITNESS     ${(last.mf||0).toFixed(4)}\n`;
+    s+=`MAX FITNESS     ${(last.xf||0).toFixed(4)}\n`;
+    s+=`STARTED         ${start}\n`;
 
-// ── SEASON ──
-function season(d) {
-  if (!d.history || d.history.length < 2) return 'Unknown';
-  const h = d.history;
-  const recent = h.slice(-10);
-  const births = recent.reduce((s, e) => s + e.b, 0);
-  const deaths = recent.reduce((s, e) => s + e.d, 0);
-  const bd = deaths > 0 ? births / deaths : births > 0 ? 99 : 1;
-  const pop = d.agents ? d.agents.length : 0;
-  const cap = d.pop_cap || 10;
-  if (pop <= Math.floor(cap * 0.4)) return 'Winter';
-  if (bd < 1.0) return 'Spring';
-  if (bd >= 1.0 && bd <= 1.2 && d.tr_reserve > 5000) return 'Summer';
-  return 'Autumn';
-}
+    // agents
+    s+=`\nAGENTS (${a.length})\n`;
+    s+=`${'ROLE'.padEnd(14)}${'GEN'.padStart(4)}${'REP'.padStart(8)}${'CONTRACTS'.padStart(11)}${'MUT'.padStart(6)}${'BASAL'.padStart(7)}${'STATUS'.padStart(9)}\n`;
+    s+=`${'-'.repeat(59)}\n`;
+    const sorted=[...a].sort((x,y)=>{if(x.prim&&!y.prim)return-1;if(!x.prim&&y.prim)return 1;return y.rep-x.rep});
+    for(const ag of sorted){
+      const st=ag.contracts===0&&!ag.prim?'STASIS':ag.contracts<20&&!ag.prim?'NEW':'ACTIVE';
+      const p=ag.prim?'*':'';
+      s+=`${(p+ag.role).padEnd(14)}${String(ag.gen).padStart(4)}${ag.rep.toFixed(4).padStart(8)}${String(ag.contracts).padStart(11)}${String(ag.mut).padStart(6)}${String(ag.basal).padStart(7)}${st.padStart(9)}\n`;
+    }
 
-// ── BUILD KV ROWS ──
-function buildKV(containerId, rows) {
-  const el = document.getElementById(containerId);
-  el.innerHTML = rows.map(([label, val, cls]) =>
-    `<div class="kv-row"><span class="kv-label">${label}</span><span class="kv-val ${cls || ''}">${val}</span></div>`
-  ).join('');
-}
+    // history
+    s+=`\nEPOCH HISTORY (last ${h.length})\n`;
+    s+=`${'EP'.padStart(6)}${'POP'.padStart(5)}${'CAP'.padStart(5)}${'B'.padStart(4)}${'D'.padStart(4)}${'ST'.padStart(4)}${'ATP'.padStart(9)}${'AVG'.padStart(8)}${'MAX'.padStart(8)}${'DECAY'.padStart(7)}${'TAX'.padStart(7)}\n`;
+    s+=`${'-'.repeat(67)}\n`;
+    for(let i=h.length-1;i>=0;i--){
+      const e=h[i];
+      s+=`${String(e.ep).padStart(6)}${String(e.pop).padStart(5)}${String(e.cap).padStart(5)}${String(e.b).padStart(4)}${String(e.d).padStart(4)}${String(e.st).padStart(4)}${e.atp.toFixed(1).padStart(9)}${e.mf.toFixed(4).padStart(8)}${e.xf.toFixed(4).padStart(8)}${e.dec.toFixed(2).padStart(7)}${e.tax.toFixed(2).padStart(7)}\n`;
+    }
 
-// ── NUMBER FORMATTING ──
-function n(v, decimals = 0) {
-  if (v == null) return '—';
-  return Number(v).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-}
-function pct(v, decimals = 1) {
-  if (v == null) return '—';
-  return (v * 100).toFixed(decimals) + '%';
-}
-
-// ── RENDER ──
-function render(d) {
-  const agents = d.agents || [];
-  const hist   = d.history || [];
-  const latest = hist.length ? hist[hist.length - 1] : {};
-  const pop    = agents.length;
-  const circulating = latest.atp || 0;
-  const totalB = d.total_births || 0;
-  const totalD = d.total_deaths || 0;
-  const bdRatio = totalD > 0 ? (totalB / totalD) : (totalB > 0 ? '∞' : '—');
-  const avgFit = latest.mf || 0;
-  const maxFit = latest.xf || 0;
-  const startDate = d.started_at ? new Date(d.started_at).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : '—';
-  const uptime  = d.started_at ? Math.floor((Date.now() - new Date(d.started_at).getTime()) / 86400000) : 0;
-  const roleCounts = {};
-  agents.forEach(a => { roleCounts[a.role] = (roleCounts[a.role] || 0) + 1; });
-  const dominantRole = Object.entries(roleCounts).sort((a, b) => b[1] - a[1])[0];
-  const stasisCount = agents.filter(a => a.contracts === 0 && !a.prim).length;
-
-  // recent 10-epoch stats
-  const last10 = hist.slice(-10);
-  const recentB = last10.reduce((s, e) => s + e.b, 0);
-  const recentD = last10.reduce((s, e) => s + e.d, 0);
-  const recentBD = recentD > 0 ? (recentB / recentD).toFixed(3) : recentB > 0 ? '∞' : '0.000';
-  const avgDecay = last10.length ? (last10.reduce((s, e) => s + e.dec, 0) / last10.length) : 0;
-
-  // ── OVERVIEW ──
-  buildKV('overview-grid', [
-    ['Epoch',           n(d.epoch),              ''],
-    ['Season',          season(d),               ''],
-    ['Uptime',          uptime + ' days',        ''],
-    ['Started',         startDate,               ''],
-    ['Population',      pop + ' / ' + (d.pop_cap || '—'), pop >= (d.pop_cap||99) ? 'warn' : ''],
-    ['In Stasis',       stasisCount,             stasisCount > 0 ? 'warn' : ''],
-  ]);
-
-  // ── ECONOMICS ──
-  buildKV('econ-grid', [
-    ['Treasury Reserve',  n(d.tr_reserve, 2) + ' ATP',  d.tr_reserve < 1000 ? 'down' : ''],
-    ['Circulating ATP',   n(circulating, 1),             ''],
-    ['Total Collected',   n(d.tr_collected, 2),          ''],
-    ['Total Distributed', n(d.tr_distributed, 2),        ''],
-    ['Skim Rate',         pct(d.tr_skim),                ''],
-    ['Stipend',           n(d.tr_stipend, 1) + ' ATP',   ''],
-    ['Avg Decay / Epoch', n(avgDecay, 2) + ' ATP',       ''],
-  ]);
-
-  // ── POPULATION ──
-  buildKV('pop-grid', [
-    ['Total Births',   n(totalB),                    'up'],
-    ['Total Deaths',   n(totalD),                    'down'],
-    ['B:D Ratio (all time)',  typeof bdRatio === 'number' ? bdRatio.toFixed(3) : bdRatio, ''],
-    ['B:D Ratio (last 10)',   recentBD,              ''],
-    ['Births (last 10)',      recentB,               recentB > 0 ? 'up' : ''],
-    ['Deaths (last 10)',      recentD,               recentD > 0 ? 'down' : ''],
-    ['Avg Fitness',           avgFit.toFixed(4),     ''],
-    ['Max Fitness',           maxFit.toFixed(4),     ''],
-    ['Dominant Role',         dominantRole ? dominantRole[0] + ' (' + dominantRole[1] + ')' : '—', ''],
-  ]);
-
-  // ── AGENTS TABLE ──
-  document.getElementById('agent-count').textContent = pop;
-  const sorted = [...agents].sort((a, b) => {
-    if (a.prim && !b.prim) return -1;
-    if (!a.prim && b.prim) return 1;
-    return b.rep - a.rep;
-  });
-  document.getElementById('agent-body').innerHTML = sorted.map((a, i) => {
-    const [statusText, statusCls] = agentStatus(a);
-    return `<tr>
-      <td>${a.prim ? '<span class="prim-dot"></span>' : ''}</td>
-      <td class="${roleClass(a.role)}">${a.role}</td>
-      <td class="r">${a.gen}</td>
-      <td class="r">${a.rep.toFixed(4)}</td>
-      <td class="r">${n(a.contracts)}</td>
-      <td class="r">${a.mut}</td>
-      <td class="r">${a.basal}</td>
-      <td class="${statusCls}">${statusText}</td>
-    </tr>`;
-  }).join('');
-
-  // ── HISTORY TABLE ──
-  document.getElementById('hist-count').textContent = hist.length;
-  // show newest first
-  const reversedHist = [...hist].reverse();
-  document.getElementById('history-body').innerHTML = reversedHist.map(e => {
-    return `<tr>
-      <td class="r">${n(e.ep)}</td>
-      <td class="r">${e.pop}</td>
-      <td class="r">${e.cap}</td>
-      <td class="r ${e.b > 0 ? 'birth-cell' : ''}">${e.b}</td>
-      <td class="r ${e.d > 0 ? 'death-cell' : ''}">${e.d}</td>
-      <td class="r ${e.st > 0 ? 'stasis-cell' : ''}">${e.st}</td>
-      <td class="r">${n(e.atp, 1)}</td>
-      <td class="r">${e.mf.toFixed(4)}</td>
-      <td class="r">${e.xf.toFixed(4)}</td>
-      <td class="r">${e.dec.toFixed(2)}</td>
-      <td class="r">${e.tax.toFixed(2)}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ── POLL ──
-async function poll() {
-  const dot = document.getElementById('poll-dot');
-  const txt = document.getElementById('update-text');
-  try {
-    const res = await fetch(DATA_URL + '?t=' + Date.now());
-    if (!res.ok) throw new Error(res.status);
-    const d = await res.json();
-    prevData = d;
-    render(d);
-    dot.classList.add('live');
-    txt.textContent = 'updated ' + new Date().toLocaleTimeString();
-    setTimeout(() => dot.classList.remove('live'), 2000);
-  } catch (e) {
-    dot.classList.remove('live');
-    txt.textContent = 'fetch failed — retrying';
+    document.getElementById('out').innerHTML='<pre>'+s+'</pre>';
+    document.getElementById('t').textContent='updated '+new Date().toLocaleTimeString();
+  }catch(e){
+    document.getElementById('t').textContent='fetch failed — retrying';
   }
 }
-
 poll();
-setInterval(poll, POLL_MS);
+setInterval(poll,6000);
 </script>
 </body>
 </html>

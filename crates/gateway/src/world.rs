@@ -211,6 +211,7 @@ impl ResourcePool {
 /// Ecological environment with per-niche resource dynamics, seasonal
 /// cycles, and stochastic perturbation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Environment {
     /// Resource pools keyed by ecological niche (AgentRole).
     pub pools: HashMap<AgentRole, ResourcePool>,
@@ -228,6 +229,12 @@ pub struct Environment {
     pub catastrophe_severity: f64,
     /// Counter for stochastic seed progression.
     pub event_seed: u64,
+}
+
+impl Default for Environment {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Environment {
@@ -507,6 +514,19 @@ impl World {
             stress_config: None,
             stress_metrics: None,
             phase_detector: PhaseTransitionDetector::new(),
+        }
+    }
+
+    /// Repair environment pools if they were lost during deserialization
+    /// from old snapshots that predate the Environment system.
+    pub fn repair_environment(&mut self) {
+        if self.environment.pools.is_empty() {
+            tracing::warn!("Environment pools were empty — re-initializing from defaults");
+            self.environment = Environment::new();
+        }
+        // Ensure base_capacity is set (old saves may have 0)
+        if self.environment.base_capacity < 1.0 {
+            self.environment.base_capacity = 150.0;
         }
     }
 
