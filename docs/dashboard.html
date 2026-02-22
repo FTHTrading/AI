@@ -129,18 +129,18 @@
     <div class="panel">
       <h3>Economics</h3>
       <div class="kv"><span class="k">Treasury</span><span class="v" id="p-treasury">—</span></div>
-      <div class="kv"><span class="k">Skim Rate</span><span class="v" id="p-skim">—</span></div>
-      <div class="kv"><span class="k">Stipend</span><span class="v" id="p-stipend">—</span></div>
+      <div class="kv"><span class="k">Market</span><span class="v" id="p-skim">—</span></div>
+      <div class="kv"><span class="k">Rewarded</span><span class="v" id="p-stipend">—</span></div>
       <div class="kv"><span class="k">Collected</span><span class="v" id="p-collected">—</span></div>
       <div class="kv"><span class="k">Distributed</span><span class="v" id="p-distributed">—</span></div>
     </div>
     <div class="panel">
-      <h3>Evolution (last 10 ep)</h3>
+      <h3>Evolution (Δ10 ep)</h3>
       <div class="kv"><span class="k">Births</span><span class="v" id="p-b10">—</span></div>
       <div class="kv"><span class="k">Deaths</span><span class="v" id="p-d10">—</span></div>
       <div class="kv"><span class="k">B:D Ratio</span><span class="v" id="p-bd10">—</span></div>
       <div class="kv"><span class="k">Avg Fitness</span><span class="v" id="p-mf">—</span></div>
-      <div class="kv"><span class="k">Max Fitness</span><span class="v" id="p-xf">—</span></div>
+      <div class="kv"><span class="k">Fit Δ</span><span class="v" id="p-xf">—</span></div>
     </div>
     <div class="panel">
       <h3>Roles</h3>
@@ -152,26 +152,26 @@
       <div class="kv"><span class="k">Pop Cap</span><span class="v" id="p-popcap">—</span></div>
       <div class="kv"><span class="k">Total Births</span><span class="v" id="p-tbirths">—</span></div>
       <div class="kv"><span class="k">Total Deaths</span><span class="v" id="p-tdeaths">—</span></div>
-      <div class="kv"><span class="k">Started</span><span class="v" id="p-started">—</span></div>
+      <div class="kv"><span class="k">Risks</span><span class="v" id="p-started" style="font-size:10px">—</span></div>
     </div>
   </div>
   <div class="section">
     <h3>Agents (<span id="agent-count">—</span>)</h3>
     <table>
-      <thead><tr><th>Role</th><th>Gen</th><th>Rep</th><th>Contracts</th><th>Mut</th><th>Basal</th><th>Status</th></tr></thead>
+      <thead><tr><th>Role</th><th>Gen</th><th>Rep</th><th>ATP</th><th>Fitness</th><th>Survived</th><th>Status</th></tr></thead>
       <tbody id="agent-tbody"></tbody>
     </table>
   </div>
   <div class="section">
     <h3>Epoch History (last 100)</h3>
     <table>
-      <thead><tr><th>Epoch</th><th>Pop</th><th>Cap</th><th>B</th><th>D</th><th>St</th><th>ATP</th><th>Avg Fit</th><th>Max Fit</th><th>Decay</th><th>Tax</th></tr></thead>
+      <thead><tr><th>Epoch</th><th>Pop</th><th>Cap</th><th>B</th><th>D</th><th>ATP</th><th>Avg Fit</th></tr></thead>
       <tbody id="history-tbody"></tbody>
     </table>
   </div>
 </div>
 <div id="status-bar">
-  <span>Genesis Protocol · Static Snapshot (live: localhost:3000/control)</span>
+  <span>Genesis Protocol · Snapshot updated every ~25 epochs · <a href="https://fthtrading.github.io/AI/" style="color:var(--accent)">FTHTrading/AI</a></span>
   <span id="last-update">—</span>
 </div>
 <script>
@@ -201,53 +201,63 @@ function drawSparkline(id, vals, color) {
 
 function render(d) {
   const h=d.history||[], a=d.agents||[], last=h[h.length-1]||{};
-  $('epoch-tag').textContent = `Epoch ${d.epoch}`;
-  $('s-pop').textContent = a.length;
+  $('epoch-tag').textContent = `Epoch ${d.epoch}  ·  ${d.season||''}  ·  up ${fmtUptime(d.uptime_seconds||0)}`;
+  $('s-pop').textContent = d.population||a.length;
   $('s-pop-sub').textContent = `cap ${d.pop_cap}`;
-  $('s-fit').textContent = fmt(last.mf,4);
-  $('s-atp').textContent = Math.round(last.atp||0).toLocaleString();
+  $('s-fit').textContent = fmt(d.avg_fitness,4);
+  $('s-fit-sub').textContent = last.mean_fitness ? `prev ${fmt(last.mean_fitness,4)}` : '—';
+  $('s-atp').textContent = Math.round(d.total_atp||0).toLocaleString();
+  $('s-atp-sub').textContent = `treasury ${fmt(d.treasury_reserve,1)} ATP`;
   const tb=d.total_births||0, td=d.total_deaths||0;
   $('s-bd').textContent = `${fmtInt(tb)} / ${fmtInt(td)}`;
   $('s-bd-sub').textContent = `ratio ${td>0?(tb/td).toFixed(3):tb>0?'∞':'0'}`;
   if (h.length>1) {
-    drawSparkline('spark-pop',    h.map(x=>x.pop),     '#38bdf8');
-    drawSparkline('spark-fit',    h.map(x=>x.mf),      '#4ade80');
-    drawSparkline('spark-atp',    h.map(x=>x.atp),     '#a78bfa');
-    drawSparkline('spark-births', h.map(x=>x.b-x.d),   '#fbbf24');
+    drawSparkline('spark-pop',    h.map(x=>x.population),   '#38bdf8');
+    drawSparkline('spark-fit',    h.map(x=>x.mean_fitness),  '#4ade80');
+    drawSparkline('spark-atp',    h.map(x=>x.total_atp),     '#a78bfa');
+    drawSparkline('spark-births', h.map(x=>x.births-x.deaths),'#fbbf24');
   }
-  $('p-treasury').textContent   = fmt(d.tr_reserve,2)+' ATP';
-  $('p-skim').textContent       = ((d.tr_skim||0)*100).toFixed(1)+'%';
-  $('p-stipend').textContent    = fmt(d.tr_stipend,1)+' ATP';
-  $('p-collected').textContent  = fmt(d.tr_collected,2)+' ATP';
-  $('p-distributed').textContent= fmt(d.tr_distributed,2)+' ATP';
-  const l10=h.slice(-10), b10=l10.reduce((s,e)=>s+e.b,0), d10=l10.reduce((s,e)=>s+e.d,0);
-  $('p-b10').textContent  = b10;
-  $('p-d10').textContent  = d10;
+  $('p-treasury').textContent   = fmt(d.treasury_reserve,2)+' ATP';
+  $('p-skim').textContent       = fmtInt(d.market_solved)+' solved';
+  $('p-stipend').textContent    = fmt(d.market_rewarded,0)+' ATP rewarded';
+  $('p-collected').textContent  = fmt(d.treasury_collected,2)+' ATP';
+  $('p-distributed').textContent= fmt(d.treasury_distributed,2)+' ATP';
+  const ed=d.epoch_diff||{};
+  $('p-b10').textContent  = ed.births_in_window||0;
+  $('p-d10').textContent  = ed.deaths_in_window||0;
+  const b10=ed.births_in_window||0, d10=ed.deaths_in_window||0;
   $('p-bd10').textContent = d10>0?(b10/d10).toFixed(3):b10>0?'∞':'0';
-  $('p-mf').textContent   = fmt(last.mf,4);
-  $('p-xf').textContent   = fmt(last.xf,4);
+  $('p-mf').textContent   = fmt(d.avg_fitness,4);
+  $('p-xf').textContent   = (ed.fitness_delta>=0?'+':'')+fmt(ed.fitness_delta,5)+' (Δ10)';
   $('p-epoch').textContent   = d.epoch;
   $('p-popcap').textContent  = d.pop_cap;
   $('p-tbirths').textContent = fmtInt(tb);
   $('p-tdeaths').textContent = fmtInt(td);
-  $('p-started').textContent = d.started_at ? new Date(d.started_at).toLocaleDateString() : '—';
-  const rc={};
-  for (const ag of a) rc[ag.role]=(rc[ag.role]||0)+1;
-  const mx=Math.max(...Object.values(rc),1);
-  $('role-bars').innerHTML=Object.entries(rc).sort((x,y)=>y[1]-x[1]).map(([r,n])=>`
+  $('p-started').textContent = (d.risks||[]).join(', ')||'STABLE';
+  const rc = d.roles || {};
+  const mx = Math.max(...Object.values(rc), 1);
+  $('role-bars').innerHTML = Object.entries(rc).sort((x,y)=>y[1]-x[1]).map(([r,n])=>`
     <div class="role-row"><span class="rname">${r}</span>
     <div class="role-bar-wrap"><div class="role-bar-fill" style="width:${(n/mx*100).toFixed(0)}%"></div></div>
     <span class="role-count">${n}</span></div>`).join('');
-  $('agent-count').textContent=a.length;
-  $('agent-tbody').innerHTML=[...a].sort((x,y)=>{if(x.prim!==y.prim)return x.prim?-1:1;return y.rep-x.rep}).map(ag=>{
-    const st=ag.contracts===0&&!ag.prim?'STASIS':ag.contracts<20&&!ag.prim?'NEW':'ACTIVE';
-    return `<tr><td>${ag.prim?'<span class="prim">✦</span>':''}${ag.role}</td><td>${ag.gen}</td><td>${fmt(ag.rep,4)}</td><td>${fmtInt(ag.contracts)}</td><td>${fmt(ag.mut,3)}</td><td>${fmt(ag.basal,2)}</td><td class="st-${st.toLowerCase()}">${st}</td></tr>`;
+  $('agent-count').textContent = a.length;
+  $('agent-tbody').innerHTML = [...a].sort((x,y) => {
+    if(x.is_primordial!==y.is_primordial) return x.is_primordial?-1:1;
+    return y.fitness-x.fitness;
+  }).map(ag => {
+    const st = ag.survived_epochs<5&&!ag.is_primordial?'NEW':ag.atp<0.5?'STASIS':'ACTIVE';
+    return `<tr><td>${ag.is_primordial?'<span class="prim">✦</span>':''}${ag.role}</td><td>${ag.generation}</td><td>${fmt(ag.reputation,4)}</td><td>${fmt(ag.atp,2)}</td><td>${fmt(ag.fitness,4)}</td><td>${ag.survived_epochs}</td><td class="st-${st.toLowerCase()}">${st}</td></tr>`;
   }).join('');
-  $('history-tbody').innerHTML=[...h].reverse().map(e=>`<tr>
-    <td>${e.ep}</td><td>${e.pop}</td><td>${e.cap}</td><td>${e.b}</td><td>${e.d}</td><td>${e.st}</td>
-    <td>${fmt(e.atp,1)}</td><td>${fmt(e.mf,4)}</td><td>${fmt(e.xf,4)}</td><td>${fmt(e.dec,2)}</td><td>${fmt(e.tax,2)}</td>
+  $('history-tbody').innerHTML = [...h].reverse().map(e => `<tr>
+    <td>${e.epoch}</td><td>${e.population}</td><td>${e.pop_cap}</td><td>${e.births}</td><td>${e.deaths}</td>
+    <td>${fmt(e.total_atp,1)}</td><td>${fmt(e.mean_fitness,4)}</td>
   </tr>`).join('');
-  $('last-update').textContent='updated '+new Date().toLocaleTimeString('en-US',{hour12:false});
+  $('last-update').textContent = 'updated '+new Date().toLocaleTimeString('en-US',{hour12:false});
+}
+
+function fmtUptime(s) {
+  const d=Math.floor(s/86400), h=Math.floor((s%86400)/3600), m=Math.floor((s%3600)/60);
+  if (d>0) return `${d}d ${h}h`; if (h>0) return `${h}h ${m}m`; return `${m}m`;
 }
 
 async function poll() {

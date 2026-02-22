@@ -676,7 +676,8 @@ function connect() {
   $('conn-state').textContent = '⬤ CONNECTING';
   $('conn-state').className = 'loading';
 
-  const es = new EventSource('/stream');
+  const base = window.location.origin || 'http://localhost:3000';
+  const es = new EventSource(base + '/stream');
 
   es.onopen = () => {
     $('conn-state').textContent = '⬤ LIVE';
