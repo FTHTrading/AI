@@ -23,12 +23,12 @@
 
 ## IPFS CID
 
-> **PENDING** — Run `upload-frozen-bundle.mjs` with `$env:PINATA_JWT` set.
-> Replace this section with the CID after upload.
-
 ```
-CID: (pending upload)
-URL: (pending upload)
+CID:     QmcmVNHbhtw22ovYZhj6dWmo3oyCmgkBtz4m2jofzBgZjC
+Gateway: https://ipfs.io/ipfs/QmcmVNHbhtw22ovYZhj6dWmo3oyCmgkBtz4m2jofzBgZjC
+Local:   http://127.0.0.1:8081/ipfs/QmcmVNHbhtw22ovYZhj6dWmo3oyCmgkBtz4m2jofzBgZjC
+Pinned:  2026-02-22 via Kubo v0.39.0 (32 peers)
+Peer ID: 12D3KooWS2kwSctr6Lbxw2BZrEpAKQEwpaX1KnwDUSTxC3EKZd6E
 ```
 
 ---
