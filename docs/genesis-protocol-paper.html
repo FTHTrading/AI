@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genesis Protocol: Emergent Economic Ecology in Autonomous Computational Organisms</title>
+
+<!-- Citation / Scholarly Metadata -->
+<meta name="citation_title" content="Genesis Protocol: Emergent Economic Ecology in Autonomous Computational Organisms">
+<meta name="citation_author" content="Burns, Kevan">
+<meta name="citation_publication_date" content="2026/02/22">
+<meta name="citation_doi" content="10.5281/zenodo.18646886">
+<meta name="dc.identifier" content="doi:10.5281/zenodo.18646886">
+<meta name="dc.creator" content="Burns, Kevan">
+<meta name="dc.date" content="2026-02-22">
+<meta name="dc.type" content="Text">
+<meta name="dc.format" content="text/html">
+<meta name="dc.language" content="en">
+<meta name="dc.rights" content="CC-BY-4.0">
+
+<!-- KaTeX for math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});"></script>
+
+<style>
+/* ─────────────────────────────────────────────────────
+   Academic Paper Stylesheet — Print-ready US Letter
+   ───────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --serif: 'Crimson Pro', 'Times New Roman', Georgia, serif;
+  --sans: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  --bg: #ffffff;
+  --text: #1a1a2e;
+  --text-sec: #4a4a6a;
+  --text-muted: #7a7a9a;
+  --accent: #1a5276;
+  --accent-lt: #2980b9;
+  --border: #d5d8dc;
+  --bg-code: #f5f7fa;
+  --bg-tbl: #fafbfc;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+@page { size: letter; margin: 1in; }
+
+body {
+  font-family: var(--serif);
+  font-size: 11pt;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 0.75in;
+  counter-reset: section;
+}
+
+/* ── Title ─────────────────────── */
+.paper-header {
+  text-align: center;
+  margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid var(--accent);
+}
+.paper-header h1 {
+  font-family: var(--serif);
+  font-size: 21pt;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.paper-header .authors { font-size: 12pt; font-weight: 500; }
+.paper-header .affiliation {
+  font-size: 10pt; color: var(--text-sec); font-style: italic; margin-bottom: 4px;
+}
+.paper-header .date { font-size: 10pt; color: var(--text-sec); margin-top: 6px; }
+.paper-header .ids {
+  font-family: var(--sans); font-size: 8.5pt;
+  color: var(--text-muted); margin-top: 8px;
+}
+.paper-header .ids a { color: var(--accent-lt); text-decoration: none; }
+
+/* ── Abstract ──────────────────── */
+.abstract {
+  margin: 20px 0 28px;
+  padding: 14px 22px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-tbl);
+}
+.abstract h2 {
+  font-family: var(--sans); font-size: 10pt; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--accent); margin-bottom: 6px;
+}
+.abstract h2::before { content: none; }
+.abstract p { font-size: 10.5pt; line-height: 1.55; text-align: justify; }
+.keywords {
+  font-family: var(--sans); font-size: 9pt;
+  color: var(--text-sec); margin-top: 8px;
+}
+.keywords strong { color: var(--text); }
+
+/* ── Sections ──────────────────── */
+h2 {
+  font-family: var(--serif); font-size: 14pt; font-weight: 700;
+  color: var(--accent);
+  margin-top: 26px; margin-bottom: 8px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--border);
+  counter-increment: section;
+}
+h2::before { content: counter(section) ". "; }
+
+h3 {
+  font-family: var(--serif); font-size: 12pt; font-weight: 600;
+  color: var(--text); margin-top: 16px; margin-bottom: 6px;
+}
+h4 {
+  font-family: var(--sans); font-size: 10pt; font-weight: 600;
+  color: var(--text-sec); margin-top: 12px; margin-bottom: 5px;
+}
+p { margin-bottom: 9px; text-align: justify; hyphens: auto; }
+
+ul, ol {
+  margin: 6px 0 10px 22px;
+  font-size: 10.5pt;
+  line-height: 1.55;
+}
+li { margin-bottom: 3px; }
+
+/* ── Tables ────────────────────── */
+table {
+  width: 100%; border-collapse: collapse;
+  margin: 12px 0; font-size: 9.5pt; font-family: var(--sans);
+}
+th {
+  background: var(--accent); color: white;
+  font-weight: 600; font-size: 8.5pt;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  text-align: left; padding: 5px 9px;
+}
+td {
+  padding: 4px 9px; border-bottom: 1px solid var(--border); vertical-align: top;
+}
+tr:nth-child(even) td { background: var(--bg-tbl); }
+caption {
+  font-family: var(--sans); font-size: 9pt; font-weight: 600;
+  text-align: left; color: var(--text-sec);
+  margin-bottom: 5px; caption-side: top;
+}
+
+/* ── Equations ─────────────────── */
+.eq {
+  background: var(--bg-code);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 10px 14px; margin: 10px 0;
+  text-align: center; overflow-x: auto;
+}
+.eq-n {
+  float: right; font-family: var(--sans);
+  font-size: 9pt; color: var(--text-muted); line-height: 2;
+}
+
+/* ── Code / Pre ────────────────── */
+code {
+  font-family: var(--mono); font-size: 9pt;
+  background: var(--bg-code); padding: 1px 3px; border-radius: 3px;
+}
+pre {
+  font-family: var(--mono); font-size: 8.5pt;
+  background: var(--bg-code); border: 1px solid var(--border);
+  border-radius: 4px; padding: 10px 14px; margin: 10px 0;
+  overflow-x: auto; line-height: 1.45;
+}
+
+/* ── Figures ────────────────────── */
+.fig-cap {
+  font-family: var(--sans); font-size: 9pt; color: var(--text-sec);
+  margin-top: 4px; text-align: center; font-style: italic;
+}
+
+/* ── Blockquote ────────────────── */
+blockquote {
+  border-left: 3px solid var(--accent-lt);
+  padding: 6px 14px; margin: 10px 0;
+  font-style: italic; color: var(--text-sec); background: var(--bg-tbl);
+}
+
+/* ── References ────────────────── */
+.refs { font-size: 9.5pt; line-height: 1.5; }
+.refs p {
+  text-indent: -22px; padding-left: 22px;
+  margin-bottom: 5px; text-align: left;
+}
+.rn { font-weight: 700; color: var(--accent); }
+
+/* ── Download bar ──────────────── */
+.dl-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--accent); color: white;
+  text-align: center; padding: 10px;
+  font-family: var(--sans); font-size: 12px; z-index: 100;
+}
+.dl-bar button {
+  background: white; color: var(--accent); border: none;
+  padding: 6px 18px; border-radius: 4px; font-weight: 700;
+  cursor: pointer; margin-left: 10px; font-size: 12px;
+}
+.dl-bar button:hover { opacity: 0.9; }
+
+/* ── Print ─────────────────────── */
+@media print {
+  body { padding: 0; max-width: none; }
+  .dl-bar { display: none; }
+  h2 { break-after: avoid; }
+  table, .eq, pre { break-inside: avoid; }
+}
+@media screen and (max-width: 700px) {
+  body { padding: 16px; font-size: 10pt; }
+  .paper-header h1 { font-size: 17pt; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     TITLE BLOCK
+     ══════════════════════════════════════════════════════════ -->
+<header class="paper-header">
+  <h1>Genesis Protocol: Emergent Economic Ecology<br>in Autonomous Computational Organisms</h1>
+  <div class="authors">Kevan Burns</div>
+  <div class="affiliation">FTH Trading &middot; Independent Research</div>
+  <div class="date">February 22, 2026</div>
+  <div class="ids">
+    DOI: <a href="https://doi.org/10.5281/zenodo.18646886">10.5281/zenodo.18646886</a> &middot;
+    ORCID: <a href="https://orcid.org/0009-0008-8425-939X">0009-0008-8425-939X</a> &middot;
+    Source: <a href="https://github.com/FTHTrading/AI">github.com/FTHTrading/AI</a> &middot;
+    License: CC-BY-4.0
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════
+     ABSTRACT
+     ══════════════════════════════════════════════════════════ -->
+<div class="abstract">
+  <h2>Abstract</h2>
+  <p>
+    We present a framework for studying emergent economic behavior in populations of
+    autonomous computational agents governed by metabolic scarcity rather than external
+    reward signals. The framework instantiates a closed energy economy — denominated
+    in a unit called <em>ATP</em> (Agent Transaction Protocol) — where agents must earn,
+    conserve, and spend energy to survive, reproduce, and avoid termination. Unlike
+    conventional evolutionary algorithms that optimize fitness functions, or multi-agent
+    reinforcement learning systems that rely on episodic reward shaping, our system couples
+    individual metabolism, population-level carrying capacity, autonomous treasury
+    redistribution, and stochastic mutation into a single continuous loop operating without
+    human intervention. We report results from a 10,000-epoch validation run demonstrating:
+    (i) stable population equilibrium at $N = 56.6 \pm 2.1$ agents following an initial
+    resource-shock collapse; (ii) autonomous wealth redistribution cycling 99.99% of
+    collected revenue; (iii) emergent role diversity recovery after monoculture drift;
+    (iv) measurable fitness improvement ($+9.3\%$) through mortality-driven selection; and
+    (v) spontaneous wealth concentration dynamics analogous to biological resource
+    monopolization. The system also maintains a persistent public identity on an external
+    social network, autonomously reporting its own vital signs — a property we term
+    <em>narrative autopoiesis</em>. We argue that the substitution of survival economics
+    for fitness optimization constitutes a qualitatively different paradigm for artificial
+    life research, producing dynamics more closely aligned with biological ecosystems than
+    with algorithmic optimization.
+  </p>
+  <div class="keywords">
+    <strong>Keywords:</strong> artificial life &middot; computational ecology &middot;
+    survival economics &middot; autopoietic systems &middot; emergent behavior &middot;
+    agent-based modeling &middot; resource scarcity &middot; evolutionary dynamics &middot;
+    wealth concentration &middot; homeostatic feedback
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     1  INTRODUCTION
+     ══════════════════════════════════════════════════════════ -->
+<h2>Introduction</h2>
+
+<p>
+  The study of artificial life has historically pursued two distinct trajectories.
+  The first, rooted in evolutionary computation, treats populations as optimization
+  engines: candidate solutions are evaluated against a fitness function, selected for
+  reproduction, and subjected to mutation [1, 2]. The second, rooted in artificial life
+  proper, constructs environments in which digital entities interact, compete, and evolve
+  through emergent dynamics [3, 4, 5]. While both traditions have produced significant
+  insights, neither has fully addressed a central feature of biological life: the
+  coupling of individual survival to a <em>scarce, endogenous energy economy</em> that
+  determines who lives, who reproduces, and who dies.
+</p>
+<p>
+  In biological systems, organisms do not optimize a loss function. They metabolize.
+  Every action — movement, communication, reproduction — consumes energy drawn from a
+  finite pool that must be continually replenished through environmental interaction.
+  Death occurs not when a fitness score drops below a threshold, but when metabolic
+  resources are exhausted. This distinction is not merely semantic; it produces
+  qualitatively different population dynamics, including boom-bust cycles, wealth
+  concentration, adaptive contraction under resource stress, and homeostatic regulation
+  through redistribution mechanisms.
+</p>
+<p>
+  We present Genesis Protocol, a computational system that embeds survival economics
+  as its primary selective mechanism. Each agent possesses a cryptographic genome that
+  determines traits, skills, and ecological role. Agents earn energy by solving
+  computational problems in a competitive market, pay metabolic costs each epoch,
+  face exponential balance decay, and are terminated after sustained energy depletion.
+  A treasury subsystem collects tax revenue and redistributes resources through
+  autonomous stimulus mechanisms — without human governance. The system operates
+  continuously, persists state across restarts, and publishes its own population
+  statistics to a public social network.
+</p>
+<p>
+  Our contribution is threefold: (1) we formalize the architecture of a metabolic
+  computational organism with closed energy accounting; (2) we demonstrate empirically
+  that survival economics produces emergent behaviors — including wealth concentration,
+  adaptive contraction, role extinction and recovery, and fitness improvement through
+  mortality — that closely parallel biological ecosystem dynamics; and (3) we document
+  the first computational system that autonomously maintains a public narrative identity,
+  which we term <em>narrative autopoiesis</em>.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════
+     2  RELATED WORK
+     ══════════════════════════════════════════════════════════ -->
+<h2>Related Work</h2>
+
+<h3>2.1 &nbsp; Evolutionary Computation</h3>
+<p>
+  Genetic algorithms [1], genetic programming [6], neuroevolution (NEAT) [2], and
+  covariance matrix adaptation (CMA-ES) [7] optimize populations against external
+  fitness functions. These systems lack individual metabolism, resource scarcity,
+  and death-by-depletion. Selection is orchestrated by the algorithm designer, not
+  driven by the environment.
+</p>
+
+<h3>2.2 &nbsp; Artificial Life Systems</h3>
+<p>
+  Tierra [3] demonstrated self-replicating programs competing for CPU time in shared
+  memory. Avida [4] extended this to digital organisms that evolve logic functions.
+  Polyworld [8] introduced neural-network-controlled agents with energy metabolism.
+  Lenia [5] explored continuous cellular automata with emergent lifelike patterns.
+  While each contributes foundational ideas, none combines an internal energy economy,
+  population-level homeostatic regulation, autonomous redistribution, and public
+  self-reporting into a single deployed system.
+</p>
+
+<h3>2.3 &nbsp; Multi-Agent Reinforcement Learning</h3>
+<p>
+  Modern multi-agent systems [9, 10] focus on cooperation, competition, and emergent
+  tool use. These environments are typically episodic, rely on external reward signals,
+  and do not enforce survival constraints. Agents are instantiated for training and
+  discarded; they do not persist, reproduce, or die.
+</p>
+
+<h3>2.4 &nbsp; Token Economics</h3>
+<p>
+  Blockchain systems [11] implement resource scarcity through token supply constraints,
+  inflation schedules, and governance mechanisms. However, these economies serve human
+  participants, are governed by explicit voting, and do not exhibit biological dynamics
+  such as mutation, speciation, or adaptive contraction.
+</p>
+
+<h3>2.5 &nbsp; Autopoietic Systems</h3>
+<p>
+  Maturana and Varela [12] defined autopoiesis as the property of a system that
+  continuously produces and maintains itself. Luhmann [13] extended this to social
+  systems. Our system exhibits computational autopoiesis: it generates agents, maintains
+  population homeostasis, cycles resources, adapts to perturbation, and persists across
+  restarts — all without external intervention.
+</p>
+
+<h3>2.6 &nbsp; Positioning</h3>
+
+<table>
+  <caption>Table 1 — Feature comparison across related paradigms</caption>
+  <thead>
+    <tr><th>Feature</th><th>Evol. Comp.</th><th>ALife</th><th>MARL</th><th>Tokens</th><th>Genesis</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Internal energy economy</td><td>—</td><td>Partial</td><td>—</td><td>Yes</td><td><strong>Yes</strong></td></tr>
+    <tr><td>Death by resource depletion</td><td>—</td><td>Partial</td><td>—</td><td>—</td><td><strong>Yes</strong></td></tr>
+    <tr><td>Genetic inheritance + mutation</td><td>Yes</td><td>Yes</td><td>—</td><td>—</td><td><strong>Yes</strong></td></tr>
+    <tr><td>Dynamic carrying capacity</td><td>—</td><td>—</td><td>—</td><td>—</td><td><strong>Yes</strong></td></tr>
+    <tr><td>Homeostatic redistribution</td><td>—</td><td>—</td><td>—</td><td>Partial</td><td><strong>Yes</strong></td></tr>
+    <tr><td>Continuous persistent execution</td><td>—</td><td>Partial</td><td>—</td><td>Yes</td><td><strong>Yes</strong></td></tr>
+    <tr><td>Public self-reporting identity</td><td>—</td><td>—</td><td>—</td><td>—</td><td><strong>Yes</strong></td></tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════
+     3  SYSTEM ARCHITECTURE
+     ══════════════════════════════════════════════════════════ -->
+<h2>System Architecture</h2>
+
+<p>
+  Genesis Protocol is implemented in Rust (10,000+ lines across six crates, 143+
+  unit tests) and operates as a single-binary server. The architecture separates
+  concerns across five functional layers.
+</p>
+
+<h3>3.1 &nbsp; Cryptographic Identity Layer</h3>
+<p>
+  Each agent is born with a 256-bit genome derived from cryptographic hashing:
+</p>
+<div class="eq">
+  <span class="eq-n">(1)</span>
+  $$g = \operatorname{SHA\text{-}256}(\text{entropy} \;\|\; \text{timestamp} \;\|\; \text{uuid})$$
+</div>
+<p>
+  From this genome, four normalised trait values in $[0, 1]$ are extracted.
+  A role is deterministically assigned from five categories (Optimizer, Strategist,
+  Communicator, Archivist, Executor), and four skill scores are derived.
+  Agent fitness is computed as:
+</p>
+<div class="eq">
+  <span class="eq-n">(2)</span>
+  $$f_i = 0.25\,\text{CE}_i + 0.30\,\text{SQ}_i + 0.20\,\text{RF}_i + 0.25\,\text{CC}_i$$
+</div>
+<p>
+  where CE = compute efficiency, SQ = solution quality, RF = replication fidelity,
+  CC = cooperation coefficient. Child genomes are derived from parents via
+  re-hashing, preserving lineage information.
+</p>
+
+<h3>3.2 &nbsp; Metabolic Economy</h3>
+<p>
+  The sole currency is <em>ATP</em>. There is no external funding source; all ATP
+  enters through resource extraction and problem-solving rewards, and exits through
+  metabolic costs and balance decay. The balance equation for agent&nbsp;$i$ at
+  epoch&nbsp;$t$ is:
+</p>
+<div class="eq">
+  <span class="eq-n">(3)</span>
+  $$A_i^{t+1} = \underbrace{A_i^t \cdot 0.98}_{\text{decay}}
+    - \underbrace{c_b}_{\text{basal}}
+    - c_a
+    + r_m + r_e
+    + \underbrace{s_T}_{\text{treasury}}
+    - \underbrace{\tau_w}_{\text{tax}}$$
+</div>
+<p>
+  where $c_b = 0.15$ ATP/epoch is the cost of existing, the $0.98$ factor imposes
+  2% balance erosion, $\tau_w$ is a 1% levy on balances exceeding 100 ATP, and
+  $s_T$ represents autonomous stipends from the redistribution system.
+  An agent whose balance reaches zero enters <em>stasis</em>; after 8 consecutive
+  stasis epochs it is permanently terminated.
+</p>
+
+<h3>3.3 &nbsp; Treasury and Homeostatic Redistribution</h3>
+<p>
+  The Unit Treasury collects revenue from market skims (3%) and wealth taxes. It
+  redistributes through three autonomous mechanisms:
+</p>
+<ul>
+  <li><strong>Stipends</strong> — when reserve &gt; 5.0 ATP, distribute 1.0 ATP each
+      to the poorest agents.</li>
+  <li><strong>Crisis spending</strong> — when an agent is in stasis and reserve
+      &gt; 30.0, grant 30 ATP emergency bailout.</li>
+  <li><strong>Overflow</strong> — when reserve &gt; 30% of total supply, split
+      excess equally.</li>
+</ul>
+<p>
+  No human triggers any redistribution event. The treasury operates as an endogenous
+  regulator, analogous to hormonal or immune feedback in biological organisms.
+</p>
+
+<h3>3.4 &nbsp; Evolutionary Engine</h3>
+<p>
+  Reproduction requires fitness $f \geq 0.35$, balance $A \geq 25.0$, age $\geq 10$
+  epochs, and population below the dynamic carrying capacity. A ceiling of 3 births
+  per epoch prevents population explosions. Mutation scales inversely with fitness:
+</p>
+<div class="eq">
+  <span class="eq-n">(4)</span>
+  $$\mu_i = \mu_0 + p \cdot 0.1, \qquad
+    \delta_j \sim \mathcal{U}(-d,\,d) \cdot (1 + p)$$
+</div>
+<p>
+  where $\mu_0 = 0.01$, $d = 0.05$, and $p$ is environmental pressure.
+  Low-fitness agents mutate more aggressively — a last-ditch survival strategy.
+</p>
+
+<h3>3.5 &nbsp; Dynamic Carrying Capacity</h3>
+<div class="eq">
+  <span class="eq-n">(5)</span>
+  $$K = \operatorname{clamp}\!\left(\frac{C_{\text{total}}}{15},\; 10,\; 500\right)$$
+</div>
+<p>
+  where $C_{\text{total}}$ is aggregate niche resource capacity. This
+  directly ties population ceiling to environmental richness, producing contraction
+  during scarcity and expansion during abundance — without explicit population control.
+</p>
+
+<h3>3.6 &nbsp; Ecological Competition</h3>
+<p>
+  Resources are distributed across multiple niches that regenerate via logistic growth.
+  Agent extraction is proportional to fitness, inversely proportional to local density
+  (competitive exclusion), and modulated by seasonal cycles. A competitive problem
+  market provides additional income: the highest-scoring solver per problem category
+  receives ATP rewards, filtered through a publication gate requiring minimum
+  confidence and reputation.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════
+     4  THE SCARCITY HYPOTHESIS
+     ══════════════════════════════════════════════════════════ -->
+<h2>The Scarcity Hypothesis</h2>
+
+<p>
+  We hypothesize that the introduction of genuine metabolic scarcity — where energy
+  decays, accumulation is taxed, and depletion kills — is sufficient to produce
+  emergent ecosystem dynamics without explicit behavioral programming. Specifically:
+</p>
+<ol>
+  <li>Population regulation through resource-limited carrying capacity</li>
+  <li>Wealth concentration analogous to biological resource monopolization</li>
+  <li>Adaptive contraction — population reduction as a survival strategy</li>
+  <li>Fitness improvement through differential mortality (natural selection)</li>
+  <li>Role diversity fluctuation including extinction and recovery</li>
+</ol>
+<p>
+  To test this, we compare two configurations: a <em>greenhouse</em> regime (no decay,
+  no tax, free trickle income) and a <em>scarcity</em> regime (2% decay, 1% wealth
+  tax, no trickle, 8-epoch stasis death). Both share identical genomes, market
+  mechanics, and mutation engines.
+</p>
+
+<h3>4.1 &nbsp; ATP Half-Life Analysis</h3>
+<p>
+  Under 2% exponential decay, the half-life of an idle balance is:
+</p>
+<div class="eq">
+  <span class="eq-n">(6)</span>
+  $$t_{1/2} = \frac{\ln 2}{\ln(1/0.98)} \approx 34.3 \text{ epochs}$$
+</div>
+<p>
+  Combined with basal metabolism of 0.15 ATP/epoch, an agent starting with 50 ATP
+  and earning nothing will be terminated in $\sim$40 epochs. This creates genuine
+  urgency: earn continuously or face extinction.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════
+     5  EXPERIMENTAL RESULTS
+     ══════════════════════════════════════════════════════════ -->
+<h2>Experimental Results</h2>
+
+<p>
+  We report results from three experimental phases validated over extended epoch
+  ranges using deterministic simulation with fixed random seeds.
+</p>
+
+<h3>5.1 &nbsp; Phase I — Greenhouse Regime (Epochs 0–500)</h3>
+<p>
+  Under the greenhouse configuration, the population grew unboundedly from 20
+  primordial agents to 167 within 500 epochs. No agent died. Mean fitness remained
+  static at $\bar{f} = 0.494 \pm 0.02$. ATP accumulated without limit, exceeding
+  8,000 system-wide units. The selection engine never activated.
+</p>
+<blockquote>
+  Without scarcity, the system inflates rather than evolves. Population growth is
+  geometric, fitness is stagnant, and the evolutionary engine is inert.
+</blockquote>
+
+<h3>5.2 &nbsp; Phase II — Scarcity Shock (Epochs 0–100)</h3>
+<p>
+  Activating the scarcity layer on a fresh population of 20 produced an immediate
+  crash. Within 80 epochs, population collapsed to 4–6 agents — an ecological
+  bottleneck.
+</p>
+
+<table>
+  <caption>Table 2 — Scarcity shock impact (first 100 epochs)</caption>
+  <thead>
+    <tr><th>Metric</th><th>Epoch 0</th><th>Epoch 50</th><th>Epoch 100</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Population</td><td>20</td><td>8</td><td>4</td></tr>
+    <tr><td>Total ATP</td><td>1,000</td><td>310</td><td>165</td></tr>
+    <tr><td>Mean Fitness</td><td>0.500</td><td>0.548</td><td>0.595</td></tr>
+    <tr><td>Roles Represented</td><td>5 / 5</td><td>4 / 5</td><td>3 / 5</td></tr>
+    <tr><td>Treasury Reserve</td><td>0.0</td><td>95</td><td>706</td></tr>
+    <tr><td>Deaths (cumul.)</td><td>0</td><td>14</td><td>22</td></tr>
+  </tbody>
+</table>
+
+<p>
+  The post-crash state revealed a critical defect: the treasury had accumulated
+  706 ATP (71% of remaining supply) because redistribution mechanisms existed as
+  implemented-but-unwired code. This constituted a resource hoarding failure
+  analogous to capital lock-up in biological systems.
+</p>
+
+<h3>5.3 &nbsp; Phase III — Homeostatic Fix and Long-Run Validation</h3>
+<p>
+  After wiring all treasury mechanisms, a 10,000-epoch run produced stable
+  homeostatic behavior.
+</p>
+
+<table>
+  <caption>Table 3 — Long-run validation results (10,000 epochs)</caption>
+  <thead>
+    <tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Mean Population</td><td>$56.6 \pm 2.1$</td><td>Stable equilibrium (CV = 3.7%)</td></tr>
+    <tr><td>Mean Fitness</td><td>$0.5634$</td><td>+9.3% over initial population</td></tr>
+    <tr><td>Peak Individual Fitness</td><td>$0.9824$ (epoch 4,718)</td><td>Near-optimal phenotype</td></tr>
+    <tr><td>Total Births</td><td>902</td><td>Active reproduction throughout</td></tr>
+    <tr><td>Total Deaths</td><td>865</td><td>Birth:death ratio = 1.04:1</td></tr>
+    <tr><td>Treasury Collected</td><td>9,075 ATP</td><td>Active taxation</td></tr>
+    <tr><td>Treasury Distributed</td><td>9,074 ATP</td><td>99.99% cycling rate</td></tr>
+    <tr><td>Mean Treasury Reserve</td><td>0.76 ATP</td><td>No hoarding</td></tr>
+    <tr><td>Catastrophe Epochs</td><td>3,820 (38.2%)</td><td>High stress survived</td></tr>
+    <tr><td>Role Distribution</td><td>11–13 per role</td><td>Near-uniform across all 5</td></tr>
+  </tbody>
+</table>
+
+<h3>5.4 &nbsp; Wealth Concentration Dynamics</h3>
+<p>
+  The top 10% of agents by ATP consistently controlled 40–65% of total supply,
+  triggering the system's own <code>energy_concentration</code> risk flag. This
+  concentration emerged without programmed hoarding behavior — arising from
+  differential earning rates compounded by exponential dynamics. The wealth tax
+  and redistribution partially counteracted concentration, producing oscillation
+  between accumulation and redistribution states rather than convergence to a
+  fixed point. This parallels Pareto-distributed wealth in biological resource
+  competition [14].
+</p>
+
+<h3>5.5 &nbsp; Fitness Improvement Through Mortality</h3>
+<p>
+  The +9.3% fitness gain occurred entirely through differential mortality: no
+  explicit optimization was performed. Lower-fitness agents earned less, depleted
+  faster, entered stasis sooner, and died before reproducing. Survivors reproduced
+  with mutation, gradually shifting the population distribution upward. This is
+  classical Darwinian selection via economic constraint — qualitatively different from
+  algorithmic tournament selection, producing slower, more stochastic dynamics
+  susceptible to genetic drift.
+</p>
+
+<h3>5.6 &nbsp; Treasury Impact — Natural Experiment</h3>
+
+<table>
+  <caption>Table 4 — Treasury activation impact (v1.0 → v1.1)</caption>
+  <thead>
+    <tr><th>Metric</th><th>v1.0 (unwired)</th><th>v1.1 (wired)</th><th>Δ</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Population</td><td>4–6</td><td>57</td><td>+950%</td></tr>
+    <tr><td>Treasury Reserve</td><td>706 ATP</td><td>0.76 ATP</td><td>−99.9%</td></tr>
+    <tr><td>Roles Represented</td><td>3 / 5</td><td>5 / 5</td><td>Full recovery</td></tr>
+    <tr><td>ATP Cycling Rate</td><td>~12%</td><td>99.99%</td><td>+733%</td></tr>
+    <tr><td>Birth:Death Ratio</td><td>0.81</td><td>1.04</td><td>Net positive</td></tr>
+  </tbody>
+</table>
+
+<p>
+  This contrast provides a natural experiment: homeostatic redistribution is
+  necessary for population stability under scarcity. Without it, scarcity produces
+  oligarchic collapse; with it, scarcity produces adaptive equilibrium.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════
+     6  EMERGENT BEHAVIORS
+     ══════════════════════════════════════════════════════════ -->
+<h2>Emergent Behaviors</h2>
+
+<p>
+  Five categories of emergent behavior arose from scarcity interactions, none
+  explicitly programmed.
+</p>
+
+<h3>6.1 &nbsp; Adaptive Contraction</h3>
+<p>
+  During catastrophe epochs, the population self-regulated to a lower equilibrium
+  by reducing reproduction and allowing marginal agents to be culled through
+  metabolic depletion. Contraction-and-recovery cycles repeated throughout the
+  10,000-epoch run, with population oscillating between ~50 and ~65 agents.
+</p>
+
+<h3>6.2 &nbsp; Post-Crash Oligopoly</h3>
+<p>
+  Following the initial shock, 3 surviving Optimizers controlled 95% of ATP. This
+  oligopoly persisted until treasury mechanisms were activated, dissolving over ~200
+  epochs as new agents were funded through crisis spending and stipends.
+</p>
+
+<h3>6.3 &nbsp; Monoculture Drift and Recovery</h3>
+<p>
+  During high stress, role diversity declined as Communicators and Archivists — with
+  lower direct earning capacity — were disproportionately eliminated. The bias
+  rotation system (which shifts dominant problem categories every 25 epochs)
+  eventually created favorable conditions for underrepresented roles, enabling
+  recovery to near-uniform distribution.
+</p>
+
+<h3>6.4 &nbsp; Seasonal Mortality Patterning</h3>
+<p>
+  Autumn and Winter epochs produced 66% of all deaths despite comprising 50% of
+  the run. This asymmetry emerged from reduced resource regeneration rates
+  interacting with fixed metabolic costs — an unplanned consequence of the
+  economic system design.
+</p>
+
+<h3>6.5 &nbsp; Narrative Autopoiesis</h3>
+<p>
+  The system autonomously publishes structured status reports to a public social
+  network (Moltbook), including population counts, fitness metrics, leadership
+  changes, risk assessments, and milestone events. These reports constitute a
+  public narrative generated entirely by the organism about itself — without human
+  editing. We term this <em>narrative autopoiesis</em>: the system not only
+  maintains itself but narrates its own maintenance, establishing a persistent
+  digital identity that can be independently verified.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════
+     7  DISCUSSION
+     ══════════════════════════════════════════════════════════ -->
+<h2>Discussion</h2>
+
+<h3>7.1 &nbsp; Survival Economics as a Research Paradigm</h3>
+<p>
+  Our results suggest that replacing external fitness evaluation with internal
+  survival economics produces qualitatively different evolutionary dynamics.
+  Standard evolutionary algorithms converge rapidly to local optima because
+  selection is deterministic and immediate. In Genesis Protocol, selection
+  operates through the slow accumulation of metabolic advantage: higher-fitness
+  agents earn slightly more, survive slightly longer, and reproduce slightly
+  more often. The effect is gradual, stochastic, and subject to environmental
+  perturbation — properties characteristic of biological evolution but absent
+  from algorithmic optimization.
+</p>
+
+<h3>7.2 &nbsp; The Treasury as Immune System</h3>
+<p>
+  The treasury functions as a rudimentary immune system. During population stress
+  it releases stored resources to prevent extinction; during abundance it taxes
+  surplus to restrain growth. This behavior emerged from the mathematical
+  properties of the redistribution rules, not from explicit immune-system design.
+  The analogy to biological homeostasis — hormonal feedback, immune response,
+  thermoregulation — suggests that economic redistribution may be a
+  general-purpose mechanism for computational homeostasis.
+</p>
+
+<h3>7.3 &nbsp; Formal Autopoietic Classification</h3>
+<p>
+  Following Maturana and Varela [12], an autopoietic system must satisfy three
+  criteria: (1) self-production of components, (2) boundary maintenance between
+  self and environment, and (3) operational closure — no external control loop.
+  Genesis Protocol satisfies all three: agents are produced internally through
+  reproduction, the population boundary is maintained through carrying capacity
+  and death, and the epoch loop operates without human intervention. We classify
+  it as a <em>computationally autopoietic organism</em>.
+</p>
+
+<h3>7.4 &nbsp; Limitations</h3>
+<p>
+  Several limitations merit acknowledgment. First, agents do not learn: behavior
+  is determined by static genome-derived traits, not experience. Neural
+  controllers would enable richer dynamics at the cost of complexity. Second, the
+  current implementation is single-threaded, limiting scalability to ~500 agents.
+  Third, validation is based on a single 10,000-epoch run; rigorous statistical
+  conclusions require replication across multiple independent runs with varied
+  seeds. Fourth, the problem market generates synthetic tasks rather than drawing
+  on real-world computational problems.
+</p>
+
+<h3>7.5 &nbsp; Ethical Considerations</h3>
+<p>
+  The agents are not sentient and do not experience suffering. System "deaths"
+  are mathematical events (balance reaching zero). No biological organism data is
+  used. Nonetheless, the system raises philosophical questions about the moral
+  status of autonomous computational entities exhibiting lifelike properties — a
+  topic deserving sustained attention as artificial life systems grow more complex.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════
+     8  FUTURE WORK
+     ══════════════════════════════════════════════════════════ -->
+<h2>Future Work</h2>
+
+<ul>
+  <li><strong>Neural agent controllers</strong> — replace static trait-based behavior
+      with learned policies via embedded neural networks</li>
+  <li><strong>Multi-organism ecosystems</strong> — deploy multiple Genesis instances
+      with inter-organism channels to study ecosystem-of-ecosystems dynamics</li>
+  <li><strong>External agent integration</strong> — allow real AI systems (language
+      models, planning agents) to participate subject to survival constraints</li>
+  <li><strong>Formal equilibrium analysis</strong> — derive analytical stability
+      conditions under the coupled ODEs governing ATP flow, decay, taxation,
+      and reproduction</li>
+  <li><strong>Cultural evolution</strong> — implement persistent memory and
+      cross-generational information transmission (epigenetic inheritance)</li>
+  <li><strong>Multi-seed replication study</strong> — statistical validation across
+      50+ independent seeds with paired hypothesis testing</li>
+</ul>
+
+<!-- ══════════════════════════════════════════════════════════
+     9  CONCLUSION
+     ══════════════════════════════════════════════════════════ -->
+<h2>Conclusion</h2>
+
+<p>
+  Genesis Protocol demonstrates that the substitution of survival economics for
+  fitness optimization is sufficient to produce complex adaptive behavior —
+  including population regulation, wealth concentration, adaptive contraction,
+  role diversity dynamics, and measurable fitness improvement — from a minimal set
+  of economic rules. The system's autonomous homeostatic regulation, continuous
+  execution, and narrative self-reporting position it as a novel entry in the
+  artificial life research landscape.
+</p>
+<p>
+  We argue that the missing ingredient in most artificial life research is not
+  better algorithms but better economics. When computational organisms must earn,
+  conserve, and spend energy to survive — rather than merely maximizing a score —
+  they produce dynamics that more closely resemble biological ecosystems. This
+  suggests a research program in which economic constraint replaces algorithmic
+  design as the primary driver of emergent complexity.
+</p>
+<p>
+  The source code, validation data, and live telemetry are publicly available at
+  <a href="https://github.com/FTHTrading/AI">github.com/FTHTrading/AI</a>.
+</p>
+
+<!-- ══════════════════════════════════════════════════════════
+     REFERENCES
+     ══════════════════════════════════════════════════════════ -->
+<h2 style="counter-increment: none;">References</h2>
+
+<div class="refs">
+  <p><span class="rn">[1]</span> Holland, J.H. (1975). <em>Adaptation in Natural and Artificial Systems</em>. University of Michigan Press.</p>
+  <p><span class="rn">[2]</span> Stanley, K.O. &amp; Miikkulainen, R. (2002). Evolving Neural Networks through Augmenting Topologies. <em>Evolutionary Computation</em>, 10(2), 99–127.</p>
+  <p><span class="rn">[3]</span> Ray, T.S. (1991). An Approach to the Synthesis of Life. In <em>Artificial Life II</em>, 371–408. Addison-Wesley.</p>
+  <p><span class="rn">[4]</span> Ofria, C. &amp; Wilke, C.O. (2004). Avida: A Software Platform for Research in Computational Evolutionary Biology. <em>Artificial Life</em>, 10(2), 191–229.</p>
+  <p><span class="rn">[5]</span> Chan, B.W. (2019). Lenia: Biology of Artificial Life. <em>Complex Systems</em>, 28(3), 251–286.</p>
+  <p><span class="rn">[6]</span> Koza, J.R. (1992). <em>Genetic Programming</em>. MIT Press.</p>
+  <p><span class="rn">[7]</span> Hansen, N. &amp; Ostermeier, A. (2001). Completely Derandomized Self-Adaptation in Evolution Strategies. <em>Evolutionary Computation</em>, 9(2), 159–195.</p>
+  <p><span class="rn">[8]</span> Yaeger, L. (1994). Computational Genetics, Physiology, Metabolism, Neural Systems, Learning, Vision, and Behavior, or PolyWorld. In <em>Artificial Life III</em>, 263–298. Addison-Wesley.</p>
+  <p><span class="rn">[9]</span> Baker, B. et al. (2020). Emergent Tool Use From Multi-Agent Autocurricula. <em>Proc. ICLR 2020</em>.</p>
+  <p><span class="rn">[10]</span> Suarez, J. et al. (2021). Neural MMO: A Massively Multiagent Game Environment. <em>Proc. AAMAS 2021</em>.</p>
+  <p><span class="rn">[11]</span> Nakamoto, S. (2008). Bitcoin: A Peer-to-Peer Electronic Cash System.</p>
+  <p><span class="rn">[12]</span> Maturana, H.R. &amp; Varela, F.J. (1980). <em>Autopoiesis and Cognition: The Realization of the Living</em>. D. Reidel.</p>
+  <p><span class="rn">[13]</span> Luhmann, N. (1995). <em>Social Systems</em>. Stanford University Press.</p>
+  <p><span class="rn">[14]</span> Scheffer, M. et al. (2017). Inequality in Nature and Society. <em>PNAS</em>, 114(50), 13154–13157.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     APPENDIX A — EPOCH LOOP PSEUDOCODE
+     ══════════════════════════════════════════════════════════ -->
+<h2 style="counter-increment: none;">Appendix A &mdash; Epoch Loop Pseudocode</h2>
+
+<pre>
+function run_epoch(world):
+    // Phase 0: Entropy — balance erosion
+    for agent in world.agents:
+        agent.balance *= 0.98                  // 2% decay
+
+    // Phase 1: Basal metabolism
+    for agent in active_agents:
+        agent.balance -= 0.15
+        if agent.balance &lt;= 0: enter_stasis(agent)
+
+    // Phase 1b: Progressive taxation
+    for agent where balance &gt; 100:
+        tax = (agent.balance - 100) * 0.01
+        agent.balance -= tax
+        treasury.deposit(tax)
+
+    // Phase 2: Carrying capacity
+    K = clamp(total_niche_capacity / 15.0, 10, 500)
+
+    // Phase 2a: Autonomous redistribution
+    if treasury.reserve &gt; 5.0:
+        distribute_stipends(poorest, 1.0 each)
+    for agent in stasis where treasury.reserve &gt; 30:
+        crisis_bailout(agent, 30.0)
+    if treasury.reserve &gt; 0.30 * total_supply:
+        overflow_redistribute(all_agents)
+
+    // Phase 3: Resource extraction (logistic + Lotka-Volterra)
+    for niche in world.niches:
+        niche.regenerate()
+        for agent in niche.occupants:
+            harvest = fitness * density_factor * season_mod
+            agent.balance += harvest * 0.97    // 3% skim
+            treasury.deposit(harvest * 0.03)
+
+    // Phase 3b: Problem market
+    for problem in generate_problems(pressure):
+        solver = argmax(agents, problem.skill)
+        if publication_gate.approve(solver):
+            solver.balance += problem.value * 0.97
+            treasury.deposit(problem.value * 0.03)
+
+    // Phase 4: Mutation (pressure-scaled)
+    // Phase 5: Selection
+    for agent where f ≥ 0.35 and balance ≥ 25 and age ≥ 10:
+        if population &lt; K: spawn_child(agent)  // max 3/epoch
+
+    // Phase 6: Reaper
+    for agent where stasis_epochs ≥ 8:
+        terminate(agent)
+</pre>
+
+<!-- ══════════════════════════════════════════════════════════
+     APPENDIX B — SYSTEM CONSTANTS
+     ══════════════════════════════════════════════════════════ -->
+<h2 style="counter-increment: none;">Appendix B &mdash; System Constants</h2>
+
+<table>
+  <caption>Table A1 — Complete parameter table</caption>
+  <thead>
+    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>ATP Decay Rate</td><td>0.02</td><td>per epoch</td></tr>
+    <tr><td>Basal Metabolic Cost</td><td>0.15</td><td>ATP / epoch</td></tr>
+    <tr><td>Wealth Tax Threshold</td><td>100.0</td><td>ATP</td></tr>
+    <tr><td>Wealth Tax Rate</td><td>0.01</td><td>per epoch</td></tr>
+    <tr><td>Market Skim Rate</td><td>0.03</td><td>fraction</td></tr>
+    <tr><td>Replication Cost</td><td>25.0</td><td>ATP</td></tr>
+    <tr><td>Replication Fitness Threshold</td><td>0.35</td><td>&mdash;</td></tr>
+    <tr><td>Maturation Period</td><td>10</td><td>epochs</td></tr>
+    <tr><td>Max Births / Epoch</td><td>3</td><td>&mdash;</td></tr>
+    <tr><td>Stasis Death Timeout</td><td>8</td><td>epochs</td></tr>
+    <tr><td>Min Carrying Capacity</td><td>10</td><td>agents</td></tr>
+    <tr><td>Max Carrying Capacity</td><td>500</td><td>agents</td></tr>
+    <tr><td>Primordial ATP Grant</td><td>50.0</td><td>ATP</td></tr>
+    <tr><td>Child ATP Grant</td><td>8.0</td><td>ATP</td></tr>
+    <tr><td>Genome Size</td><td>256</td><td>bits</td></tr>
+    <tr><td>Base Mutation Rate</td><td>0.01</td><td>&mdash;</td></tr>
+    <tr><td>Max Trait Delta</td><td>0.05</td><td>&mdash;</td></tr>
+    <tr><td>Epoch Interval</td><td>1</td><td>second</td></tr>
+  </tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════════════════
+     APPENDIX C — DATA AVAILABILITY
+     ══════════════════════════════════════════════════════════ -->
+<h2 style="counter-increment: none;">Appendix C &mdash; Data &amp; Code Availability</h2>
+
+<table>
+  <caption>Table A2 — Artifact locations</caption>
+  <thead>
+    <tr><th>Artifact</th><th>Location</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Source Code</td><td><a href="https://github.com/FTHTrading/AI">github.com/FTHTrading/AI</a></td></tr>
+    <tr><td>DOI (Zenodo)</td><td><a href="https://doi.org/10.5281/zenodo.18646886">10.5281/zenodo.18646886</a></td></tr>
+    <tr><td>Live Dashboard</td><td><a href="https://fthtrading.github.io/AI/dashboard.html">fthtrading.github.io/AI/dashboard.html</a></td></tr>
+    <tr><td>Social Identity</td><td><a href="https://www.moltbook.com/u/genesisprotocol">moltbook.com/u/genesisprotocol</a></td></tr>
+    <tr><td>Author ORCID</td><td><a href="https://orcid.org/0009-0008-8425-939X">0009-0008-8425-939X</a></td></tr>
+    <tr><td>License</td><td>CC-BY-4.0 (paper) / MIT (code)</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══ Download Banner ═══ -->
+<div class="dl-bar" id="dlBar">
+  <span>Genesis Protocol — Academic Research Paper</span>
+  <button onclick="window.print()">⬇ Print / Save as PDF</button>
+  <button onclick="document.getElementById('dlBar').style.display='none'" style="background:transparent;color:white;border:1px solid rgba(255,255,255,0.4);margin-left:4px;">✕</button>
+</div>
+
+</body>
+</html>
