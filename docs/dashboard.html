@@ -1,255 +1,383 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Genesis Protocol  Civilization Status</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Genesis Protocol</title>
 <style>
-:root {
-  --bg:      #060b14;
-  --surface: #0d1525;
-  --surface2:#111d32;
-  --border:  rgba(255,255,255,0.07);
-  --text:    #e2e8f0;
-  --dim:     #64748b;
-  --accent:  #38bdf8;
-  --green:   #4ade80;
-  --red:     #f87171;
-  --yellow:  #fbbf24;
-  --purple:  #a78bfa;
-  --mono:    'Cascadia Code','JetBrains Mono','Fira Code',monospace;
+:root{
+  --bg:#060b14;--s1:#0d1525;--s2:#111d32;
+  --border:rgba(255,255,255,.07);
+  --text:#e2e8f0;--dim:#64748b;
+  --accent:#38bdf8;--green:#4ade80;--red:#f87171;--yellow:#fbbf24;--purple:#a78bfa;
+  --mono:'Cascadia Code','JetBrains Mono','Fira Code',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
-#header{background:rgba(6,11,20,.97);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
-.brand{font-size:11px;font-weight:800;letter-spacing:3px;color:var(--accent);text-transform:uppercase}
-.brand span{color:var(--green)}
-.hright{text-align:right;font-size:11px;color:var(--dim);font-family:var(--mono)}
-.hright strong{color:var(--text)}
-#status-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:1px;margin-left:12px}
-.pill-stable{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3)}
-.pill-warn{background:rgba(251,191,36,.15);color:var(--yellow);border:1px solid rgba(251,191,36,.3)}
-.pill-crit{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
-.main{padding:20px 24px;max-width:1440px;margin:0 auto}
-.vital-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
-.vital{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
-.vital-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
-.vital-val{font-size:36px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;margin-bottom:2px}
-.vital-sub{font-size:11px;color:var(--dim);font-family:var(--mono)}
-canvas.spark{width:100%;height:36px;display:block;margin-top:8px;border-radius:4px}
-.v-blue{color:var(--accent)}.v-green{color:var(--green)}.v-purple{color:var(--purple)}.v-yellow{color:var(--yellow)}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-@media(max-width:900px){.row2{grid-template-columns:1fr}}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
-.panel h3{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.kv{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)}
-.kv .k{color:var(--dim);font-size:12px}
-.kv .v{font-family:var(--mono);font-size:12px;color:var(--text)}
-.kv .v.green{color:var(--green)}
-#primordial-banner{margin-bottom:16px;border-radius:10px;background:linear-gradient(135deg,rgba(56,189,248,.08) 0%,rgba(167,139,250,.08) 100%);border:1px solid rgba(56,189,248,.2);padding:16px 20px}
-#primordial-banner h3{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
-.prim-list{display:flex;flex-wrap:wrap;gap:8px}
-.prim-chip{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px}
-.prim-chip .pcid{color:var(--accent);font-weight:700}
-.prim-chip .pcfit{color:var(--green)}
-.prim-chip .pcrole{color:var(--dim)}
-.prim-chip .pcep{color:var(--yellow);font-size:10px}
-.role-row{display:flex;align-items:center;gap:8px;padding:5px 0}
-.rname{width:100px;color:var(--dim);font-size:11px;font-family:var(--mono)}
-.rbar-wrap{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;line-height:1.5}
+
+/* HEADER */
+#hdr{position:sticky;top:0;z-index:99;background:rgba(6,11,20,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:10px;font-weight:900;letter-spacing:3px;color:var(--accent);text-transform:uppercase;white-space:nowrap}
+.brand b{color:var(--green)}
+#hdr-mid{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+#h-epoch{color:var(--text);font-weight:700}
+#h-uptime{color:var(--dim)}
+#status-pill{padding:2px 10px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:1px}
+.pill-stable{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+.pill-warn{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.3)}
+.pill-crit{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+#hdr-right{display:flex;align-items:center;gap:8px}
+
+/* SOURCE TOGGLE */
+.src-btn{padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .15s}
+.src-btn.active{background:rgba(56,189,248,.15);color:var(--accent);border-color:rgba(56,189,248,.4)}
+#adv-btn{padding:3px 10px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim);transition:all .15s}
+#adv-btn:hover{color:var(--text);border-color:var(--dim)}
+
+/* MAIN */
+.main{padding:16px 20px;max-width:1200px;margin:0 auto}
+
+/* METRIC GRID */
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:900px){.grid5{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.grid5{grid-template-columns:1fr}}
+
+.card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.card-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.card-val{font-size:32px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.card-sub{font-size:11px;color:var(--dim);font-family:var(--mono);margin-top:4px;height:16px}
+.card-trend{font-size:12px;margin-top:2px;font-family:var(--mono)}
+.up{color:var(--green)}.dn{color:var(--red)}.flat{color:var(--dim)}
+
+/* SPARKLINES */
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(max-width:700px){.charts{grid-template-columns:1fr}}
+.chart-box{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.chart-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+canvas{width:100%;height:60px;display:block}
+
+/* ADVANCED */
+#adv-panel{display:none}
+#adv-panel.open{display:block}
+.adv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(max-width:700px){.adv-grid{grid-template-columns:1fr}}
+.panel{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.panel h4{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.kv{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.025)}
+.kv .k{color:var(--dim);font-size:12px}.kv .v{font-family:var(--mono);font-size:12px}
+.role-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+.rname{width:95px;color:var(--dim);font-size:11px}
+.rbar-wrap{flex:1;height:7px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
 .rbar-fill{height:100%;border-radius:4px}
-.rcount{color:var(--text);font-family:var(--mono);font-size:11px;width:22px;text-align:right}
-.section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden}
-.section-head{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-table{width:100%;border-collapse:collapse}
-thead th{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);padding:7px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
-tbody tr{border-bottom:1px solid rgba(255,255,255,.025)}
-tbody tr:hover{background:rgba(255,255,255,.03)}
-tbody td{padding:6px 14px;font-size:12px;font-family:var(--mono);white-space:nowrap}
-.badge-prim{font-size:9px;color:var(--accent);font-weight:800;margin-right:4px}
-.bar-fit{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:5px}
-.gen-badge{display:inline-block;background:rgba(255,255,255,.06);border-radius:3px;padding:0 4px;font-size:10px;color:var(--dim)}
-.rank-1{color:#ffd700}.rank-2{color:#c0c0c0}.rank-3{color:#cd7f32}.rank-num{color:var(--dim);font-size:10px}
-td.up{color:var(--green)}td.down{color:var(--red)}td.dim{color:var(--dim)}
-#footer{background:rgba(6,11,20,.95);border-top:1px solid var(--border);padding:8px 24px;display:flex;justify-content:space-between;font-size:10px;color:var(--dim);font-family:var(--mono);position:sticky;bottom:0}
+.rcount{font-family:var(--mono);font-size:11px;width:20px;text-align:right;color:var(--text)}
+
+/* FOOTER */
+#footer{border-top:1px solid var(--border);padding:7px 20px;display:flex;justify-content:space-between;font-size:10px;color:var(--dim);font-family:var(--mono)}
+#footer a{color:var(--accent);text-decoration:none}
+#last-tick{color:var(--dim)}
 </style>
 </head>
 <body>
 
-<div id="header">
-  <div class="brand">Genesis <span>Protocol</span></div>
-  <div class="hright">
-    <strong id="h-epoch"></strong> &nbsp;&nbsp; <span id="h-season"></span> &nbsp;&nbsp; up <strong id="h-uptime"></strong>
+<div id="hdr">
+  <div class="brand">Genesis <b>Protocol</b></div>
+  <div id="hdr-mid">
+    <span id="h-epoch">epoch </span>
+    <span>&middot;</span>
     <span id="status-pill" class="pill-stable"> STABLE</span>
+    <span>&middot;</span>
+    <span>up <span id="h-uptime"></span></span>
+  </div>
+  <div id="hdr-right">
+    <button class="src-btn" id="btn-live" onclick="setMode('live')">LIVE 1s</button>
+    <button class="src-btn active" id="btn-arch" onclick="setMode('archive')">ARCHIVE</button>
+    <button id="adv-btn" onclick="toggleAdv()">Advanced </button>
   </div>
 </div>
 
 <div class="main">
 
-  <div class="vital-row">
-    <div class="vital">
-      <div class="vital-label">Population</div>
-      <div class="vital-val v-blue" id="v-pop"></div>
-      <div class="vital-sub">cap <span id="v-cap"></span> &nbsp;&middot;&nbsp; <span id="v-popd"></span></div>
-      <canvas class="spark" id="sp-pop" height="36"></canvas>
+  <div class="grid5">
+    <div class="card">
+      <div class="card-label">Population</div>
+      <div class="card-val" id="m-pop" style="color:var(--accent)"></div>
+      <div class="card-sub" id="m-pop-sub"></div>
+      <div class="card-trend" id="m-pop-trend"></div>
     </div>
-    <div class="vital">
-      <div class="vital-label">Avg Fitness</div>
-      <div class="vital-val v-green" id="v-fit"></div>
-      <div class="vital-sub">delta <span id="v-fitd"></span></div>
-      <canvas class="spark" id="sp-fit" height="36"></canvas>
+    <div class="card">
+      <div class="card-label">Avg Fitness</div>
+      <div class="card-val" id="m-fit" style="color:var(--green)"></div>
+      <div class="card-sub" id="m-fit-sub"></div>
+      <div class="card-trend" id="m-fit-trend"></div>
     </div>
-    <div class="vital">
-      <div class="vital-label">ATP Supply</div>
-      <div class="vital-val v-purple" id="v-atp"></div>
-      <div class="vital-sub">treasury <span id="v-treas"></span></div>
-      <canvas class="spark" id="sp-atp" height="36"></canvas>
+    <div class="card">
+      <div class="card-label">B:D Ratio (10ep)</div>
+      <div class="card-val" id="m-bd"></div>
+      <div class="card-sub" id="m-bd-sub"></div>
+      <div class="card-trend" id="m-bd-trend"></div>
     </div>
-    <div class="vital">
-      <div class="vital-label">Total Births</div>
-      <div class="vital-val v-yellow" id="v-births"></div>
-      <div class="vital-sub"><span id="v-deaths"></span> deaths &nbsp;&middot;&nbsp; <span id="v-net"></span> net</div>
-      <canvas class="spark" id="sp-net" height="36"></canvas>
+    <div class="card">
+      <div class="card-label">ATP Supply</div>
+      <div class="card-val" id="m-atp" style="color:var(--purple)"></div>
+      <div class="card-sub" id="m-atp-sub"></div>
+      <div class="card-trend" id="m-atp-trend"></div>
     </div>
-    <div class="vital">
-      <div class="vital-label">Market</div>
-      <div class="vital-val v-green" id="v-solved"></div>
-      <div class="vital-sub"><span id="v-rewarded"></span> ATP rewarded</div>
-    </div>
-  </div>
-
-  <div id="primordial-banner">
-    <h3>&#x2B21; Primordial Agents  Original Founders (Generation 0)</h3>
-    <div class="prim-list" id="prim-list">Loading...</div>
-  </div>
-
-  <div class="row2">
-    <div class="panel">
-      <h3>Role Distribution</h3>
-      <div id="role-bars"></div>
-    </div>
-    <div class="panel">
-      <h3>Economics</h3>
-      <div class="kv"><span class="k">Treasury Reserve</span><span class="v" id="e-tres"></span></div>
-      <div class="kv"><span class="k">Total Collected</span><span class="v" id="e-col"></span></div>
-      <div class="kv"><span class="k">Total Distributed</span><span class="v" id="e-dis"></span></div>
-      <div class="kv"><span class="k">Market Solved</span><span class="v green" id="e-sol"></span></div>
-      <div class="kv"><span class="k">Market Rewarded</span><span class="v green" id="e-rew"></span></div>
-      <div class="kv"><span class="k">&Delta; ATP (last window)</span><span class="v" id="e-atpd"></span></div>
+    <div class="card">
+      <div class="card-label">Mutations/ep (10ep)</div>
+      <div class="card-val" id="m-mut" style="color:var(--yellow)"></div>
+      <div class="card-sub" id="m-mut-sub"></div>
+      <div class="card-trend" id="m-mut-trend"></div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-head">Top Agents by Fitness &nbsp;<span style="color:var(--dim);font-weight:400" id="agent-count"></span></div>
-    <table>
-      <thead><tr>
-        <th>#</th><th>Agent ID</th><th>Role</th><th>Fitness</th>
-        <th>Rep</th><th>ATP</th><th>Gen</th><th>Survived</th>
-      </tr></thead>
-      <tbody id="agent-tbody"></tbody>
-    </table>
+  <div class="charts">
+    <div class="chart-box">
+      <div class="chart-title">Population  rolling buffer</div>
+      <canvas id="c-pop" height="60"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Avg Fitness  rolling buffer</div>
+      <canvas id="c-fit" height="60"></canvas>
+    </div>
   </div>
 
-  <div class="section">
-    <div class="section-head">Epoch History <span style="color:var(--dim);font-weight:400">(newest first)</span></div>
-    <table>
-      <thead><tr>
-        <th>Epoch</th><th>Pop</th><th>Cap</th><th>Births</th><th>Deaths</th>
-        <th>ATP</th><th>Avg Fitness</th>
-      </tr></thead>
-      <tbody id="history-tbody"></tbody>
-    </table>
+  <div id="adv-panel">
+    <div class="adv-grid">
+      <div class="panel">
+        <h4>Role Distribution</h4>
+        <div id="role-bars"></div>
+      </div>
+      <div class="panel">
+        <h4>Economics</h4>
+        <div class="kv"><span class="k">Treasury Balance</span><span class="v" id="e-tres"></span></div>
+        <div class="kv"><span class="k">Total Collected</span><span class="v" id="e-col"></span></div>
+        <div class="kv"><span class="k">Total Distributed</span><span class="v" id="e-dis"></span></div>
+        <div class="kv"><span class="k">Market Solved</span><span class="v" id="e-sol"></span></div>
+        <div class="kv"><span class="k">Market Rewarded ATP</span><span class="v" id="e-rew"></span></div>
+        <div class="kv"><span class="k">Total Births</span><span class="v" id="e-brt"></span></div>
+        <div class="kv"><span class="k">Total Deaths</span><span class="v" id="e-dth"></span></div>
+        <div class="kv"><span class="k">&Delta; ATP (last 10ep)</span><span class="v" id="e-atpd"></span></div>
+      </div>
+    </div>
   </div>
 
 </div>
 
 <div id="footer">
-  <span>Genesis Protocol &middot; <a href="https://github.com/FTHTrading/AI" style="color:var(--accent)">FTHTrading/AI</a> &middot; snapshot every ~25 epochs</span>
-  <span id="last-update"></span>
+  <span><a href="https://github.com/FTHTrading/AI" target="_blank">FTHTrading/AI</a> &middot; live=localhost:3000/status &middot; archive=docs/system-state.json</span>
+  <span id="last-tick"></span>
 </div>
 
 <script>
-const $=id=>document.getElementById(id);
-const fmt=(n,d=2)=>typeof n==='number'?n.toFixed(d):'';
-const fmtK=n=>typeof n==='number'?(n>=1000?(n/1000).toFixed(1)+'k':Math.round(n).toString()):'';
-function fmtUptime(s){const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60);if(d>0)return d+'d '+h+'h '+m+'m';if(h>0)return h+'h '+m+'m';return m+'m';}
-function spark(id,vals,color){
-  const c=$(id);if(!c||vals.length<2)return;
-  const W=c.offsetWidth||300,H=36;c.width=W;c.height=H;
-  const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
-  const mn=Math.min(...vals),mx=Math.max(...vals),rng=mx-mn||1,pad=3;
-  ctx.beginPath();
-  vals.forEach((v,i)=>{const x=pad+(i/(vals.length-1))*(W-pad*2);const y=(H-pad)-((v-mn)/rng)*(H-pad*2);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.stroke();
-  const lx=pad+1*(W-pad*2);ctx.lineTo(lx,H);ctx.lineTo(pad,H);ctx.closePath();
-  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,color.replace(')',',0.15)').replace('rgb','rgba'));g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fill();
+/*  config  */
+const LIVE_URL    = 'http://localhost:3000/status';
+const ARCHIVE_URL = 'system-state.json';
+const BUFFER_MAX  = 200;
+
+const RC = {Optimizer:'#38bdf8',Strategist:'#a78bfa',Communicator:'#4ade80',Executor:'#fbbf24',Archivist:'#f87171'};
+
+/*  state  */
+let mode       = 'archive';  // 'live' | 'archive'
+let advOpen    = false;
+let timer      = null;
+let lastGood   = null;  // last valid payload
+const buf_pop  = [];
+const buf_fit  = [];
+
+/*  utils  */
+const $     = id => document.getElementById(id);
+const num   = (v,d=2) => (typeof v === 'number' && isFinite(v)) ? v.toFixed(d) : null;
+const fmtK  = v => {
+  if (typeof v !== 'number' || !isFinite(v)) return null;
+  return v >= 1000 ? (v/1000).toFixed(1)+'k' : Math.round(v).toString();
+};
+const safe  = (v, fallback='') => v !== null && v !== undefined ? v : fallback;
+
+function fmtUptime(s) {
+  if (typeof s !== 'number' || !isFinite(s)) return '';
+  const d=Math.floor(s/86400), h=Math.floor((s%86400)/3600), m=Math.floor((s%3600)/60), sec=Math.floor(s%60);
+  if (d>0) return d+'d '+h+'h '+m+'m';
+  if (h>0) return h+'h '+m+'m'+sec+'s';
+  return m+'m '+sec+'s';
 }
-const RC={Optimizer:'#38bdf8',Strategist:'#a78bfa',Communicator:'#4ade80',Executor:'#fbbf24',Archivist:'#f87171'};
-function render(d){
-  const h=d.history||[],a=d.agents||[],ed=d.epoch_diff||{};
-  const tot_b=d.total_births||0,tot_d=d.total_deaths||0;
-  $('h-epoch').textContent='Epoch '+d.epoch;
-  $('h-season').textContent=d.season||'';
-  $('h-uptime').textContent=fmtUptime(d.uptime_seconds||0);
-  const risks=d.risks||[];
-  const pill=$('status-pill');
-  if(risks.length===0||risks[0]==='STABLE'){pill.textContent=' STABLE';pill.className='pill-stable';pill.id='status-pill';}
-  else{pill.textContent=' '+risks[0];pill.className='pill-warn';pill.id='status-pill';}
-  $('v-pop').textContent=d.population;
-  $('v-cap').textContent=d.pop_cap;
-  const pd=ed.population_delta||0;$('v-popd').textContent=(pd>0?'':pd<0?'':'')+Math.abs(pd)+' (?10)';
-  $('v-fit').textContent=fmt(d.avg_fitness,4);
-  $('v-fitd').textContent=(ed.fitness_delta>=0?'+':'')+fmt(ed.fitness_delta,5);
-  $('v-atp').textContent=fmtK(d.total_atp);
-  $('v-treas').textContent=fmt(d.treasury_reserve,2)+' ATP';
-  $('v-births').textContent=tot_b.toLocaleString();
-  $('v-deaths').textContent=tot_d.toLocaleString();
-  const net=tot_b-tot_d;$('v-net').textContent=(net>=0?'+':'')+net;
-  $('v-solved').textContent=(d.market_solved||0).toLocaleString();
-  $('v-rewarded').textContent=fmtK(d.market_rewarded||0);
-  if(h.length>1){
-    spark('sp-pop',h.map(x=>x.population),'#38bdf8');
-    spark('sp-fit',h.map(x=>x.mean_fitness),'#4ade80');
-    spark('sp-atp',h.map(x=>x.total_atp),'#a78bfa');
-    spark('sp-net',h.map(x=>x.births-x.deaths),'#fbbf24');
+
+function trend(val, prev) {
+  if (prev === null || val === null) return '';
+  const d = val - prev;
+  if (Math.abs(d) < 0.0001) return '<span class="flat"></span>';
+  return d > 0 ? '<span class="up"> +'+(Math.abs(d)<1?d.toFixed(4):d.toFixed(2))+'</span>'
+               : '<span class="dn"> '+(Math.abs(d)<1?d.toFixed(4):d.toFixed(2))+'</span>';
+}
+
+/*  sparkline  */
+function drawSpark(id, vals, color) {
+  const c = $(id);
+  if (!c || vals.length < 2) return;
+  const W = c.offsetWidth || 500, H = 60;
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const mn = Math.min(...vals), mx = Math.max(...vals), rng = mx - mn || 1, pad = 4;
+  // gradient fill
+  const path = new Path2D();
+  vals.forEach((v,i) => {
+    const x = pad + (i/(vals.length-1)) * (W-pad*2);
+    const y = (H-pad) - ((v-mn)/rng) * (H-pad*2);
+    i === 0 ? path.moveTo(x,y) : path.lineTo(x,y);
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
+  ctx.stroke(path);
+  // fill under
+  const fill = new Path2D(path);
+  fill.lineTo(pad + (W-pad*2), H); fill.lineTo(pad, H); fill.closePath();
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, color.replace(')',',0.12)').replace('#','rgba(0x').replace('rgba(0x','rgba(').replace(/rgba\((.{2})(.{2})(.{2}),/,(_,r,g,b)=>`rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},`));
+  g.addColorStop(1, 'transparent');
+  // simpler fill approach
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = color;
+  ctx.fill(fill);
+  ctx.restore();
+}
+
+/*  render  */
+function render(d) {
+  if (!d || typeof d !== 'object') return;
+  lastGood = d;
+
+  /* normalise: /status and system-state.json have slightly different shapes */
+  const epoch   = d.epoch;
+  const pop     = d.population;
+  const fit     = d.avg_fitness;
+  const atp     = d.total_atp;
+  const uptime  = d.uptime_seconds;
+  const risks   = Array.isArray(d.risks) ? d.risks : [];
+  const ed      = d.epoch_diff || {};
+  const births  = ed.births_in_window;
+  const deaths  = ed.deaths_in_window;
+  const window  = ed.window || 10;
+  const muts    = ed.mutations_in_window;
+  const atp_d   = ed.atp_delta;
+  const fit_d   = ed.fitness_delta;
+  const pop_d   = ed.population_delta;
+
+  /* roles: /status uses role_distribution, system-state.json uses roles */
+  const roles = d.role_distribution || d.roles || {};
+
+  /* buffer for charts */
+  if (typeof pop === 'number' && isFinite(pop)) { buf_pop.push(pop); if (buf_pop.length>BUFFER_MAX) buf_pop.shift(); }
+  if (typeof fit === 'number' && isFinite(fit)) { buf_fit.push(fit); if (buf_fit.length>BUFFER_MAX) buf_fit.shift(); }
+
+  /*  header  */
+  $('h-epoch').textContent  = typeof epoch === 'number' ? 'epoch '+epoch : 'epoch ';
+  $('h-uptime').textContent = fmtUptime(uptime);
+  const pill = $('status-pill');
+  const state = risks.length && risks[0] !== 'STABLE' ? risks[0] : 'STABLE';
+  pill.textContent = ' '+state;
+  pill.className   = state==='STABLE'?'pill-stable':(state==='CRITICAL'?'pill-crit':'pill-warn');
+
+  /*  pop card  */
+  $('m-pop').textContent     = typeof pop==='number' ? pop : '';
+  const cap = d.pop_cap;  // only in archive
+  $('m-pop-sub').textContent = typeof cap==='number' ? 'cap '+cap : (typeof pop_d==='number' ? 'Δ10ep: '+(pop_d>=0?'+':'')+pop_d : '');
+  $('m-pop-trend').innerHTML = typeof pop_d==='number' ? trend(pop, pop-(pop_d||0)) : '';
+
+  /*  fitness card  */
+  $('m-fit').textContent     = num(fit,4) || '';
+  $('m-fit-sub').textContent = typeof fit_d==='number' && isFinite(fit_d) ? 'Δ10ep: '+(fit_d>=0?'+':'')+fit_d.toFixed(5) : '';
+  // color by value
+  const fv = typeof fit==='number'?fit:0;
+  $('m-fit').style.color = fv>=0.7?'var(--green)':fv>=0.5?'var(--yellow)':'var(--red)';
+
+  /*  B:D ratio  */
+  let bd = null, bdClass = 'flat', bdSub = '';
+  if (typeof births==='number' && typeof deaths==='number' && isFinite(births) && isFinite(deaths)) {
+    if (deaths === 0) { bd = births > 0 ? '' : '1.00'; bdClass='up'; }
+    else { const r = births/deaths; bd = r.toFixed(2); bdClass = r>=1?'up':'dn'; }
+    bdSub = births+'B / '+deaths+'D ('+window+'ep)';
   }
-  const prims=a.filter(x=>x.is_primordial);
-  if(prims.length===0){
-    $('primordial-banner').innerHTML='<h3>&#x2B21; Primordials</h3><div style="color:var(--red);font-size:12px;padding:4px 0">All primordial agents have died. The civilization carries only their descendants.</div>';
-  } else {
-    $('prim-list').innerHTML=prims.map(p=>'<div class="prim-chip"><span class="pcid">'+p.id+'</span><span class="pcrole"> '+p.role+'</span><span class="pcfit"> fit '+fmt(p.fitness,4)+'</span><span class="pcep"> &middot; '+p.survived_epochs+' epochs</span></div>').join('');
+  $('m-bd').textContent     = bd || '';
+  $('m-bd').style.color     = bdClass==='up'?'var(--green)':bdClass==='dn'?'var(--red)':'var(--dim)';
+  $('m-bd-sub').textContent = bdSub;
+
+  /*  ATP  */
+  $('m-atp').textContent     = fmtK(atp) || '';
+  $('m-atp-sub').textContent = typeof atp_d==='number'&&isFinite(atp_d) ? 'Δ10ep: '+(atp_d>=0?'+':'')+atp_d.toFixed(1) : '';
+
+  /*  mutation rate  */
+  let mutr = null;
+  if (typeof muts==='number' && isFinite(muts) && typeof window==='number') {
+    mutr = (muts/window).toFixed(1);
   }
-  const rc=d.roles||{},rmx=Math.max(...Object.values(rc),1);
-  $('role-bars').innerHTML=Object.entries(rc).sort((a,b)=>b[1]-a[1]).map(([r,n])=>'<div class="role-row"><span class="rname">'+r+'</span><div class="rbar-wrap"><div class="rbar-fill" style="width:'+Math.round(n/rmx*100)+'%;background:'+(RC[r]||'var(--accent)')+'"></div></div><span class="rcount">'+n+'</span></div>').join('');
-  $('e-tres').textContent=fmt(d.treasury_reserve,3)+' ATP';
-  $('e-col').textContent=fmtK(d.treasury_collected)+' ATP';
-  $('e-dis').textContent=fmtK(d.treasury_distributed)+' ATP';
-  $('e-sol').textContent=(d.market_solved||0).toLocaleString();
-  $('e-rew').textContent=fmtK(d.market_rewarded)+' ATP';
-  const atpd=ed.atp_delta||0;$('e-atpd').textContent=(atpd>=0?'+':'')+fmt(atpd,2)+' ATP';
-  $('agent-count').textContent=a.length+' total';
-  const sorted=[...a].sort((x,y)=>{if(x.is_primordial!==y.is_primordial)return x.is_primordial?-1:1;return y.fitness-x.fitness;}).slice(0,30);
-  $('agent-tbody').innerHTML=sorted.map((ag,i)=>{
-    const r=i+1;
-    const rs=r===1?'<span class="rank-1">&#x1F947;</span>':r===2?'<span class="rank-2">&#x1F948;</span>':r===3?'<span class="rank-3">&#x1F949;</span>':'<span class="rank-num">'+r+'</span>';
-    const fb='<span class="bar-fit" style="width:'+(ag.fitness*40).toFixed(0)+'px;background:'+(ag.fitness>0.7?'var(--green)':ag.fitness>0.5?'var(--yellow)':'var(--red)')+'"></span>';
-    const pr=ag.is_primordial?'<span class="badge-prim">&#x2736;PRIM</span>':'';
-    return '<tr><td>'+rs+'</td><td>'+pr+'<span style="font-size:11px;color:var(--dim)">'+ag.id+'</span></td><td style="color:'+(RC[ag.role]||'var(--accent)')+'">'+ag.role+'</td><td>'+fb+fmt(ag.fitness,4)+'</td><td>'+fmt(ag.reputation,3)+'</td><td>'+fmt(ag.atp,2)+'</td><td><span class="gen-badge">G'+ag.generation+'</span></td><td>'+ag.survived_epochs.toLocaleString()+'</td></tr>';
-  }).join('');
-  $('history-tbody').innerHTML=[...h].reverse().map((e,i,arr)=>{
-    const prev=arr[i+1];
-    const pc=prev?(e.population>prev.population?'up':e.population<prev.population?'down':'dim'):'dim';
-    const fc=prev?(e.mean_fitness>prev.mean_fitness?'up':e.mean_fitness<prev.mean_fitness?'down':'dim'):'dim';
-    return '<tr><td>'+e.epoch+'</td><td class="'+pc+'">'+e.population+'</td><td class="dim">'+e.pop_cap+'</td><td class="'+(e.births>0?'up':'dim')+'">'+( e.births||0)+'</td><td class="'+(e.deaths>0?'down':'dim')+'">'+(e.deaths||0)+'</td><td>'+fmt(e.total_atp,0)+'</td><td class="'+fc+'">'+fmt(e.mean_fitness,4)+'</td></tr>';
-  }).join('');
-  $('last-update').textContent='epoch '+d.epoch+'  '+new Date().toLocaleTimeString('en-US',{hour12:false});
+  $('m-mut').textContent     = mutr !== null ? mutr+'/ep' : '';
+  $('m-mut-sub').textContent = typeof muts==='number'&&isFinite(muts) ? muts+' total ('+window+'ep)' : '';
+
+  /*  sparklines  */
+  drawSpark('c-pop', buf_pop, '#38bdf8');
+  drawSpark('c-fit', buf_fit, '#4ade80');
+
+  /*  advanced  */
+  /* roles */
+  const rv = Object.values(roles); const rmx = rv.length ? Math.max(...rv,1) : 1;
+  $('role-bars').innerHTML = Object.entries(roles)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([r,n])=>'<div class="role-row"><span class="rname">'+r+'</span>'
+      +'<div class="rbar-wrap"><div class="rbar-fill" style="width:'+Math.round(n/rmx*100)+'%;background:'+(RC[r]||'var(--accent)')+'"></div></div>'
+      +'<span class="rcount">'+n+'</span></div>').join('');
+
+  /* economics  only fields that actually exist */
+  const setKv = (id, v) => { $(id).textContent = v !== null && v !== undefined ? v : ''; };
+  setKv('e-tres', num(d.treasury_balance,3) !== null ? num(d.treasury_balance,3)+' ATP' : null);
+  setKv('e-col',  fmtK(d.treasury_collected));
+  setKv('e-dis',  fmtK(d.treasury_distributed));
+  setKv('e-sol',  typeof d.market_solved==='number' ? d.market_solved.toLocaleString() : null);
+  setKv('e-rew',  fmtK(d.market_rewarded));
+  setKv('e-brt',  typeof d.total_births==='number' ? d.total_births.toLocaleString() : null);
+  setKv('e-dth',  typeof d.total_deaths==='number' ? d.total_deaths.toLocaleString() : null);
+  setKv('e-atpd', typeof atp_d==='number'&&isFinite(atp_d) ? (atp_d>=0?'+':'')+atp_d.toFixed(2)+' ATP' : null);
+
+  /* footer */
+  $('last-tick').textContent = (mode==='live'?'live  ':'archive  ')+'epoch '+(epoch||'')+'  '+new Date().toLocaleTimeString('en-US',{hour12:false});
 }
-async function poll(){
-  try{const r=await fetch('system-state.json?t='+Date.now());if(!r.ok)throw 0;render(await r.json());}
-  catch(e){$('last-update').textContent='fetch failed  retrying  '+new Date().toLocaleTimeString();}
+
+/*  fetch & validate  */
+async function tick() {
+  const url = mode==='live' ? LIVE_URL+'?t='+Date.now() : ARCHIVE_URL+'?t='+Date.now();
+  try {
+    const r = await fetch(url, {cache:'no-store'});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    // basic schema check  must have epoch and population
+    if (typeof d.epoch !== 'number' || typeof d.population !== 'number') throw new Error('schema mismatch');
+    render(d);
+  } catch(e) {
+    // show error in footer but keep last good state visible
+    $('last-tick').textContent = (mode==='live'?'LIVE UNAVAILABLE':'fetch failed')+'  '+e.message+'  '+new Date().toLocaleTimeString();
+    if (mode==='live') {  // auto-fallback suggestion
+      $('last-tick').textContent += '  try ARCHIVE';
+    }
+  }
 }
-poll();
-setInterval(poll,10000);
+
+/*  controls  */
+function setMode(m) {
+  mode = m;
+  $('btn-live').classList.toggle('active', m==='live');
+  $('btn-arch').classList.toggle('active', m==='archive');
+  clearInterval(timer);
+  tick();
+  timer = setInterval(tick, m==='live' ? 1000 : 10000);
+}
+
+function toggleAdv() {
+  advOpen = !advOpen;
+  $('adv-panel').classList.toggle('open', advOpen);
+  $('adv-btn').textContent = advOpen ? 'Advanced ' : 'Advanced ';
+}
+
+/*  start  */
+setMode('archive');
 </script>
 </body>
 </html>
