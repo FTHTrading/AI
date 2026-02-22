@@ -73,247 +73,271 @@ canvas{display:block;width:100%!important;height:100%!important}
 </head>
 <body>
 <div id="app">
-<div id="topbar">
-  <span id="logo"> GENESIS PROTOCOL</span>
-  <span class="sep">|</span>
-  <span id="ep-badge">EP <span id="ep-num"></span></span>
-  <span id="season-badge"></span>
-  <span id="status-pill" class="pill-stable"></span>
-  <span class="sep">|</span>
-  <span id="uptime-val"></span>
-  <span class="sep">|</span>
-  <div id="pop-cap-bar-wrap">
-    <span id="pop-cap-label">POP/CAP</span>
-    <span id="pop-cap-frac"></span>
-    <div id="pop-cap-mini"><div id="pop-cap-fill" style="width:0%"></div></div>
+  <div id="topbar">
+    <span id="logo">&#9670; GENESIS PROTOCOL</span>
+    <span class="sep">|</span>
+    <span id="ep-badge">EP <span id="ep-num"></span></span>
+    <span id="season-badge"></span>
+    <span id="status-pill" class="pill-stable">CONNECTING</span>
+    <span class="sep">|</span>
+    <span id="uptime-val"></span>
+    <span class="sep">|</span>
+    <div id="pop-cap-bar-wrap">
+      <span id="pop-cap-label">POP/CAP</span>
+      <span id="pop-cap-frac"></span>
+      <div id="pop-cap-mini"><div id="pop-cap-fill" style="width:0%"></div></div>
+    </div>
+    <div class="spacer"></div>
+    <div id="dot"></div>
+    <button class="mode-btn active" onclick="setMode('live')" id="btn-live">LIVE 1s</button>
+    <button class="mode-btn" onclick="setMode('archive')" id="btn-arch">ARCHIVE</button>
   </div>
-  <div class="spacer"></div>
-  <div id="dot"></div>
-  <button class="mode-btn active" onclick="setMode('live')" id="btn-live">LIVE 1s</button>
-  <button class="mode-btn" onclick="setMode('archive')" id="btn-arch">ARCHIVE</button>
-</div>
-<div id="cards">
-  <div class="card" id="card-pop">
-    <div class="card-label">Population</div>
-    <div class="card-val c-cyan" id="c-pop"></div>
-    <div class="card-sub" id="c-pop-cap">cap </div>
-    <div class="card-delta" id="c-pop-d"></div>
-    <div class="card-bar" style="background:var(--cyan)"></div>
+  <div id="cards">
+    <div class="card" id="card-pop">
+      <div class="card-label">Population</div>
+      <div class="card-val c-cyan" id="c-pop"></div>
+      <div class="card-sub" id="c-pop-cap">cap -</div>
+      <div class="card-delta" id="c-pop-d"></div>
+      <div class="card-bar" style="background:var(--cyan)"></div>
+    </div>
+    <div class="card" id="card-fit">
+      <div class="card-label">Avg Fitness</div>
+      <div class="card-val" id="c-fit"></div>
+      <div class="card-sub">fitness score [0-1]</div>
+      <div class="card-delta" id="c-fit-d"></div>
+      <div class="card-bar" id="fit-bar" style="background:var(--green)"></div>
+    </div>
+    <div class="card" id="card-atp">
+      <div class="card-label">ATP Supply</div>
+      <div class="card-val c-purple" id="c-atp"></div>
+      <div class="card-sub" id="c-atp-net"></div>
+      <div class="card-delta" id="c-atp-d"></div>
+      <div class="card-bar" style="background:var(--purple)"></div>
+    </div>
+    <div class="card" id="card-mut">
+      <div class="card-label">Mutations / ep</div>
+      <div class="card-val c-amber" id="c-mut"></div>
+      <div class="card-sub" id="c-mut-sub"></div>
+      <div class="card-delta" id="c-net-pop"></div>
+      <div class="card-bar" style="background:var(--amber)"></div>
+    </div>
+    <div class="card" id="card-bd">
+      <div class="card-label">Birth : Death</div>
+      <div class="card-val" id="c-bd"></div>
+      <div class="card-sub" id="c-bd-sub">B / D</div>
+      <div class="card-delta" id="c-bd-life"></div>
+      <div class="card-bar" id="bd-bar" style="background:var(--green)"></div>
+    </div>
   </div>
-  <div class="card" id="card-fit">
-    <div class="card-label">Avg Fitness</div>
-    <div class="card-val" id="c-fit"></div>
-    <div class="card-sub">fitness score [01]</div>
-    <div class="card-delta" id="c-fit-d"></div>
-    <div class="card-bar" id="fit-bar" style="background:var(--green)"></div>
+  <div id="middle">
+    <div class="panel">
+      <div class="panel-title">Population History</div>
+      <div class="spark-wrap"><canvas id="spark-pop"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Fitness History</div>
+      <div class="spark-wrap"><canvas id="spark-fit"></canvas></div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column">
+      <div class="panel-title">Moltbook Launch Readiness</div>
+      <div id="readiness">
+        <div id="ready-score">-%</div>
+        <div id="ready-label">LAUNCH SCORE</div>
+        <div class="ready-bar-bg"><div id="ready-fill" style="width:0%"></div></div>
+        <div class="check-row"><span class="chk" id="chk-stable"></span><span id="chk-stable-l">Status: checking</span></div>
+        <div class="check-row"><span class="chk" id="chk-fit"></span><span id="chk-fit-l">Fitness 0.60</span></div>
+        <div class="check-row"><span class="chk" id="chk-atp"></span><span id="chk-atp-l">ATP growing</span></div>
+        <div class="check-row"><span class="chk" id="chk-pop"></span><span id="chk-pop-l">Population 50</span></div>
+        <div class="check-row"><span class="chk" id="chk-mkt"></span><span id="chk-mkt-l">Market 1000 solved</span></div>
+        <div class="check-row"><span class="chk" id="chk-bal"></span><span id="chk-bal-l">BD ratio 1.0</span></div>
+      </div>
+    </div>
   </div>
-  <div class="card" id="card-atp">
-    <div class="card-label">ATP Supply</div>
-    <div class="card-val c-purple" id="c-atp"></div>
-    <div class="card-sub" id="c-atp-net"></div>
-    <div class="card-delta" id="c-atp-d"></div>
-    <div class="card-bar" style="background:var(--purple)"></div>
-  </div>
-  <div class="card" id="card-mut">
-    <div class="card-label">Mutations / ep</div>
-    <div class="card-val c-amber" id="c-mut"></div>
-    <div class="card-sub" id="c-mut-sub"></div>
-    <div class="card-delta" id="c-net-pop"></div>
-    <div class="card-bar" style="background:var(--amber)"></div>
-  </div>
-  <div class="card" id="card-bd">
-    <div class="card-label">Birth : Death</div>
-    <div class="card-val" id="c-bd"></div>
-    <div class="card-sub" id="c-bd-sub"> B /  D</div>
-    <div class="card-delta" id="c-bd-life"></div>
-    <div class="card-bar" id="bd-bar" style="background:var(--green)"></div>
-  </div>
-</div>
-<div id="middle">
-  <div class="panel">
-    <div class="panel-title">Population History</div>
-    <div class="spark-wrap"><canvas id="spark-pop"></canvas></div>
-  </div>
-  <div class="panel">
-    <div class="panel-title">Fitness History</div>
-    <div class="spark-wrap"><canvas id="spark-fit"></canvas></div>
-  </div>
-  <div class="panel" style="display:flex;flex-direction:column">
-    <div class="panel-title"> Moltbook Launch Readiness</div>
-    <div id="readiness">
-      <div id="ready-score">%</div>
-      <div id="ready-label">LAUNCH SCORE</div>
-      <div class="ready-bar-bg"><div id="ready-fill" style="width:0%"></div></div>
-      <div class="check-row"><span class="chk" id="chk-stable"></span><span id="chk-stable-l">Status: checking</span></div>
-      <div class="check-row"><span class="chk" id="chk-fit"></span><span id="chk-fit-l">Fitness  0.60</span></div>
-      <div class="check-row"><span class="chk" id="chk-atp"></span><span id="chk-atp-l">ATP growing</span></div>
-      <div class="check-row"><span class="chk" id="chk-pop"></span><span id="chk-pop-l">Population  50</span></div>
-      <div class="check-row"><span class="chk" id="chk-mkt"></span><span id="chk-mkt-l">Market  1,000 solved</span></div>
-      <div class="check-row"><span class="chk" id="chk-bal"></span><span id="chk-bal-l">B:D ratio  1.0</span></div>
+  <div id="bottom">
+    <div class="bp" id="bp-season">
+      <div class="bp-title">Seasonal Ecology</div>
+      <div id="season-desc"></div>
+      <div id="eco-tag-wrap"></div>
+      <div class="eco-row"><span>Fertility cost</span><span class="eco-val" id="eco-fert"></span></div>
+      <div class="eco-row"><span>Mutation pressure</span><span class="eco-val" id="eco-mut"></span></div>
+      <div class="eco-row"><span>Treasury mode</span><span class="eco-val" id="eco-treas"></span></div>
+    </div>
+    <div class="bp">
+      <div class="bp-title">Role Distribution</div>
+      <div id="role-bars"></div>
+    </div>
+    <div class="bp">
+      <div class="bp-title">Market</div>
+      <div class="stat-grid" id="market-stats"></div>
+    </div>
+    <div class="bp">
+      <div class="bp-title">Treasury</div>
+      <div class="stat-grid" id="treasury-stats"></div>
     </div>
   </div>
 </div>
-<div id="bottom">
-  <div class="bp" id="bp-season">
-    <div class="bp-title">Seasonal Ecology</div>
-    <div id="season-desc"></div>
-    <div id="eco-tag-wrap"></div>
-    <div class="eco-row"><span>Fertility cost</span><span class="eco-val" id="eco-fert"></span></div>
-    <div class="eco-row"><span>Mutation pressure</span><span class="eco-val" id="eco-mut"></span></div>
-    <div class="eco-row"><span>Treasury mode</span><span class="eco-val" id="eco-treas"></span></div>
-  </div>
-  <div class="bp">
-    <div class="bp-title">Role Distribution</div>
-    <div id="role-bars"></div>
-  </div>
-  <div class="bp">
-    <div class="bp-title">Market</div>
-    <div class="stat-grid" id="market-stats"></div>
-  </div>
-  <div class="bp">
-    <div class="bp-title">Treasury</div>
-    <div class="stat-grid" id="treasury-stats"></div>
-  </div>
-</div>
-</div>
 <script>
-const LIVE_URL='/status';
-const ARCH_URL='system-state.json';
-const MAX_SPARK=200;
-const ROLE_COLORS={Optimizer:'#38bdf8',Executor:'#4ade80',Archivist:'#a78bfa',Communicator:'#fbbf24',Strategist:'#f87171'};
-const SEASON_CFG={
-  Spring:{bg:'#0f3a20',color:'#4ade80',label:' SPRING',fert:'40% repro cost',mut:'Baseline',treas:'Crisis + stipends'},
-  Summer:{bg:'#3a300a',color:'#fbbf24',label:' SUMMER',fert:'Baseline',mut:'+25% mutation surge',treas:'Normal'},
-  Autumn:{bg:'#1a1a1a',color:'#94a3b8',label:' AUTUMN',fert:'Baseline',mut:'Baseline (stable)',treas:'Normal'},
-  Winter:{bg:'#0a1a3a',color:'#60a5fa',label:' WINTER',fert:'+20% repro friction',mut:'10% suppressed',treas:'Force-release'},
+var LIVE_URL = '/status';
+var ARCH_URL = 'system-state.json';
+var MAX_SPARK = 200;
+var ROLE_COLORS = {Optimizer:'#38bdf8',Executor:'#4ade80',Archivist:'#a78bfa',Communicator:'#fbbf24',Strategist:'#f87171'};
+var SEASON_CFG = {
+  Spring:{bg:'#0f3a20',color:'#4ade80',label:'SPRING',fert:'40% repro cost',mut:'Baseline',treas:'Crisis + stipends'},
+  Summer:{bg:'#3a300a',color:'#fbbf24',label:'SUMMER',fert:'Baseline',mut:'+25% mutation surge',treas:'Normal'},
+  Autumn:{bg:'#1a1a1a',color:'#94a3b8',label:'AUTUMN',fert:'Baseline',mut:'Baseline (stable)',treas:'Normal'},
+  Winter:{bg:'#0a1a3a',color:'#60a5fa',label:'WINTER',fert:'+20% repro friction',mut:'10% suppressed',treas:'Force-release'}
 };
-let mode='live',sparkPop=[],sparkFit=[],timer=null;
-function fmt(v,d=0){return typeof v==='number'&&isFinite(v)?v.toFixed(d):''}
-function fmtK(v){if(typeof v!=='number'||!isFinite(v))return '';return v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0)}
-function uptimeFmt(s){if(typeof s!=='number')return '';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return h>0?`${h}h ${String(m).padStart(2,'0')}m`:`${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`}
+var mode='live', sparkPop=[], sparkFit=[], timer=null;
+
+function fmt(v,d){d=d||0;return (typeof v==='number'&&isFinite(v))?v.toFixed(d):'';}
+function fmtK(v){if(typeof v!=='number'||!isFinite(v))return '';return v>=1000?(v/1000).toFixed(1)+'k':v.toFixed(0);}
+function uptimeFmt(s){if(typeof s!=='number')return '';var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return h>0?h+'h '+String(m).padStart(2,'0')+'m':String(m).padStart(2,'0')+':'+String(sc).padStart(2,'0');}
+
 function spark(id,vals,color,mn,mx){
-  const cv=document.getElementById(id);if(!cv||vals.length<2)return;
-  const pr=window.devicePixelRatio||1,w=cv.offsetWidth,h=cv.offsetHeight;
-  if(!w||!h)return;cv.width=w*pr;cv.height=h*pr;
-  const ctx=cv.getContext('2d');ctx.scale(pr,pr);
-  const lo=mn??Math.min(...vals),hi=mx??Math.max(...vals),range=hi-lo||1,pad=4;
-  const grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,color+'55');grad.addColorStop(1,color+'00');
+  var cv=document.getElementById(id);
+  if(!cv||vals.length<2)return;
+  var pr=window.devicePixelRatio||1,w=cv.offsetWidth,h=cv.offsetHeight;
+  if(!w||!h)return;
+  cv.width=w*pr;cv.height=h*pr;
+  var ctx=cv.getContext('2d');ctx.scale(pr,pr);
+  var lo=(mn!=null)?mn:Math.min.apply(null,vals),hi=(mx!=null)?mx:Math.max.apply(null,vals),range=hi-lo||1,pad=4;
+  var grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,color+'55');grad.addColorStop(1,color+'00');
   ctx.clearRect(0,0,w,h);
-  const pts=vals.map((v,i)=>({x:pad+(i/(vals.length-1))*(w-2*pad),y:pad+(1-(v-lo)/range)*(h-2*pad)}));
-  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  var pts=vals.map(function(v,i){return {x:pad+(i/(vals.length-1))*(w-2*pad),y:pad+(1-(v-lo)/range)*(h-2*pad)};});
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(var i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
   ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();
   ctx.lineTo(pts[pts.length-1].x,h-pad);ctx.lineTo(pts[0].x,h-pad);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-  const lp=pts[pts.length-1];ctx.beginPath();ctx.arc(lp.x,lp.y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
-  ctx.fillStyle=color;ctx.font=`bold ${Math.max(9,Math.round(h*.18))}px Segoe UI,sans-serif`;ctx.textAlign='right';
-  ctx.fillText(fmt(vals[vals.length-1],vals[vals.length-1]>10?1:3),w-pad,pad+10);
+  var lp=pts[pts.length-1];ctx.beginPath();ctx.arc(lp.x,lp.y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+  var lv=vals[vals.length-1];ctx.fillStyle=color;ctx.font='bold '+Math.max(9,Math.round(h*.18))+'px Segoe UI,sans-serif';ctx.textAlign='right';
+  ctx.fillText(fmt(lv,lv>10?1:3),w-pad,pad+10);
 }
+
 function setChk(id,lid,ok,warn,lok,lwarn,lbad){
-  const e=document.getElementById(id),l=document.getElementById(lid);
-  if(ok){e.className='chk chk-ok';e.textContent='';l.style.color='var(--green)';l.textContent=lok}
-  else if(warn){e.className='chk chk-warn';e.textContent='';l.style.color='var(--amber)';l.textContent=lwarn}
-  else{e.className='chk chk-bad';e.textContent='';l.style.color='var(--red)';l.textContent=lbad}
+  var e=document.getElementById(id),l=document.getElementById(lid);
+  if(!e||!l)return;
+  if(ok){e.className='chk chk-ok';e.textContent='v';l.style.color='var(--green)';l.textContent=lok;}
+  else if(warn){e.className='chk chk-warn';e.textContent='!';l.style.color='var(--amber)';l.textContent=lwarn||'';}
+  else{e.className='chk chk-bad';e.textContent='x';l.style.color='var(--red)';l.textContent=lbad;}
 }
+
 function render(d){
   document.getElementById('ep-num').textContent=d.epoch;
-  const season=d.season||'Autumn',sc=SEASON_CFG[season]||SEASON_CFG.Autumn;
-  const sb=document.getElementById('season-badge');
+  var season=d.season||'Autumn',sc=SEASON_CFG[season]||SEASON_CFG.Autumn;
+  var sb=document.getElementById('season-badge');
   sb.textContent=sc.label;sb.style.background=sc.bg;sb.style.color=sc.color;sb.style.border='1px solid '+sc.color;
-  const risks=Array.isArray(d.risks)?d.risks:[];
-  const stable=risks.includes('STABLE')||risks.includes('Stable')||risks.length===0;
-  const crit=risks.some(r=>r.includes('CRASH')||r.includes('MONO'));
-  const pill=document.getElementById('status-pill');
+  var risks=Array.isArray(d.risks)?d.risks:[];
+  var stable=risks.indexOf('STABLE')>=0||risks.indexOf('Stable')>=0||risks.length===0;
+  var crit=risks.some(function(r){return r.indexOf('CRASH')>=0||r.indexOf('MONO')>=0;});
+  var pill=document.getElementById('status-pill');
   pill.textContent=stable?'STABLE':risks[0];pill.className='pill-'+(crit?'crit':stable?'stable':'warn');
-  document.getElementById('uptime-val').textContent=' '+uptimeFmt(d.uptime_seconds);
-  const pop=d.population,cap=typeof d.pop_cap==='number'?d.pop_cap:null;
-  const rat=cap?pop/cap:0;
-  const pcf=document.getElementById('pop-cap-frac');
-  pcf.textContent=cap?`${pop}/${cap}`:`${pop}`;
-  pcf.style.color=cap&&pop>cap*1.5?'var(--red)':cap&&pop>cap?'var(--amber)':'var(--green)';
-  document.getElementById('pop-cap-fill').style.width=Math.min(rat*33.3,100)+'%';
-  document.getElementById('pop-cap-fill').style.background=cap&&pop>cap*1.5?'var(--red)':cap&&pop>cap?'var(--amber)':'var(--green)';
-  const ed=d.epoch_diff||{},win=typeof ed.window==='number'?ed.window:10;
-  // Pop card
+  document.getElementById('uptime-val').textContent=uptimeFmt(d.uptime_seconds);
+  var pop=d.population,cap=(typeof d.pop_cap==='number')?d.pop_cap:null,rat=cap?pop/cap:0;
+  var pcf=document.getElementById('pop-cap-frac');
+  pcf.textContent=cap?(pop+'/'+cap):String(pop);
+  pcf.style.color=(cap&&pop>cap*1.5)?'var(--red)':(cap&&pop>cap)?'var(--amber)':'var(--green)';
+  var fillEl=document.getElementById('pop-cap-fill');
+  fillEl.style.width=Math.min(rat*33.3,100)+'%';
+  fillEl.style.background=(cap&&pop>cap*1.5)?'var(--red)':(cap&&pop>cap)?'var(--amber)':'var(--green)';
+  var ed=d.epoch_diff||{},win=(typeof ed.window==='number')?ed.window:10;
   document.getElementById('c-pop').textContent=pop;
-  document.getElementById('c-pop-cap').textContent=cap?`cap ${cap}  ${Math.round(rat*100)}% utilisation`:'live population';
-  const pd=ed.population_delta;
-  const pde=document.getElementById('c-pop-d');
-  pde.textContent=(typeof pd==='number'?`${pd>=0?'+':''}${pd} Δ${win}ep  `:'')+'net +'+(( d.total_births||0)-(d.total_deaths||0));
+  document.getElementById('c-pop-cap').textContent=cap?('cap '+cap+'  '+Math.round(rat*100)+'% util'):'live population';
+  var pd=ed.population_delta;
+  var pde=document.getElementById('c-pop-d');
+  pde.textContent=(typeof pd==='number'?((pd>=0?'+':'')+pd+' d'+win+'ep  '):'')+'net '+((d.total_births||0)-(d.total_deaths||0));
   pde.className='card-delta '+(typeof pd==='number'&&pd>0?'up':typeof pd==='number'&&pd<0?'dn':'flat');
   document.getElementById('card-pop').className='card'+(cap&&pop>cap*1.5?' glow-red':cap&&pop>cap?' glow-amber':'');
-  // Fitness card
-  const fv=typeof d.avg_fitness==='number'?d.avg_fitness:null;
-  const fitEl=document.getElementById('c-fit');fitEl.textContent=fv!==null?fv.toFixed(4):'';
-  const fc=fv===null?'var(--sub)':fv>=0.7?'var(--green)':fv>=0.5?'var(--amber)':'var(--red)';
+  var fv=(typeof d.avg_fitness==='number')?d.avg_fitness:null;
+  var fitEl=document.getElementById('c-fit');fitEl.textContent=fv!==null?fv.toFixed(4):'';
+  var fc=fv===null?'var(--sub)':fv>=0.7?'var(--green)':fv>=0.5?'var(--amber)':'var(--red)';
   fitEl.style.color=fc;document.getElementById('fit-bar').style.background=fc;
-  const fd=ed.fitness_delta;
-  const fde=document.getElementById('c-fit-d');
-  fde.textContent=typeof fd==='number'?`${fd>=0?'+':''}${fd.toFixed(5)} Δ${win}ep`:'';
+  var fd=ed.fitness_delta;
+  var fde=document.getElementById('c-fit-d');
+  fde.textContent=typeof fd==='number'?((fd>=0?'+':'')+fd.toFixed(5)+' d'+win+'ep'):'';
   fde.className='card-delta '+(typeof fd==='number'&&fd>0?'up':typeof fd==='number'&&fd<0?'dn':'flat');
-  // ATP card
-  const atp=d.total_atp;
+  var atp=d.total_atp;
   document.getElementById('c-atp').textContent=typeof atp==='number'?atp.toFixed(1):'';
-  const atpD=ed.atp_delta;const atpUp=typeof atpD==='number'&&atpD>0;
-  document.getElementById('c-atp-d').textContent=typeof atpD==='number'?`${atpUp?'+':''}${atpD.toFixed(2)} / ${win}ep`:'';
+  var atpD=ed.atp_delta,atpUp=typeof atpD==='number'&&atpD>0;
+  document.getElementById('c-atp-d').textContent=typeof atpD==='number'?((atpUp?'+':'')+atpD.toFixed(2)+' / '+win+'ep'):'';
   document.getElementById('c-atp-d').className='card-delta '+(atpUp?'up':typeof atpD==='number'&&atpD<0?'dn':'flat');
-  document.getElementById('c-atp-net').textContent=`treasury ${fmt(d.treasury_balance,3)}  collected ${fmtK(d.treasury_collected)}`;
-  document.getElementById('card-atp').className='card'+(risks.includes('ATP_CONCENTRATION')?' glow-amber':'');
-  // Mutations card
-  const muts=ed.mutations_in_window;const mpe=typeof muts==='number'&&win?muts/win:null;
+  document.getElementById('c-atp-net').textContent='treasury '+fmt(d.treasury_balance,3)+'  collected '+fmtK(d.treasury_collected);
+  document.getElementById('card-atp').className='card'+(risks.indexOf('ATP_CONCENTRATION')>=0?' glow-amber':'');
+  var muts=ed.mutations_in_window,mpe=(typeof muts==='number'&&win)?muts/win:null;
   document.getElementById('c-mut').textContent=mpe!==null?mpe.toFixed(1):'';
-  document.getElementById('c-mut-sub').textContent=typeof muts==='number'?`${muts} in ${win}ep`:'';
-  document.getElementById('c-net-pop').textContent=`lifetime: +${(d.total_births||0)-(d.total_deaths||0)} (${d.total_births||0}B ${d.total_deaths||0}D)`;
-  // B:D card
-  const b=ed.births_in_window||0,dths=ed.deaths_in_window||0;
-  const bdr=dths>0?b/dths:(b>0?Infinity:1);
-  const bde=document.getElementById('c-bd');
-  bde.textContent=dths>0?bdr.toFixed(2):(b>0?'':'');
-  const bdc=b>dths?'var(--green)':b<dths?'var(--red)':'var(--sub)';
+  document.getElementById('c-mut-sub').textContent=typeof muts==='number'?(muts+' in '+win+'ep'):'';
+  document.getElementById('c-net-pop').textContent='lifetime: '+((d.total_births||0)-(d.total_deaths||0))+' ('+(d.total_births||0)+'B '+(d.total_deaths||0)+'D)';
+  var b=ed.births_in_window||0,dths=ed.deaths_in_window||0;
+  var bdr=dths>0?b/dths:(b>0?999:1);
+  var bde=document.getElementById('c-bd');
+  bde.textContent=dths>0?bdr.toFixed(2):(b>0?'inf':'1.0');
+  var bdc=b>dths?'var(--green)':b<dths?'var(--red)':'var(--sub)';
   bde.style.color=bdc;document.getElementById('bd-bar').style.background=bdc;
-  document.getElementById('c-bd-sub').textContent=`${b}B / ${dths}D (${win}ep)`;
-  document.getElementById('c-bd-life').textContent=` ${d.total_births||0} born   ${d.total_deaths||0} died`;
-  // Sparklines
-  if(typeof pop==='number')sparkPop.push(pop);if(fv!==null)sparkFit.push(fv);
-  if(sparkPop.length>MAX_SPARK)sparkPop.shift();if(sparkFit.length>MAX_SPARK)sparkFit.shift();
-  spark('spark-pop',sparkPop,'#38bdf8');spark('spark-fit',sparkFit,fc,0,1);
-  // Launch readiness
-  const r1=stable&&!crit;
-  const r2=fv!==null&&fv>=0.6,r2w=fv!==null&&fv>=0.55&&fv<0.6;
-  const r3=typeof atpD==='number'&&atpD>=0,r3w=typeof atpD==='number'&&atpD>=-20&&atpD<0;
-  const r4=pop>=50;const r5=(d.market_solved||0)>=1000;
-  const r6=b>=dths,r6w=b+dths===0;
-  const score=[r1,r2||r2w,r3||r3w,r4,r5,r6||r6w].filter(Boolean).length;
-  const pct=Math.round(score/6*100);
-  const rc=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
+  document.getElementById('c-bd-sub').textContent=b+'B / '+dths+'D ('+win+'ep)';
+  document.getElementById('c-bd-life').textContent=(d.total_births||0)+' born  '+(d.total_deaths||0)+' died';
+  if(typeof pop==='number')sparkPop.push(pop);
+  if(fv!==null)sparkFit.push(fv);
+  if(sparkPop.length>MAX_SPARK)sparkPop.shift();
+  if(sparkFit.length>MAX_SPARK)sparkFit.shift();
+  spark('spark-pop',sparkPop,'#38bdf8');
+  spark('spark-fit',sparkFit,fc,0,1);
+  var r1=stable&&!crit;
+  var r2=fv!==null&&fv>=0.6,r2w=fv!==null&&fv>=0.55&&fv<0.6;
+  var r3=typeof atpD==='number'&&atpD>=0,r3w=typeof atpD==='number'&&atpD>-20&&atpD<0;
+  var r4=pop>=50,r5=(d.market_solved||0)>=1000,r6=b>=dths,r6w=b+dths===0;
+  var score=[r1,r2||r2w,r3||r3w,r4,r5,r6||r6w].filter(Boolean).length;
+  var pct=Math.round(score/6*100);
+  var rc=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
   document.getElementById('ready-score').textContent=pct+'%';
   document.getElementById('ready-score').style.color=rc;
-  document.getElementById('ready-fill').style.width=pct+'%';document.getElementById('ready-fill').style.background=rc;
-  document.getElementById('ready-label').textContent=pct>=80?' LAUNCH READY':pct>=50?' PREP NEEDED':' NOT READY';
-  setChk('chk-stable','chk-stable-l',r1,false,`Status STABLE `,null,`Risk: ${risks[0]||'?'}`);
-  setChk('chk-fit','chk-fit-l',r2,r2w,`Fitness ${fv!==null?fv.toFixed(3):'?'} `,`Fitness ${fv!==null?fv.toFixed(3):'?'} (warn)`,`Fitness ${fv!==null?fv.toFixed(3):'?'} low`);
-  setChk('chk-atp','chk-atp-l',r3,r3w,`ATP ${atpD!==undefined?(atpD>=0?'+':'')+atpD.toFixed(1):'?'} growing`,`ATP ${atpD!==undefined?atpD.toFixed(1):'?'} declining (caution)`,`ATP ${atpD!==undefined?atpD.toFixed(1):'?'} falling fast`);
-  setChk('chk-pop','chk-pop-l',r4,false,`Population ${pop} `,null,`Population ${pop} (need 50)`);
-  setChk('chk-mkt','chk-mkt-l',r5,false,`Market ${fmtK(d.market_solved||0)} solved `,null,`Market ${fmtK(d.market_solved||0)} (need 1k)`);
-  setChk('chk-bal','chk-bal-l',r6,r6w,`B:D ${b}:${dths} healthy`,`B:D flat this window`,`Deaths > births`);
-  // Season panel
-  const sd=document.getElementById('season-desc');sd.textContent=season;sd.style.color=sc.color;
-  document.getElementById('eco-tag-wrap').innerHTML=`<span class="eco-tag" style="background:${sc.bg};color:${sc.color};border:1px solid ${sc.color}">${sc.label}</span>`;
+  document.getElementById('ready-fill').style.width=pct+'%';
+  document.getElementById('ready-fill').style.background=rc;
+  document.getElementById('ready-label').textContent=pct>=80?'LAUNCH READY':pct>=50?'PREP NEEDED':'NOT READY';
+  var fitStr=fv!==null?fv.toFixed(3):'?';
+  var atpStr=typeof atpD==='number'?((atpD>=0?'+':'')+atpD.toFixed(1)):'?';
+  setChk('chk-stable','chk-stable-l',r1,false,'Status STABLE',null,'Risk: '+(risks[0]||'?'));
+  setChk('chk-fit','chk-fit-l',r2,r2w,'Fitness '+fitStr,'Fitness '+fitStr+' (warn)','Fitness '+fitStr+' low');
+  setChk('chk-atp','chk-atp-l',r3,r3w,'ATP '+atpStr+' growing','ATP '+atpStr+' declining','ATP '+atpStr+' falling fast');
+  setChk('chk-pop','chk-pop-l',r4,false,'Population '+pop,null,'Population '+pop+' (need 50)');
+  setChk('chk-mkt','chk-mkt-l',r5,false,'Market '+fmtK(d.market_solved||0)+' solved',null,'Market '+fmtK(d.market_solved||0)+' (need 1k)');
+  setChk('chk-bal','chk-bal-l',r6,r6w,'B:D '+b+':'+dths+' healthy','B:D flat this window','Deaths > births');
+  document.getElementById('season-desc').textContent=season;
+  document.getElementById('season-desc').style.color=sc.color;
+  document.getElementById('eco-tag-wrap').innerHTML='<span class="eco-tag" style="background:'+sc.bg+';color:'+sc.color+';border:1px solid '+sc.color+'">'+sc.label+'</span>';
   document.getElementById('eco-fert').textContent=sc.fert;
   document.getElementById('eco-mut').textContent=sc.mut;
   document.getElementById('eco-treas').textContent=sc.treas;
-  // Roles
-  const roles=d.role_distribution||d.roles||{};
-  const tot=Object.values(roles).reduce((a,b2)=>a+b2,0)||1;
-  const order=['Optimizer','Executor','Archivist','Communicator','Strategist'];
-  document.getElementById('role-bars').innerHTML=order.map(r=>{const c2=roles[r]||0;const p2=Math.round(c2/tot*100);const cl=ROLE_COLORS[r]||'#94a3b8';return `<div class="role-row"><span class="role-name">${r}</span><div class="role-bar-bg"><div class="role-bar" style="width:${p2}%;background:${cl}"></div></div><span class="role-count">${c2}</span></div>`;}).join('');
-  // Market
-  document.getElementById('market-stats').innerHTML=`<div class="stat-item"><div class="stat-l">Solved</div><div class="stat-v">${fmtK(d.market_solved)}</div></div><div class="stat-item"><div class="stat-l">ATP Rewarded</div><div class="stat-v">${fmtK(d.market_rewarded)}</div></div><div class="stat-item"><div class="stat-l">Total Births</div><div class="stat-v">${d.total_births||0}</div></div><div class="stat-item"><div class="stat-l">Total Deaths</div><div class="stat-v">${d.total_deaths||0}</div></div>`;
-  // Treasury
-  document.getElementById('treasury-stats').innerHTML=`<div class="stat-item"><div class="stat-l">Reserve</div><div class="stat-v" style="color:${(d.treasury_balance||0)>0.5?'var(--green)':'var(--amber)'}">${fmt(d.treasury_balance,3)}</div></div><div class="stat-item"><div class="stat-l">ATP Δ/window</div><div class="stat-v" style="color:${r3?'var(--green)':r3w?'var(--amber)':'var(--red)'}">${typeof atpD==='number'?(atpD>=0?'+':'')+atpD.toFixed(1):''}</div></div><div class="stat-item"><div class="stat-l">Collected</div><div class="stat-v">${fmtK(d.treasury_collected)}</div></div><div class="stat-item"><div class="stat-l">Distributed</div><div class="stat-v">${fmtK(d.treasury_distributed)}</div></div>`;
+  var roles=d.role_distribution||d.roles||{};
+  var tot=Object.values(roles).reduce(function(a,v){return a+v;},0)||1;
+  var order=['Optimizer','Executor','Archivist','Communicator','Strategist'];
+  document.getElementById('role-bars').innerHTML=order.map(function(rn){
+    var c2=roles[rn]||0,p2=Math.round(c2/tot*100),cl=ROLE_COLORS[rn]||'#94a3b8';
+    return '<div class="role-row"><span class="role-name">'+rn+'</span><div class="role-bar-bg"><div class="role-bar" style="width:'+p2+'%;background:'+cl+'"></div></div><span class="role-count">'+c2+'</span></div>';
+  }).join('');
+  document.getElementById('market-stats').innerHTML=
+    '<div class="stat-item"><div class="stat-l">Solved</div><div class="stat-v">'+fmtK(d.market_solved)+'</div></div>'+
+    '<div class="stat-item"><div class="stat-l">ATP Rewarded</div><div class="stat-v">'+fmtK(d.market_rewarded)+'</div></div>'+
+    '<div class="stat-item"><div class="stat-l">Total Births</div><div class="stat-v">'+(d.total_births||0)+'</div></div>'+
+    '<div class="stat-item"><div class="stat-l">Total Deaths</div><div class="stat-v">'+(d.total_deaths||0)+'</div></div>';
+  var tCol=(d.treasury_balance||0)>0.5?'var(--green)':'var(--amber)';
+  var atpDCol=r3?'var(--green)':r3w?'var(--amber)':'var(--red)';
+  document.getElementById('treasury-stats').innerHTML=
+    '<div class="stat-item"><div class="stat-l">Reserve</div><div class="stat-v" style="color:'+tCol+'">'+fmt(d.treasury_balance,3)+'</div></div>'+
+    '<div class="stat-item"><div class="stat-l">ATP d/window</div><div class="stat-v" style="color:'+atpDCol+'">'+atpStr+'</div></div>'+
+    '<div class="stat-item"><div class="stat-l">Collected</div><div class="stat-v">'+fmtK(d.treasury_collected)+'</div></div>'+
+    '<div class="stat-item"><div class="stat-l">Distributed</div><div class="stat-v">'+fmtK(d.treasury_distributed)+'</div></div>';
 }
+
 function tick(){
-  const url=mode==='live'?LIVE_URL:ARCH_URL+'?t='+Date.now();
-  fetch(url,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{if(typeof d.epoch!=='number')throw new Error('bad schema');render(d)}).catch(e=>{if(mode==='live'){document.getElementById('status-pill').textContent='OFFLINE';document.getElementById('status-pill').className='pill-crit'}console.warn(e)});
+  var url=mode==='live'?LIVE_URL:ARCH_URL+'?t='+Date.now();
+  fetch(url,{cache:'no-store'})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(d){if(typeof d.epoch!=='number')throw new Error('bad schema');render(d);})
+    .catch(function(e){
+      if(mode==='live'){document.getElementById('status-pill').textContent='OFFLINE';document.getElementById('status-pill').className='pill-crit';}
+      console.error('tick:',e);
+    });
 }
+
 function setMode(m){
   mode=m;clearInterval(timer);
   document.getElementById('btn-live').classList.toggle('active',m==='live');
@@ -322,7 +346,13 @@ function setMode(m){
   document.getElementById('dot').style.boxShadow=m==='live'?'0 0 6px var(--green)':'0 0 6px var(--amber)';
   tick();timer=setInterval(tick,m==='live'?1000:10000);
 }
-window.addEventListener('resize',()=>{spark('spark-pop',sparkPop,'#38bdf8');const fv=sparkFit[sparkFit.length-1];const c=fv===undefined?'var(--sub)':fv>=0.7?'var(--green)':fv>=0.5?'var(--amber)':'var(--red)';spark('spark-fit',sparkFit,c,0,1)});
+
+window.addEventListener('resize',function(){
+  spark('spark-pop',sparkPop,'#38bdf8');
+  var lf=sparkFit[sparkFit.length-1];
+  var fc2=lf===undefined?'var(--sub)':lf>=0.7?'var(--green)':lf>=0.5?'var(--amber)':'var(--red)';
+  spark('spark-fit',sparkFit,fc2,0,1);
+});
 setMode('live');
 </script>
 </body>
