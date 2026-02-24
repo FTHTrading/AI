@@ -445,6 +445,7 @@ mod tests {
             base_pressure_override: None,
             mutation_rate_override: None,
             cortex_enabled_override: None,
+            base_stress_override: None,
             base_seed: 42,
         };
         let trial = ExperimentRunner::run_trial(&config, 0, 0, 0.00002, 42);
@@ -467,6 +468,7 @@ mod tests {
             base_pressure_override: None,
             mutation_rate_override: None,
             cortex_enabled_override: None,
+            base_stress_override: None,
             base_seed: 100,
         };
         let result = ExperimentRunner::run(&config);
@@ -493,6 +495,7 @@ mod tests {
             base_pressure_override: None,
             mutation_rate_override: None,
             cortex_enabled_override: None,
+            base_stress_override: None,
             base_seed: 999,
         };
         let result = ExperimentRunner::run(&config);
@@ -538,6 +541,7 @@ mod tests {
             base_pressure_override: None,
             mutation_rate_override: None,
             cortex_enabled_override: None,
+            base_stress_override: None,
             base_seed: 42,
         };
         let result = ExperimentRunner::run(&config);

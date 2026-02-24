@@ -1,5 +1,5 @@
 {
-  "manifest_id": "GEN-EXP-FD7E3B3D34E5",
+  "manifest_id": "GEN-EXP-56BD5EEC14DC",
   "config": {
     "name": "Entropy Sweep: Cost of Existing",
     "hypothesis": "Higher entropy coefficients cause earlier civilization collapse and higher terminal inequality",
@@ -27,17 +27,17 @@
     "base_preset": "EarthPrime",
     "base_seed": 20260222
   },
-  "created_at": "2026-02-22T22:41:29.628877400Z",
+  "created_at": "2026-02-24T01:40:00.353443600Z",
   "result_hash": "495119178d24e2bc61c567af12df5c2339b131f775d5096c485cd8a8ca13beaa",
-  "manifest_hash": "d6b43d3c6d666250c9bc211a8a223a78debffefa4c50ea1b0e976283bedfc537",
+  "manifest_hash": "038d80e368feef91bbac9f9d267b727914896ad60d1eaaca689cca26fd1b50f1",
   "total_worlds": 200,
   "total_epochs": 100000,
-  "duration_ms": 8298,
+  "duration_ms": 7302,
   "findings": [
     "No collapses observed across entire entropy range",
-    "Gini coefficient moves from 0.5607 to 0.5782 (+3.1%) across entropy range",
-    "Mean population declines from 48.0 to 46.8 as entropy increases",
-    "Mean fitness shifts from 0.5423 to 0.5456 under increasing entropy pressure"
+    "Gini coefficient moves from 0.5452 to 0.5679 (+4.2%) across entropy range",
+    "Mean population declines from 48.4 to 47.2 as entropy increases",
+    "Mean fitness shifts from 0.5404 to 0.5381 under increasing entropy pressure"
   ],
   "protocol_version": "0.1.0"
 }

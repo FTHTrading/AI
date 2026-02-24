@@ -1,0 +1,60 @@
+{
+  "manifest_id": "GEN-EXP-994604AACBE2",
+  "config": {
+    "name": "Basal Inversion: The Starvation",
+    "hypothesis": "The Oxygen Attack targets reproduction. The Starvation targets existence itself. By scaling basal metabolic cost from 1x (0.15 ATP) to 10x (1.5 ATP), agents burn through ATP faster than they can earn. At some multiplier, chronic energy deficit causes population decay and eventual collapse.",
+    "sweep": {
+      "variable": "BasalCostMultiplier",
+      "start": 1.0,
+      "end": 10.0,
+      "step": 1.0
+    },
+    "runs_per_step": 20,
+    "epochs_per_run": 500,
+    "metrics": [
+      "FinalPopulation",
+      "Collapsed",
+      "SurvivalEpochs",
+      "MeanPopulation",
+      "PopulationVolatility",
+      "MeanFitness",
+      "MaxFitness",
+      "GiniCoefficient",
+      "TotalBirths",
+      "TotalDeaths",
+      "BirthDeathRatio",
+      "TotalCatastropheDeaths",
+      "TotalEntropyBurned",
+      "TreasuryRatio",
+      "RoleEntropy",
+      "TotalTraitMutations",
+      "TotalPressureMutations",
+      "TotalImmuneThreats"
+    ],
+    "base_preset": "EarthPrime",
+    "base_pressure_override": {
+      "soft_cap": 180,
+      "entropy_coeff": 0.0001,
+      "catastrophe_base_prob": 0.03,
+      "catastrophe_pop_scale": 0.00001,
+      "gini_wealth_tax_threshold": 1.0,
+      "gini_wealth_tax_rate": 0.0,
+      "treasury_overflow_threshold": 1.0
+    },
+    "mutation_rate_override": 0.0,
+    "cortex_enabled_override": false,
+    "base_seed": 20260224
+  },
+  "created_at": "2026-02-24T02:10:49.134003200Z",
+  "result_hash": "cfbaa9bf48175a03bddcfbc6f5c89b0a89782dd69d074c6a95f411798933c171",
+  "manifest_hash": "6eef843551da3b446d0e74f4a341ae01b19ebd1640bf23a51977928c00a8d7f1",
+  "total_worlds": 200,
+  "total_epochs": 100000,
+  "duration_ms": 5148,
+  "findings": [
+    "NO COLLAPSE: 0 of 200 worlds survived Starvation (basal cost 1x-10x)",
+    "Structural architecture sustains the organism under metabolic stress.",
+    "The boundary, if it exists, lies beyond the tested parameter space."
+  ],
+  "protocol_version": "0.1.0"
+}

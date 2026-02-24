@@ -1,5 +1,5 @@
 {
-  "manifest_id": "GEN-EXP-CE7B415B6A80",
+  "manifest_id": "GEN-EXP-FA6E4AAE4553",
   "config": {
     "name": "Evolution Forbidden: Survival Without Adaptation",
     "hypothesis": "Without mutation (base_rate=0.0), civilizations lose resilience under catastrophe pressure — collapse rates increase relative to the standard catastrophe resilience experiment, proving that adaptation is a necessary survival mechanism",
@@ -31,18 +31,18 @@
     "mutation_rate_override": 0.0,
     "base_seed": 20260222
   },
-  "created_at": "2026-02-24T01:14:10.926834Z",
+  "created_at": "2026-02-24T01:40:21.225390Z",
   "result_hash": "7e5c1acd0b8b69287a89582e4c44a7b09bf2ea6f4f52ef048d174be87c4b224f",
-  "manifest_hash": "4d96477c6467dc760dce52997fca296bf6ec68745de27496fecf1cb810b644bb",
+  "manifest_hash": "eb9db2067ce069655a5f5e7e932c2a97ec3bfd45a53aa23f6b2141bc0ab85afe",
   "total_worlds": 140,
   "total_epochs": 70000,
-  "duration_ms": 4316,
+  "duration_ms": 4729,
   "findings": [
     "Collapse rate WITHOUT evolution: 0% at peaceful (0.0) vs 0% at extreme (0.03)",
     "Mean survival (no evolution): 500.0 epochs at peaceful vs 500.0 at extreme catastrophe",
     "Total trait mutations across all worlds: 0 (expected: 0)",
-    "Mean fitness (frozen traits): 0.5337 at peaceful vs 0.5653 at extreme catastrophe",
-    "Mean population (no evolution): 48.5 at peaceful vs 46.7 at extreme",
+    "Mean fitness (frozen traits): 0.5310 at peaceful vs 0.5684 at extreme catastrophe",
+    "Mean population (no evolution): 48.4 at peaceful vs 46.4 at extreme",
     "Mean catastrophe deaths at extreme rate (no evolution): 12.3"
   ],
   "protocol_version": "0.1.0"

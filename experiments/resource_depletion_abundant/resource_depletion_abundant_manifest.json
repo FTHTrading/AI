@@ -1,0 +1,56 @@
+{
+  "manifest_id": "GEN-EXP-ADA88F81C6DB",
+  "config": {
+    "name": "Resource Depletion — Abundant (cap=200)",
+    "hypothesis": "Under abundant resources (soft_cap=200), increasing metabolic cost has minimal impact on population stability",
+    "sweep": {
+      "variable": "EntropyCoeff",
+      "start": 0.00001,
+      "end": 0.0001,
+      "step": 0.00001
+    },
+    "runs_per_step": 15,
+    "epochs_per_run": 500,
+    "metrics": [
+      "FinalPopulation",
+      "Collapsed",
+      "SurvivalEpochs",
+      "TreasuryRatio",
+      "GiniCoefficient",
+      "MeanFitness",
+      "MeanPopulation",
+      "PopulationVolatility",
+      "TotalBirths",
+      "TotalDeaths",
+      "BirthDeathRatio",
+      "TotalCatastropheDeaths",
+      "TotalEntropyBurned",
+      "RoleEntropy"
+    ],
+    "base_preset": "EarthPrime",
+    "base_pressure_override": {
+      "soft_cap": 200,
+      "entropy_coeff": 0.00002,
+      "catastrophe_base_prob": 0.002,
+      "catastrophe_pop_scale": 0.00001,
+      "gini_wealth_tax_threshold": 0.4,
+      "gini_wealth_tax_rate": 0.02,
+      "treasury_overflow_threshold": 0.5
+    },
+    "base_seed": 20260222
+  },
+  "created_at": "2026-02-24T01:40:43.878478400Z",
+  "result_hash": "7f1431beea8c4f1637a1480a480400b0c7b3618a3006ad17a3ff7a0b5b15c841",
+  "manifest_hash": "a0fc8b17bb3181d1fceaab59fd686246d825e4f2f12c5a5214947881db209c4b",
+  "total_worlds": 150,
+  "total_epochs": 75000,
+  "duration_ms": 5348,
+  "findings": [
+    "Best fitness at entropy_coeff = 0.000090 (mean fitness: 0.5589) at cap=200",
+    "Population decline from low to high entropy: 2.1% (49.3 → 48.3)",
+    "Gini range: 0.5459 (low entropy) → 0.5692 (high entropy)",
+    "No collapses observed across entire entropy range",
+    "Total entropy burned: 24.7 (low) → 853.7 (high) — 35× increase"
+  ],
+  "protocol_version": "0.1.0"
+}

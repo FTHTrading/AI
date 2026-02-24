@@ -17,10 +17,14 @@ $experiments = @(
     "catastrophe_resilience",
     "inequality_threshold",
     "treasury_stability",
-    "fth_reserve_calm",
-    "fth_reserve_moderate",
-    "fth_reserve_stressed",
-    "fth_reserve_crisis"
+    "reserve_calm",
+    "reserve_moderate",
+    "reserve_stressed",
+    "reserve_crisis",
+    "resource_depletion_abundant",
+    "resource_depletion_normal",
+    "resource_depletion_constrained",
+    "resource_depletion_scarce"
 )
 
 $inputs = @("papers\sravan-executive-brief.md")

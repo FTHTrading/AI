@@ -1,0 +1,57 @@
+{
+  "manifest_id": "GEN-EXP-E625CC6CEE2D",
+  "config": {
+    "name": "Reserve Stress — Moderate (shock=0.005)",
+    "hypothesis": "Under moderate shocks (shock=0.005), the optimal deployment threshold shifts toward conservative reserves",
+    "sweep": {
+      "variable": "TreasuryOverflowThreshold",
+      "start": 0.1,
+      "end": 0.9,
+      "step": 0.1
+    },
+    "runs_per_step": 15,
+    "epochs_per_run": 500,
+    "metrics": [
+      "FinalPopulation",
+      "Collapsed",
+      "SurvivalEpochs",
+      "TreasuryRatio",
+      "GiniCoefficient",
+      "MeanFitness",
+      "MeanPopulation",
+      "PopulationVolatility",
+      "TotalBirths",
+      "TotalDeaths",
+      "BirthDeathRatio",
+      "TotalCatastropheDeaths",
+      "TotalEntropyBurned",
+      "RoleEntropy"
+    ],
+    "base_preset": "EarthPrime",
+    "base_pressure_override": {
+      "soft_cap": 180,
+      "entropy_coeff": 0.00002,
+      "catastrophe_base_prob": 0.005,
+      "catastrophe_pop_scale": 0.00001,
+      "gini_wealth_tax_threshold": 0.4,
+      "gini_wealth_tax_rate": 0.02,
+      "treasury_overflow_threshold": 0.5
+    },
+    "base_seed": 20260222
+  },
+  "created_at": "2026-02-24T01:40:29.919994200Z",
+  "result_hash": "1402e684494c4e8f5dc4d3cdc3baf3adbcb6ae41af38f4da1eb0a76b8bc4a48b",
+  "manifest_hash": "4c4817c436d794b9e859c1bfb746383fa1a742df071d44f6b1a4c370268aad28",
+  "total_worlds": 135,
+  "total_epochs": 67500,
+  "duration_ms": 4221,
+  "findings": [
+    "Optimal treasury threshold by fitness: 0.30 (mean fitness: 0.5478) at shock=0.005",
+    "Peak population stability at threshold = 0.80 (mean pop: 49.3)",
+    "Treasury ratio: 0.0046 at deployment (0.10) vs 0.0127 at hoarding (0.90)",
+    "No collapses observed across entire threshold range",
+    "Mean catastrophe deaths: 3.0 at deployment vs 2.9 at hoarding",
+    "Population volatility: 6.77 at deployment vs 6.64 at hoarding"
+  ],
+  "protocol_version": "0.1.0"
+}

@@ -1,0 +1,56 @@
+{
+  "manifest_id": "GEN-EXP-DCDCA37FCAC0",
+  "config": {
+    "name": "Resource Depletion — Constrained (cap=60)",
+    "hypothesis": "Under constrained resources (soft_cap=60), metabolic cost becomes a critical survival factor — small increases may trigger population collapse",
+    "sweep": {
+      "variable": "EntropyCoeff",
+      "start": 0.00001,
+      "end": 0.0001,
+      "step": 0.00001
+    },
+    "runs_per_step": 15,
+    "epochs_per_run": 500,
+    "metrics": [
+      "FinalPopulation",
+      "Collapsed",
+      "SurvivalEpochs",
+      "TreasuryRatio",
+      "GiniCoefficient",
+      "MeanFitness",
+      "MeanPopulation",
+      "PopulationVolatility",
+      "TotalBirths",
+      "TotalDeaths",
+      "BirthDeathRatio",
+      "TotalCatastropheDeaths",
+      "TotalEntropyBurned",
+      "RoleEntropy"
+    ],
+    "base_preset": "EarthPrime",
+    "base_pressure_override": {
+      "soft_cap": 60,
+      "entropy_coeff": 0.00002,
+      "catastrophe_base_prob": 0.002,
+      "catastrophe_pop_scale": 0.00001,
+      "gini_wealth_tax_threshold": 0.4,
+      "gini_wealth_tax_rate": 0.02,
+      "treasury_overflow_threshold": 0.5
+    },
+    "base_seed": 20260222
+  },
+  "created_at": "2026-02-24T01:40:53.680762100Z",
+  "result_hash": "4b4aa08b842b5b25af3772480997b5193bf5e24b9b6fb6ebed0de7992634ea34",
+  "manifest_hash": "18ef7dad3bc454f95cf33ba429478e580befe2ff2ecfbf425002f33b03519c0b",
+  "total_worlds": 150,
+  "total_epochs": 75000,
+  "duration_ms": 4764,
+  "findings": [
+    "Best fitness at entropy_coeff = 0.000010 (mean fitness: 0.5558) at cap=60",
+    "Population decline from low to high entropy: 3.1% (48.2 → 46.7)",
+    "Gini range: 0.5514 (low entropy) → 0.5614 (high entropy)",
+    "No collapses observed across entire entropy range",
+    "Total entropy burned: 25.0 (low) → 821.2 (high) — 33× increase"
+  ],
+  "protocol_version": "0.1.0"
+}

@@ -10,7 +10,7 @@ This is not a simulation wrapper. It is a research platform for conducting repro
 
 ## What Has Been Proven
 
-Eight controlled experiments across five research domains. 1,220 independent world simulations. 610,000 total economic epochs. Zero civilization collapses.
+Twelve controlled experiments across six research domains. 1,820 independent world simulations. 910,000 total economic epochs. Zero civilization collapses.
 
 | Experiment | Worlds | Epochs | Key Finding |
 |---|---|---|---|
@@ -18,7 +18,8 @@ Eight controlled experiments across five research domains. 1,220 independent wor
 | **Catastrophe Resilience** | 140 | 70,000 | 0–3% catastrophe probability per epoch → zero collapses. Deaths scale linearly (0 → 12.4). Population declines only 4.6%. |
 | **Inequality Threshold** | 160 | 80,000 | Varying wealth tax threshold from 0.20 to 0.90 produces 31.6% Gini increase. Population stability and mean fitness remain invariant. |
 | **Treasury Stability** | 180 | 90,000 | Sweeping reserve deployment threshold 0.10–0.90: aggressive deployment yields 2.1% higher fitness, <1% Gini variation. Zero collapses at any policy. |
-| **FTH Reserve Stress** (4 tiers) | 540 | 270,000 | Optimal treasury threshold shifts +0.60 (0.10→0.70) from calm to crisis. Crossover detected: deployment outperforms hoarding until shock rate exceeds 1.5%. |
+| **Reserve Stress** (4 tiers) | 540 | 270,000 | Optimal treasury threshold shifts +0.60 (0.10→0.70) from calm to crisis. Crossover detected: deployment outperforms hoarding until shock rate exceeds 1.5%. |
+| **Resource Depletion** (4 tiers) | 600 | 300,000 | Metabolic cost sensitivity under carrying capacity compression. Sweeps entropy cost across abundant→scarce resource environments. |
 
 All results are deterministically reproducible from seed `20260222`, verified via SHA-256 result hashing, and exported as CSV datasets for independent analysis.
 
@@ -65,22 +66,26 @@ git clone https://github.com/FTHTrading/AI.git
 cd AI
 cargo build --release
 
-# Run all eight experiments (~49 seconds)
+# Run all twelve experiments
 cargo run --release --bin run_experiments
 
 # Results appear in experiments/
-#   entropy_sweep/          — 200 worlds, data + manifest + report
-#   catastrophe_resilience/ — 140 worlds, data + manifest + report
-#   inequality_threshold/   — 160 worlds, data + manifest + report
-#   treasury_stability/     — 180 worlds, data + manifest + report
-#   fth_reserve_calm/       — 135 worlds, shock=0.001
-#   fth_reserve_moderate/   — 135 worlds, shock=0.005
-#   fth_reserve_stressed/   — 135 worlds, shock=0.015
-#   fth_reserve_crisis/     — 135 worlds, shock=0.030
+#   entropy_sweep/                   — 200 worlds, data + manifest + report
+#   catastrophe_resilience/          — 140 worlds, data + manifest + report
+#   inequality_threshold/            — 160 worlds, data + manifest + report
+#   treasury_stability/              — 180 worlds, data + manifest + report
+#   reserve_calm/                    — 135 worlds, shock=0.001
+#   reserve_moderate/                — 135 worlds, shock=0.005
+#   reserve_stressed/                — 135 worlds, shock=0.015
+#   reserve_crisis/                  — 135 worlds, shock=0.030
+#   resource_depletion_abundant/     — 150 worlds, cap=200
+#   resource_depletion_normal/       — 150 worlds, cap=120
+#   resource_depletion_constrained/  — 150 worlds, cap=60
+#   resource_depletion_scarce/       — 150 worlds, cap=30
 
 # Verify the full test suite
 cargo test --workspace
-# Expected: 345 passed, 0 failed
+# Expected: 349 passed, 0 failed
 ```
 
 Each experiment exports:
@@ -95,10 +100,10 @@ Each experiment exports:
 | Metric | Value |
 |---|---|
 | Crates | 13 |
-| Tests | 345 passing, 0 failed, 7 ignored |
+| Tests | 349 passing, 0 failed, 7 ignored |
 | Compiler warnings | 0 |
-| Experiment worlds | 1,220 |
-| Total epochs simulated | 610,000 |
+| Experiment worlds | 1,820 |
+| Total epochs simulated | 910,000 |
 | Civilization collapses | 0 |
 | Deterministic seed | `20260222` |
 | Result verification | SHA-256 manifest hash per experiment |
@@ -107,7 +112,7 @@ Each experiment exports:
 
 ## Deliverables
 
-**[Genesis Experiment Pack v3](deliverables/genesis-experiment-pack-v3/)** — Portable bundle containing the executive brief, all eight experiment outputs (manifests, CSV datasets, reports), reproduction instructions, and SHA-256 integrity verification. Self-contained and independently verifiable. Includes the 4-tier FTH Reserve Stress Suite (540 worlds, 270,000 epochs, crossover analysis).
+**[Genesis Experiment Pack v3](deliverables/genesis-experiment-pack-v3/)** — Portable bundle containing the executive brief, all twelve experiment outputs (manifests, CSV datasets, reports), reproduction instructions, and SHA-256 integrity verification. Self-contained and independently verifiable. Includes the 4-tier Reserve Stress Suite (540 worlds, crossover analysis) and 4-tier Resource Depletion Crossover (600 worlds, carrying capacity compression).
 
 Rebuild the pack:
 
@@ -124,4 +129,4 @@ powershell -ExecutionPolicy Bypass -File scripts/build_experiment_pack_v3.ps1
 
 ---
 
-*Built by [FTHTrading](https://github.com/FTHTrading)*
+*Built by [Kevan Burns](https://github.com/FTHTrading)*

@@ -221,6 +221,7 @@ mod tests {
             base_pressure_override: None,
             mutation_rate_override: None,
             cortex_enabled_override: None,
+            base_stress_override: None,
             base_seed: 42,
         };
         ExperimentRunner::run(&config)
