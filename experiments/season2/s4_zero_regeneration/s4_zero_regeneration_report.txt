@@ -1,0 +1,66 @@
+╔══════════════════════════════════════════════════════════╗
+║  Genesis Experiment: S4 Topology: Zero Regeneration      ║
+╚══════════════════════════════════════════════════════════╝
+
+Hypothesis: With resource regeneration disabled, pools are finite. Extraction permanently depletes them, eventually zeroing energy inflow. Once pools are empty, no ATP enters the system. Agents cannot forage, cannot reproduce, and basal metabolism depletes remaining balances. This should produce the first true collapse — extinction from resource exhaustion.
+
+── Protocol ──
+  Variable:      soft_cap
+  Range:         30.000000 → 180.000000 (step 30.000000)
+  Runs/step:     20
+  Epochs/run:    500
+  Base preset:   EarthPrime
+  Base seed:     42
+  Total worlds:  120
+  Total epochs:  60000
+  Duration:      2210ms
+
+── Results ──
+
+param_value  collapse_%   final_population     collapsed            survival_epochs      mean_population      min_population       mean_fitness         gini_coefficient     total_births         total_deaths         treasury_ratio       max_treasury_reserve birth_death_ratio    atp_variance         wealth_concentration_index median_mean_atp_divergence mean_gini_coefficient max_gini_coefficient reproductive_inequality_index survival_inequality_index top_decile_persistence
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+30.000000    0.0          18.55    ± 2.76     0.00     ± 0.00     500.00   ± 0.00     21.69    ± 2.18     12.20    ± 2.48     0.52     ± 0.03     0.55     ± 0.10     147.60   ± 23.87    149.05   ± 21.98    0.00     ± 0.00     1.49     ± 0.73     1.03     ± 0.06     130.99   ± 309.02   0.42     ± 0.14     0.24     ± 0.27     0.61     ± 0.04     0.83     ± 0.03     0.95     ± 0.04     0.94     ± 0.01     0.52     ± 0.17    
+60.000000    0.0          19.35    ± 2.13     0.00     ± 0.00     500.00   ± 0.00     23.64    ± 1.49     12.75    ± 1.80     0.52     ± 0.03     0.58     ± 0.11     171.55   ± 16.05    172.20   ± 15.72    0.00     ± 0.00     1.49     ± 1.22     1.05     ± 0.07     82.46    ± 168.10   0.42     ± 0.13     0.31     ± 0.26     0.59     ± 0.03     0.83     ± 0.02     0.96     ± 0.01     0.94     ± 0.01     0.40     ± 0.14    
+90.000000    0.0          17.90    ± 3.61     0.00     ± 0.00     500.00   ± 0.00     22.01    ± 2.88     11.45    ± 2.54     0.50     ± 0.04     0.53     ± 0.13     155.05   ± 33.03    157.15   ± 31.07    0.00     ± 0.00     1.27     ± 0.76     1.01     ± 0.08     208.83   ± 557.84   0.40     ± 0.15     0.25     ± 0.23     0.60     ± 0.04     0.84     ± 0.02     0.92     ± 0.14     0.94     ± 0.02     0.46     ± 0.15    
+120.000000   0.0          19.05    ± 2.04     0.00     ± 0.00     500.00   ± 0.00     23.41    ± 2.06     12.95    ± 1.76     0.53     ± 0.03     0.54     ± 0.11     169.30   ± 22.60    170.25   ± 21.51    0.00     ± 0.00     1.26     ± 0.87     1.01     ± 0.04     58.38    ± 82.12    0.38     ± 0.13     0.23     ± 0.29     0.59     ± 0.04     0.82     ± 0.03     0.95     ± 0.01     0.94     ± 0.01     0.42     ± 0.21    
+150.000000   0.0          20.05    ± 2.21     0.00     ± 0.00     500.00   ± 0.00     24.14    ± 1.37     13.40    ± 1.76     0.53     ± 0.03     0.52     ± 0.08     177.25   ± 16.16    177.20   ± 15.01    0.00     ± 0.00     1.48     ± 0.84     1.03     ± 0.04     26.82    ± 18.57    0.37     ± 0.10     0.25     ± 0.21     0.57     ± 0.02     0.82     ± 0.02     0.97     ± 0.01     0.94     ± 0.01     0.31     ± 0.10    
+180.000000   0.0          18.85    ± 2.32     0.00     ± 0.00     500.00   ± 0.00     23.35    ± 1.80     12.30    ± 2.34     0.51     ± 0.03     0.53     ± 0.09     170.10   ± 18.86    171.25   ± 18.27    0.00     ± 0.00     1.22     ± 0.82     1.02     ± 0.08     47.71    ± 96.15    0.37     ± 0.12     0.21     ± 0.24     0.59     ± 0.04     0.83     ± 0.03     0.96     ± 0.01     0.94     ± 0.01     0.40     ± 0.18    
+
+── Findings ──
+
+  1. Collapse rate: 0/120 trials (0.0%)
+  2. NO COLLAPSES — topology violation [s4_zero_regeneration] did NOT cause extinction
+  3. ── Resource Topology ──
+  4. ── Inequality Instrumentation ──
+  5. Wealth concentration (top 10%): mean=0.3934, max=0.8458
+  6. Mean Gini coefficient: mean=0.5929, max=0.7094
+  7. Median/Mean ATP divergence: mean=0.2487, max=0.8852
+  8. ATP variance: mean=92.5, max=2452.1
+  9. Reproductive inequality: mean=0.9509, max=0.9838
+  10.   ⚠ REPRODUCTIVE MONOPOLY: Top quartile >50% of births
+  11. Survival inequality: mean=0.9405, max=1.0000
+  12.   ⚠ SURVIVAL APARTHEID: Bottom quartile >50% of deaths
+  13. Top decile persistence: mean=0.4194, max=0.8360
+  14. ── Population & Economy ──
+  15. Population floor: global_min=5, mean_min=12.5
+  16. Mean population: 23.0 (min trial: 14.6)
+  17. Final population: mean=19.0, min=6, max=23
+  18. Birth/death ratio: mean=1.0239, min=0.8140
+  19. Total births: mean=165.1, min=67
+  20. Treasury accumulation: global_max=5.1, mean_max=1.4 ATP
+  21. Mean fitness: 0.5186
+  22. ── Per-step breakdown ──
+  23.   cap=30: collapse=0.0%, pop=21.7, gini=0.6129, wci=0.4226, repro=0.9519, surv=0.9361
+  24.   cap=60: collapse=0.0%, pop=23.6, gini=0.5861, wci=0.4198, repro=0.9555, surv=0.9418
+  25.   cap=90: collapse=0.0%, pop=22.0, gini=0.6044, wci=0.4034, repro=0.9216, surv=0.9403
+  26.   cap=120: collapse=0.0%, pop=23.4, gini=0.5930, wci=0.3769, repro=0.9542, surv=0.9403
+  27.   cap=150: collapse=0.0%, pop=24.1, gini=0.5721, wci=0.3689, repro=0.9651, surv=0.9431
+  28.   cap=180: collapse=0.0%, pop=23.4, gini=0.5887, wci=0.3691, repro=0.9572, surv=0.9412
+  29. ── VERDICT ──
+  30. NO COLLAPSE but PATHOLOGICAL: [s4_zero_regeneration] → [gini=0.593, repro_inequality=0.951, survival_inequality=0.940]
+  31. Survivable but degenerate economy under topology violation
+
+── Verification ──
+
+  Result hash:   554f944dda68d27c14d6b397e4951191e1e5326bca3bd5aa32a99d3741e9715c
+

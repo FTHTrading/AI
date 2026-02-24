@@ -807,6 +807,18 @@ impl World {
         // ═══════════════════════════════════════════════════════════════
         // STEP 0: Environment tick — regenerate resources, apply seasons
         // ═══════════════════════════════════════════════════════════════
+
+        // S4: Gate resource regeneration — disable pool logistic regrowth.
+        // When disabled, resource pools are finite: extraction depletes
+        // them permanently. This attacks energy inflow continuity.
+        if let Some(ref sc) = self.stress_config {
+            if !sc.resource_regeneration_enabled {
+                for pool in self.environment.pools.values_mut() {
+                    pool.regen_rate = 0.0;
+                }
+            }
+        }
+
         self.environment.tick(epoch);
 
         // ── Stress: catastrophe cluster bias ──────────────────────────
@@ -883,6 +895,17 @@ impl World {
                         for dead_id in &to_cull {
                             if let Ok(bal) = self.ledger.balance(dead_id) {
                                 if bal.balance > 0.0 {
+                                    // S4: death drains resources (catastrophe path)
+                                    if let Some(ref sc) = self.stress_config {
+                                        if sc.death_drains_resources {
+                                            // Find role of culled agent
+                                            if let Some(agent) = self.agents.iter().find(|a| a.id == *dead_id) {
+                                                if let Some(pool) = self.environment.pools.get_mut(&agent.role) {
+                                                    pool.level = (pool.level - bal.balance).max(0.0);
+                                                }
+                                            }
+                                        }
+                                    }
                                     let _ = self.ledger.burn(
                                         dead_id, bal.balance,
                                         TransactionKind::BasalMetabolism,
@@ -1401,6 +1424,10 @@ impl World {
         let balance_map: std::collections::HashMap<uuid::Uuid, f64> = population.iter()
             .map(|(dna, bal, _)| (dna.id, *bal))
             .collect();
+        // S4: Map agent ID → role for death-drains-resources pool lookup
+        let agent_role_map: std::collections::HashMap<uuid::Uuid, AgentRole> = self.agents.iter()
+            .map(|a| (a.id, a.role))
+            .collect();
         let mut births_top_quartile: u64 = 0;
         let mut births_bottom_quartile: u64 = 0;
         let mut deaths_top_quartile: u64 = 0;
@@ -1535,6 +1562,19 @@ impl World {
                 self.agent_birth_epoch.remove(&dead_id);
                 if let Ok(bal) = self.ledger.balance(&dead_id) {
                     if bal.balance > 0.0 {
+                        // S4: death drains resources — subtract dead agent's
+                        // remaining ATP from their niche's resource pool.
+                        // Creates a net-negative death loop: each death actively
+                        // shrinks the resource base on top of ATP destruction.
+                        if let Some(ref sc) = self.stress_config {
+                            if sc.death_drains_resources {
+                                if let Some(role) = agent_role_map.get(&dead_id) {
+                                    if let Some(pool) = self.environment.pools.get_mut(role) {
+                                        pool.level = (pool.level - bal.balance).max(0.0);
+                                    }
+                                }
+                            }
+                        }
                         let _ = self.ledger.burn(
                             &dead_id, bal.balance,
                             TransactionKind::BasalMetabolism,
@@ -1571,6 +1611,16 @@ impl World {
                     self.agent_birth_epoch.remove(&dead_id);
                     if let Ok(bal) = self.ledger.balance(&dead_id) {
                         if bal.balance > 0.0 {
+                            // S4: death drains resources (fallback path)
+                            if let Some(ref sc) = self.stress_config {
+                                if sc.death_drains_resources {
+                                    if let Some(role) = agent_role_map.get(&dead_id) {
+                                        if let Some(pool) = self.environment.pools.get_mut(role) {
+                                            pool.level = (pool.level - bal.balance).max(0.0);
+                                        }
+                                    }
+                                }
+                            }
                             let _ = self.ledger.burn(
                                 &dead_id, bal.balance,
                                 TransactionKind::BasalMetabolism,

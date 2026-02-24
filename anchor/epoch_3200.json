@@ -1,0 +1,13 @@
+{
+  "epoch": 3200,
+  "ledger_root": "51567b56da02cd6f2014b9ca08dcedbf7f3fb7798d7dafb835f52efa76751bfb",
+  "world_root": "6b831e297a91221637aaf7a2e6ea336406b0857d94951c34e4a9a501c250ddd0",
+  "epoch_root": "08d74f28cc7d8c19a8bb59ac6aae51757ff2d6687efa4bac861ca3adba13656c",
+  "previous_root": "af5a45b2da74466120e430727296f194c855f38d6a782b49971f4c0456909ab2",
+  "population": 22,
+  "total_supply": 104.155250076848,
+  "treasury_reserve": 0.4639999999999993,
+  "anchored_at": "2026-02-24T04:23:47.108280800Z",
+  "mode": "Local",
+  "evolution_root_ref": "0000000000000000000000000000000000000000000000000000000000000000"
+}

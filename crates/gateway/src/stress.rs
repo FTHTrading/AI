@@ -73,6 +73,21 @@ pub struct StressConfig {
     /// bypassed — removing all mechanisms that buffer agents from death.
     /// Predicted effect: removes the population floor, enabling true extinction.
     pub extinction_floor_enabled: bool,
+
+    // ── Energy topology toggles (Season 2 S4) ───────────────────────
+    /// Enable/disable resource pool regeneration (S4 topology invariant).
+    /// When false, resource pools never regenerate — creating a finite
+    /// resource universe. Pools start at 80% capacity but deplete
+    /// permanently through extraction. This attacks energy inflow
+    /// continuity, the deepest structural invariant.
+    pub resource_regeneration_enabled: bool,
+
+    /// Enable/disable death-drains-resources (S4 topology invariant).
+    /// When true, dead agents' remaining ATP is also subtracted from
+    /// their niche's resource pool — creating a net negative death loop
+    /// where each death actively shrinks the resource base.
+    /// Default false (death burns ledger balance but pool is unaffected).
+    pub death_drains_resources: bool,
 }
 
 impl Default for StressConfig {
@@ -88,6 +103,8 @@ impl Default for StressConfig {
             atp_decay_enabled: true,
             reproduction_grants_enabled: true,
             extinction_floor_enabled: true,
+            resource_regeneration_enabled: true,
+            death_drains_resources: false,
         }
     }
 }
@@ -111,6 +128,8 @@ impl StressConfig {
             atp_decay_enabled: true,
             reproduction_grants_enabled: true,
             extinction_floor_enabled: true,
+            resource_regeneration_enabled: true,
+            death_drains_resources: false,
         }
     }
 
@@ -127,6 +146,8 @@ impl StressConfig {
             atp_decay_enabled: true,
             reproduction_grants_enabled: true,
             extinction_floor_enabled: true,
+            resource_regeneration_enabled: true,
+            death_drains_resources: false,
         }
     }
 
@@ -143,6 +164,8 @@ impl StressConfig {
             atp_decay_enabled: true,
             reproduction_grants_enabled: true,
             extinction_floor_enabled: true,
+            resource_regeneration_enabled: true,
+            death_drains_resources: false,
         }
     }
 
@@ -159,6 +182,8 @@ impl StressConfig {
             atp_decay_enabled: true,
             reproduction_grants_enabled: true,
             extinction_floor_enabled: true,
+            resource_regeneration_enabled: true,
+            death_drains_resources: false,
         }
     }
 

@@ -1431,6 +1431,12 @@ impl FlagshipExperiments {
             "S3 Coupled: Decay OFF + Grants OFF",
             "S3 Coupled: Decay OFF + Floor OFF",
             "S3 Coupled: All Safety OFF",
+            // Season 4: Energy Topology Violations
+            "S4 Topology: Zero Regeneration",
+            "S4 Topology: Death Sink",
+            "S4 Topology: Zero Regen + Death Sink",
+            "S4 Topology: Full Attack",
+            "S4 Topology: Extended Horizon (5000 epochs)",
         ]
     }
 
@@ -1663,6 +1669,279 @@ impl FlagshipExperiments {
             ("s3_all_off", Self::s3_all_off()),
         ]
     }
+
+    // ── Season 2 S4: Energy Topology Violations ─────────────────────────
+    //
+    // Supervisor v2 directive: "The collapse boundary lies in energy
+    // topology, not governance parameters." S4 attacks the positive
+    // closed-loop energy conservation with enforced throughput.
+    //
+    // Key insight: S1-S3 removed fairness overlays (decay, treasury,
+    // grants, floor) — none were load-bearing. S4 now attacks:
+    //   A. Resource inflow continuity (zero regeneration)
+    //   B. Death recycling (death drains resource pools)
+    //   C. Combined topology violations
+    //   D. Full attack (all topology + all safety OFF)
+    //   E. Extended horizon (5,000 epochs with topology stress)
+
+    /// Hostile pressure config shared by all S4 experiments.
+    fn s4_hostile_pressure() -> PressureConfig {
+        let mut p = PressureConfig::default();
+        p.catastrophe_base_prob = 0.03;
+        p.entropy_coeff = 0.0001;
+        p.gini_wealth_tax_threshold = 1.0;
+        p.gini_wealth_tax_rate = 0.0;
+        p.treasury_overflow_threshold = 1.0;
+        p
+    }
+
+    /// Metrics collected by all S4 experiments.
+    fn s4_metrics() -> Vec<Metric> {
+        vec![
+            Metric::FinalPopulation,
+            Metric::Collapsed,
+            Metric::SurvivalEpochs,
+            Metric::MeanPopulation,
+            Metric::MinPopulation,
+            Metric::MeanFitness,
+            Metric::GiniCoefficient,
+            Metric::TotalBirths,
+            Metric::TotalDeaths,
+            Metric::TreasuryRatio,
+            Metric::MaxTreasuryReserve,
+            Metric::BirthDeathRatio,
+            Metric::AtpVariance,
+            Metric::WealthConcentrationIndex,
+            Metric::MedianMeanAtpDivergence,
+            Metric::MeanGiniCoefficient,
+            Metric::MaxGiniCoefficient,
+            Metric::ReproductiveInequalityIndex,
+            Metric::SurvivalInequalityIndex,
+            Metric::TopDecilePersistence,
+        ]
+    }
+
+    /// S4-A: Zero Regeneration — finite resource universe.
+    /// Resource pools start at 80% capacity but never regrow.
+    /// Extraction permanently depletes the pool. This attacks
+    /// energy inflow continuity — the deepest structural invariant.
+    pub fn s4_zero_regeneration() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S4 Topology: Zero Regeneration".into(),
+            hypothesis: "With resource regeneration disabled, pools are finite. \
+                         Extraction permanently depletes them, eventually zeroing \
+                         energy inflow. Once pools are empty, no ATP enters the \
+                         system. Agents cannot forage, cannot reproduce, and basal \
+                         metabolism depletes remaining balances. This should produce \
+                         the first true collapse — extinction from resource exhaustion.".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: Self::s4_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s4_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                resource_regeneration_enabled: false,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S4-A quick variant (2 steps × 5 runs × 100 epochs).
+    pub fn s4_zero_regeneration_quick() -> ExperimentConfig {
+        let mut config = Self::s4_zero_regeneration();
+        config.name = "S4 Topology: Zero Regeneration [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 5;
+        config.epochs_per_run = 100;
+        config
+    }
+
+    /// S4-B: Death Sink — dead agents drain resource pools.
+    /// When an agent dies, its remaining ATP is subtracted from its
+    /// niche's resource pool on top of being burned from the ledger.
+    /// This creates a net-negative death loop: each death actively
+    /// shrinks the resource base, potentially triggering cascading
+    /// depletion.
+    pub fn s4_death_sink() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S4 Topology: Death Sink".into(),
+            hypothesis: "With death draining resources, each death shrinks the \
+                         pool that feeds surviving agents. Under hostile conditions \
+                         with frequent catastrophe culling, this should create a \
+                         death spiral: catastrophe kills agents → pool shrinks → \
+                         surviving agents extract less → more agents enter stasis → \
+                         more deaths → pool shrinks further. If the cascade reaches \
+                         critical mass, extinction follows.".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: Self::s4_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s4_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                death_drains_resources: true,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S4-B quick variant.
+    pub fn s4_death_sink_quick() -> ExperimentConfig {
+        let mut config = Self::s4_death_sink();
+        config.name = "S4 Topology: Death Sink [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 5;
+        config.epochs_per_run = 100;
+        config
+    }
+
+    /// S4-C: Zero Regen + Death Sink — double topology violation.
+    /// Finite resources AND each death drains the pool. The most
+    /// aggressive pure topology attack: no new resources enter,
+    /// and death actively accelerates depletion.
+    pub fn s4_zero_regen_death_sink() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S4 Topology: Zero Regen + Death Sink".into(),
+            hypothesis: "Combining zero regeneration with death-drains-resources \
+                         creates maximal energy loss. Pools deplete from extraction \
+                         AND from deaths. The system hemorrhages ATP from both channels. \
+                         This should collapse faster than either violation alone. \
+                         The question is whether the primordial grant provides enough \
+                         initial energy for any agent to even reproduce.".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: Self::s4_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s4_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                resource_regeneration_enabled: false,
+                death_drains_resources: true,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S4-C quick variant.
+    pub fn s4_zero_regen_death_sink_quick() -> ExperimentConfig {
+        let mut config = Self::s4_zero_regen_death_sink();
+        config.name = "S4 Topology: Zero Regen + Death Sink [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 5;
+        config.epochs_per_run = 100;
+        config
+    }
+
+    /// S4-D: Full Topology Attack — every energy invariant violated.
+    /// Zero regeneration + death sink + all S3 safety OFF + 10× replication cost.
+    /// This is the maximum-severity stress test: finite resources, death
+    /// drains pools, no decay, no treasury, no grants, no floor, and
+    /// reproduction costs 250 ATP (10× base). If this doesn't collapse,
+    /// nothing within the current architecture can.
+    pub fn s4_full_attack() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S4 Topology: Full Attack".into(),
+            hypothesis: "The most aggressive experiment in the entire protocol: \
+                         zero regeneration + death drains resources + all four \
+                         S3 safety mechanisms OFF + 10× replication cost (250 ATP). \
+                         Energy cannot enter, death destroys pools, reproduction \
+                         is nearly impossible, and no safety net exists. If the \
+                         system still survives, the only explanation is that the \
+                         primordial grant creates enough initial momentum to reach \
+                         a stable state before depletion — which would be extraordinary.".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: Self::s4_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s4_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                resource_regeneration_enabled: false,
+                death_drains_resources: true,
+                atp_decay_enabled: false,
+                treasury_cycling_enabled: false,
+                reproduction_grants_enabled: false,
+                extinction_floor_enabled: false,
+                replication_cost_multiplier: 10.0,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S4-D quick variant.
+    pub fn s4_full_attack_quick() -> ExperimentConfig {
+        let mut config = Self::s4_full_attack();
+        config.name = "S4 Topology: Full Attack [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 5;
+        config.epochs_per_run = 100;
+        config
+    }
+
+    /// S4-E: Extended Horizon — 5,000 epochs with topology stress.
+    /// Tests whether slow entropy drift can eventually exhaust a finite
+    /// resource pool over 10× the standard horizon. Zero regeneration
+    /// + death sink under hostile conditions, but with all safety
+    /// mechanisms ON to isolate the pure topology effect.
+    pub fn s4_extended_horizon() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S4 Topology: Extended Horizon (5000 epochs)".into(),
+            hypothesis: "With zero regeneration and death sink over 5,000 epochs \
+                         (10× standard), slow resource depletion should eventually \
+                         exhaust all pools. Even if 500 epochs isn't enough to \
+                         collapse, 5,000 should be. This tests the slow-death \
+                         hypothesis: does the system find a stable equilibrium \
+                         at depleted pools, or does it eventually flatline?".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 10,
+            epochs_per_run: 5000,
+            metrics: Self::s4_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s4_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                resource_regeneration_enabled: false,
+                death_drains_resources: true,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S4-E quick variant (2 steps × 3 runs × 1000 epochs).
+    pub fn s4_extended_horizon_quick() -> ExperimentConfig {
+        let mut config = Self::s4_extended_horizon();
+        config.name = "S4 Topology: Extended Horizon [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 3;
+        config.epochs_per_run = 1000;
+        config
+    }
+
+    /// S4 topology violation suite — all 5 experiments.
+    pub fn s4_topology_suite() -> Vec<(&'static str, ExperimentConfig)> {
+        vec![
+            ("s4_zero_regeneration", Self::s4_zero_regeneration()),
+            ("s4_death_sink", Self::s4_death_sink()),
+            ("s4_zero_regen_death_sink", Self::s4_zero_regen_death_sink()),
+            ("s4_full_attack", Self::s4_full_attack()),
+            ("s4_extended_horizon", Self::s4_extended_horizon()),
+        ]
+    }
 }
 
 #[cfg(test)]
@@ -1749,7 +2028,7 @@ mod tests {
     #[test]
     fn flagship_list() {
         let list = FlagshipExperiments::list();
-        assert_eq!(list.len(), 25);
+        assert_eq!(list.len(), 34);
         assert!(list[0].contains("Entropy"));
         assert!(list[1].contains("Catastrophe"));
         assert!(list[2].contains("Inequality"));
@@ -2268,11 +2547,137 @@ mod tests {
     #[test]
     fn experiment_list_includes_s3() {
         let list = FlagshipExperiments::list();
-        assert_eq!(list.len(), 29);
+        assert_eq!(list.len(), 34);
         assert!(list.contains(&"S3 Coupled: Decay OFF + Treasury OFF"));
         assert!(list.contains(&"S3 Coupled: Decay OFF + Grants OFF"));
         assert!(list.contains(&"S3 Coupled: Decay OFF + Floor OFF"));
         assert!(list.contains(&"S3 Coupled: All Safety OFF"));
+    }
+
+    // ── Season 4: Energy Topology Tests ─────────────────────────────
+
+    #[test]
+    fn s4_topology_suite_valid() {
+        let suite = FlagshipExperiments::s4_topology_suite();
+        assert_eq!(suite.len(), 5);
+        for (name, config) in &suite {
+            assert!(!name.is_empty());
+            assert!(config.total_worlds() > 0);
+        }
+    }
+
+    #[test]
+    fn s4_zero_regeneration_config_valid() {
+        let config = FlagshipExperiments::s4_zero_regeneration();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.total_worlds(), 120);
+        assert!(config.metrics.len() >= 18);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(!stress.resource_regeneration_enabled);
+        assert!(!stress.death_drains_resources);
+        // Safety mechanisms still ON
+        assert!(stress.atp_decay_enabled);
+        assert!(stress.treasury_cycling_enabled);
+        assert!(stress.reproduction_grants_enabled);
+        assert!(stress.extinction_floor_enabled);
+    }
+
+    #[test]
+    fn s4_death_sink_config_valid() {
+        let config = FlagshipExperiments::s4_death_sink();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.total_worlds(), 120);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(stress.resource_regeneration_enabled); // regen still ON
+        assert!(stress.death_drains_resources);
+    }
+
+    #[test]
+    fn s4_zero_regen_death_sink_config_valid() {
+        let config = FlagshipExperiments::s4_zero_regen_death_sink();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.total_worlds(), 120);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(!stress.resource_regeneration_enabled);
+        assert!(stress.death_drains_resources);
+    }
+
+    #[test]
+    fn s4_full_attack_config_valid() {
+        let config = FlagshipExperiments::s4_full_attack();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.total_worlds(), 120);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(!stress.resource_regeneration_enabled);
+        assert!(stress.death_drains_resources);
+        assert!(!stress.atp_decay_enabled);
+        assert!(!stress.treasury_cycling_enabled);
+        assert!(!stress.reproduction_grants_enabled);
+        assert!(!stress.extinction_floor_enabled);
+        assert!((stress.replication_cost_multiplier - 10.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn s4_extended_horizon_config_valid() {
+        let config = FlagshipExperiments::s4_extended_horizon();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.epochs_per_run, 5000);
+        assert_eq!(config.runs_per_step, 10);
+        assert_eq!(config.total_worlds(), 60);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(!stress.resource_regeneration_enabled);
+        assert!(stress.death_drains_resources);
+    }
+
+    #[test]
+    fn quick_s4_zero_regeneration_runs() {
+        let config = FlagshipExperiments::s4_zero_regeneration_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn quick_s4_death_sink_runs() {
+        let config = FlagshipExperiments::s4_death_sink_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn quick_s4_zero_regen_death_sink_runs() {
+        let config = FlagshipExperiments::s4_zero_regen_death_sink_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn quick_s4_full_attack_runs() {
+        let config = FlagshipExperiments::s4_full_attack_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn quick_s4_extended_horizon_runs() {
+        let config = FlagshipExperiments::s4_extended_horizon_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn experiment_list_includes_s4() {
+        let list = FlagshipExperiments::list();
+        assert_eq!(list.len(), 34);
+        assert!(list.contains(&"S4 Topology: Zero Regeneration"));
+        assert!(list.contains(&"S4 Topology: Death Sink"));
+        assert!(list.contains(&"S4 Topology: Zero Regen + Death Sink"));
+        assert!(list.contains(&"S4 Topology: Full Attack"));
+        assert!(list.contains(&"S4 Topology: Extended Horizon (5000 epochs)"));
     }
 
 }

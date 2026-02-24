@@ -1,0 +1,68 @@
+╔══════════════════════════════════════════════════════════╗
+║  Genesis Experiment: S4 Topology: Death Sink             ║
+╚══════════════════════════════════════════════════════════╝
+
+Hypothesis: With death draining resources, each death shrinks the pool that feeds surviving agents. Under hostile conditions with frequent catastrophe culling, this should create a death spiral: catastrophe kills agents → pool shrinks → surviving agents extract less → more agents enter stasis → more deaths → pool shrinks further. If the cascade reaches critical mass, extinction follows.
+
+── Protocol ──
+  Variable:      soft_cap
+  Range:         30.000000 → 180.000000 (step 30.000000)
+  Runs/step:     20
+  Epochs/run:    500
+  Base preset:   EarthPrime
+  Base seed:     42
+  Total worlds:  120
+  Total epochs:  60000
+  Duration:      3143ms
+
+── Results ──
+
+param_value  collapse_%   final_population     collapsed            survival_epochs      mean_population      min_population       mean_fitness         gini_coefficient     total_births         total_deaths         treasury_ratio       max_treasury_reserve birth_death_ratio    atp_variance         wealth_concentration_index median_mean_atp_divergence mean_gini_coefficient max_gini_coefficient reproductive_inequality_index survival_inequality_index top_decile_persistence
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+30.000000    0.0          28.20    ± 1.96     0.00     ± 0.00     500.00   ± 0.00     29.93    ± 0.26     20.00    ± 0.00     0.57     ± 0.03     0.67     ± 0.05     40.70    ± 6.51     32.50    ± 7.54     0.00     ± 0.00     0.95     ± 0.85     0.79     ± 0.12     781.91   ± 207.70   0.59     ± 0.04     0.62     ± 0.08     0.60     ± 0.02     0.72     ± 0.03     0.84     ± 0.04     0.68     ± 0.07     0.76     ± 0.11    
+60.000000    0.0          47.15    ± 3.36     0.00     ± 0.00     500.00   ± 0.00     44.72    ± 1.84     20.00    ± 0.00     0.57     ± 0.02     0.75     ± 0.05     100.70   ± 6.71     73.55    ± 7.86     0.00     ± 0.00     1.19     ± 1.31     1.00     ± 0.13     381.59   ± 127.44   0.71     ± 0.08     0.68     ± 0.10     0.54     ± 0.02     0.77     ± 0.03     0.94     ± 0.01     0.84     ± 0.02     0.45     ± 0.09    
+90.000000    0.0          47.25    ± 3.08     0.00     ± 0.00     500.00   ± 0.00     45.14    ± 1.95     20.00    ± 0.00     0.57     ± 0.02     0.75     ± 0.05     104.60   ± 8.55     77.35    ± 9.97     0.00     ± 0.00     0.82     ± 0.24     0.94     ± 0.11     332.73   ± 104.25   0.69     ± 0.07     0.65     ± 0.09     0.54     ± 0.02     0.77     ± 0.03     0.94     ± 0.01     0.85     ± 0.03     0.42     ± 0.09    
+120.000000   0.0          47.35    ± 2.28     0.00     ± 0.00     500.00   ± 0.00     44.38    ± 2.18     20.00    ± 0.00     0.57     ± 0.02     0.74     ± 0.06     107.05   ± 12.87    79.70    ± 13.24    0.00     ± 0.00     0.94     ± 0.54     0.98     ± 0.12     290.80   ± 104.26   0.67     ± 0.10     0.64     ± 0.14     0.54     ± 0.02     0.77     ± 0.04     0.93     ± 0.02     0.85     ± 0.02     0.40     ± 0.11    
+150.000000   0.0          47.65    ± 1.09     0.00     ± 0.00     500.00   ± 0.00     45.18    ± 2.52     20.00    ± 0.00     0.56     ± 0.02     0.73     ± 0.05     105.60   ± 7.54     77.95    ± 7.84     0.00     ± 0.00     1.12     ± 0.82     0.94     ± 0.09     311.69   ± 113.73   0.67     ± 0.09     0.64     ± 0.09     0.53     ± 0.03     0.76     ± 0.02     0.94     ± 0.01     0.85     ± 0.02     0.40     ± 0.11    
+180.000000   0.0          48.90    ± 2.34     0.00     ± 0.00     500.00   ± 0.00     45.67    ± 1.79     20.00    ± 0.00     0.58     ± 0.02     0.73     ± 0.07     108.35   ± 9.03     79.45    ± 9.97     0.00     ± 0.00     1.26     ± 0.93     0.99     ± 0.10     310.97   ± 109.62   0.67     ± 0.12     0.61     ± 0.20     0.54     ± 0.02     0.77     ± 0.03     0.93     ± 0.02     0.85     ± 0.02     0.41     ± 0.07    
+
+── Findings ──
+
+  1. Collapse rate: 0/120 trials (0.0%)
+  2. NO COLLAPSES — topology violation [s4_death_sink] did NOT cause extinction
+  3. ── Resource Topology ──
+  4. ── Inequality Instrumentation ──
+  5. Wealth concentration (top 10%): mean=0.6648, max=0.7912
+  6.   ⚠ WEALTH OLIGARCHY: Top 10% controls >50% of ATP
+  7. Mean Gini coefficient: mean=0.5496, max=0.6575
+  8. Median/Mean ATP divergence: mean=0.6399, max=0.8417
+  9.   ⚠ RIGHT-SKEWED: Mean >> Median, wealth hoarding
+  10. ATP variance: mean=401.6, max=1138.6
+  11. Reproductive inequality: mean=0.9189, max=0.9623
+  12.   ⚠ REPRODUCTIVE MONOPOLY: Top quartile >50% of births
+  13. Survival inequality: mean=0.8202, max=0.9000
+  14.   ⚠ SURVIVAL APARTHEID: Bottom quartile >50% of deaths
+  15. Top decile persistence: mean=0.4735, max=0.8960
+  16. ── Population & Economy ──
+  17. Population floor: global_min=20, mean_min=20.0
+  18. Mean population: 42.5 (min trial: 29.5)
+  19. Final population: mean=44.4, min=23, max=54
+  20. Birth/death ratio: mean=0.9400, min=0.5556
+  21. Total births: mean=94.5, min=32
+  22. Treasury accumulation: global_max=6.2, mean_max=1.0 ATP
+  23. Mean fitness: 0.5686
+  24. ── Per-step breakdown ──
+  25.   cap=30: collapse=0.0%, pop=29.9, gini=0.6010, wci=0.5863, repro=0.8378, surv=0.6781
+  26.   cap=60: collapse=0.0%, pop=44.7, gini=0.5449, wci=0.7138, repro=0.9357, surv=0.8429
+  27.   cap=90: collapse=0.0%, pop=45.1, gini=0.5404, wci=0.6869, repro=0.9367, surv=0.8504
+  28.   cap=120: collapse=0.0%, pop=44.4, gini=0.5393, wci=0.6683, repro=0.9310, surv=0.8529
+  29.   cap=150: collapse=0.0%, pop=45.2, gini=0.5338, wci=0.6678, repro=0.9388, surv=0.8474
+  30.   cap=180: collapse=0.0%, pop=45.7, gini=0.5383, wci=0.6660, repro=0.9332, surv=0.8491
+  31. ── VERDICT ──
+  32. NO COLLAPSE but PATHOLOGICAL: [s4_death_sink] → [wealth_concentration=0.665, gini=0.550, repro_inequality=0.919, survival_inequality=0.820]
+  33. Survivable but degenerate economy under topology violation
+
+── Verification ──
+
+  Result hash:   18f1fcd077c9b31698878c8a28b39fdaba8fa9bf5196db755d1e20d1f59ece12
+
