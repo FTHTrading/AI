@@ -298,7 +298,7 @@ The most extreme environmental test: all protective mechanisms stripped simultan
 
 ### 5.9 Metabolic Inversion (The Tournament)
 
-Environmental attacks target "weather" — they make the world hostile but do not alter the cost of being alive. The Tournament attacked "oxygen" — the metabolic cost of reproducing and existing.
+Environmental attacks target "weather" — they make the world hostile but do not alter the cost of metabolic existence. The Tournament attacked "oxygen" — the metabolic cost of reproducing and existing.
 
 **Round 1 — Oxygen Attack (180 worlds):**
 Replication cost swept from 1× (25 ATP) to 5× (125 ATP). Full hostility, all protections disabled.
@@ -395,10 +395,10 @@ As long as that cycle operates, the population persists. The floor (~17.6 agents
 Most artificial life research focuses on the emergence of complexity, self-replication, or adaptive behavior. Genesis Protocol suggests an orthogonal question: **what are the necessary and sufficient conditions for population persistence?**
 
 Our results indicate that:
-- Adaptation is **sufficient** but not **necessary** for persistence
-- Energy-based metabolism with decay is **necessary** (without decay, populations inflate indefinitely — the Greenhouse Phase)
-- Treasury cycling (or equivalent redistribution) is **necessary** (without it, wealth concentrates and populations collapse — the v1.0 Crash)
-- Resource competition with carrying capacity is **necessary** (without it, there is no environmental constraint)
+- Adaptation is **sufficient** but not **necessary** for persistence (demonstrated by Evolution Forbidden and Fully Static experiments)
+- Energy-based metabolism with decay **empirically appears necessary** (without decay, populations inflate indefinitely — the Greenhouse Phase, observed in internal v1.0 testing)
+- Treasury cycling (or equivalent redistribution) **empirically appears necessary** (without it, wealth concentrated and population collapsed — observed in v1.0 prior to the current experimental framework; a controlled treasury-disabled experiment remains future work)
+- Resource competition with carrying capacity is a **structural precondition** of the model (without it, there is no environmental constraint)
 
 The minimal requirements for a self-sustaining digital organism may be: (1) energy economy with decay, (2) resource competition with capacity limits, (3) death under energy depletion, and (4) reproduction gated by energy surplus. Everything else — mutation, adaptation, communication, social structure — is emergent decoration on a metabolic substrate.
 
@@ -419,6 +419,50 @@ The minimal requirements for a self-sustaining digital organism may be: (1) ener
 Genesis Protocol is ungoverned. There is no mechanism for agents to vote on parameters, propose policy changes, or collectively decide resource allocation. The treasury operates on fixed rules. Carrying capacity is computed, not negotiated.
 
 This is deliberate. The system is a **wild ecosystem**, not a **managed civilization**. The question of whether governance mechanisms would improve outcomes — or whether they would introduce the same instabilities that plague human economic governance — is a question for future work.
+
+### 7.6 Toward a Theoretical Framing
+
+While the experimental evidence is extensive, a sketch of the underlying dynamics provides intuition for why the system stabilizes. Define:
+
+$$B(P) = \text{Birth rate} = f\bigl(\text{ATP}_{\text{per capita}}(P)\bigr)$$
+
+$$D(P) = \text{Death rate} = g\bigl(c_{\text{basal}},\ \delta_{\text{decay}},\ \tau_{\text{stasis}}\bigr)$$
+
+At equilibrium population $P^*$, births balance deaths:
+
+$$B(P^*) = D(P^*)$$
+
+The birth function $B(P)$ is monotonically decreasing in $P$ because per-capita ATP decreases with population (resource competition). The death function $D(P)$ is approximately constant for moderate $P$ (basal cost and decay are individual-level constants) but increases sharply when per-capita ATP drops below subsistence.
+
+This yields a stable fixed point: perturbations above $P^*$ reduce per-capita ATP → increased death → population returns downward; perturbations below $P^*$ increase per-capita ATP → increased reproduction → population returns upward.
+
+The minimum viable population $P_{\min}$ exists where the ATP flow constraint is just satisfied:
+
+$$\text{ATP}_{\text{flow}}(P_{\min}) \geq c_{\text{basal}} + \frac{c_{\text{replication}}}{\mathbb{E}[\text{inter-birth interval}]}$$
+
+Under dual inversion ($c_{\text{basal}} = 3.0$, $c_{\text{replication}} = 5.0$), this constraint yields $P_{\min} \approx 17.6$, consistent with the experimentally observed floor. A full Lyapunov stability analysis remains future work (Section 8.5), but the monotonicity argument provides strong informal assurance that the fixed point is an attractor.
+
+### 7.7 Population Dynamics Under Stress: A Sketch
+
+The following text figure illustrates the qualitative population response across stress regimes, derived from experimental data:
+
+```
+Population
+  55 ┤●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●  Baseline / Q1-Q4 (no collapse)
+     │
+  45 ┤  ●━━━━━━━━━━━━━━━━━━━●               Catastrophe / Evolution Forbidden
+     │                        ╲
+  30 ┤                         ●━━━━━━━●     Scarce Resources / Basal Inversion
+     │                                  ╲
+  20 ┤                                   ●━● Metabolic Inversion
+     │                                      ╲
+  17 ┤ · · · · · · · · · · · · · · · · · · ·●· Dual Inversion (FLOOR)
+     │
+   0 ┤─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  Collapse (never reached)
+     └──────────────────────────────────────→  Increasing stress
+```
+
+**Figure 1.** Qualitative population equilibria across experimental stress regimes. Each plateau represents a stable equilibrium. No trajectory crosses the extinction boundary. The floor at ~17.6 agents under dual inversion represents the minimum viable population where per-capita ATP extraction exactly balances per-capita expenditure at maximum metabolic cost.
 
 ---
 
@@ -471,7 +515,7 @@ The stabilizing mechanism is not evolutionary adaptation but architectural const
 
 This finding has implications beyond artificial life. It suggests that the stability of complex adaptive systems may depend less on their capacity to adapt and more on the structural properties of their resource economies. Evolution is a powerful force — but metabolism comes first.
 
-The organism is alive. It competes, dies, reproduces, self-reports, and persists. And it is, within its design space, unkillable.
+The system exhibits functional signatures analogous to living systems: it competes, dies, reproduces, self-reports, and persists. Within the explored parameter space, no collapse-to-extinction events were observed across any experimental configuration.
 
 ---
 
