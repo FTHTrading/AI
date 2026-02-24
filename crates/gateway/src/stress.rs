@@ -60,6 +60,19 @@ pub struct StressConfig {
     /// Predicted effect: wealth concentration → demographic stagnation
     /// → reproductive starvation cascade.
     pub atp_decay_enabled: bool,
+
+    /// Enable/disable reproduction grants (S3 invariant).
+    /// When false, children receive 0 ATP at birth instead of CHILD_GRANT (8.0).
+    /// Predicted effect: children immediately enter stasis, dramatically
+    /// reducing reproductive viability and causing demographic freeze.
+    pub reproduction_grants_enabled: bool,
+
+    /// Enable/disable the extinction floor safety net (S3 invariant).
+    /// When false: stasis tolerance drops to 1 epoch (instant death on stasis),
+    /// juvenile basal rebate is disabled, and MIN_POPULATION_SIZE check is
+    /// bypassed — removing all mechanisms that buffer agents from death.
+    /// Predicted effect: removes the population floor, enabling true extinction.
+    pub extinction_floor_enabled: bool,
 }
 
 impl Default for StressConfig {
@@ -73,6 +86,8 @@ impl Default for StressConfig {
             treasury_lock_probability: 0.0,
             treasury_cycling_enabled: true,
             atp_decay_enabled: true,
+            reproduction_grants_enabled: true,
+            extinction_floor_enabled: true,
         }
     }
 }
@@ -94,6 +109,8 @@ impl StressConfig {
             treasury_lock_probability: 0.05,
             treasury_cycling_enabled: true,
             atp_decay_enabled: true,
+            reproduction_grants_enabled: true,
+            extinction_floor_enabled: true,
         }
     }
 
@@ -108,6 +125,8 @@ impl StressConfig {
             treasury_lock_probability: 0.10,
             treasury_cycling_enabled: true,
             atp_decay_enabled: true,
+            reproduction_grants_enabled: true,
+            extinction_floor_enabled: true,
         }
     }
 
@@ -122,6 +141,8 @@ impl StressConfig {
             treasury_lock_probability: 0.20,
             treasury_cycling_enabled: true,
             atp_decay_enabled: true,
+            reproduction_grants_enabled: true,
+            extinction_floor_enabled: true,
         }
     }
 
@@ -136,6 +157,8 @@ impl StressConfig {
             treasury_lock_probability: 0.95,
             treasury_cycling_enabled: true,
             atp_decay_enabled: true,
+            reproduction_grants_enabled: true,
+            extinction_floor_enabled: true,
         }
     }
 

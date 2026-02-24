@@ -1073,7 +1073,12 @@ impl World {
 
         // ── Juvenile protection: agents < 5 epochs old get 25% basal rebate ──
         // Prevents newborns from dying before their first foraging cycle.
-        {
+        // S3 invariant: gated by stress_config.extinction_floor_enabled
+        let juvenile_protection_active = self.stress_config
+            .as_ref()
+            .map(|sc| sc.extinction_floor_enabled)
+            .unwrap_or(true);
+        if juvenile_protection_active {
             use metabolism::atp::costs::BASAL_TICK;
             let rebate = BASAL_TICK * JUVENILE_BASAL_REBATE;
             let juvenile_ids: Vec<uuid::Uuid> = self.agents.iter()
@@ -1401,6 +1406,15 @@ impl World {
         let mut deaths_top_quartile: u64 = 0;
         let mut deaths_bottom_quartile: u64 = 0;
 
+        // S3: extinction floor gate — reduce stasis tolerance to 1 (instant death)
+        let extinction_floor_active = self.stress_config
+            .as_ref()
+            .map(|sc| sc.extinction_floor_enabled)
+            .unwrap_or(true);
+        if !extinction_floor_active {
+            self.selection_engine.max_stasis_cycles = 1;
+        }
+
         if let Ok(outcome) = self.selection_engine.select(&population) {
             mean_fitness = outcome.mean_fitness;
             max_fitness = outcome.max_fitness;
@@ -1470,7 +1484,17 @@ impl World {
                                 TransactionKind::ReplicationCost,
                                 "Replication cost",
                             );
-                            self.ledger.register_agent(child.id, CHILD_GRANT);
+                            // S3: reproduction grants gate — children get 0 ATP without grants
+                            let effective_child_grant = if self.stress_config
+                                .as_ref()
+                                .map(|sc| sc.reproduction_grants_enabled)
+                                .unwrap_or(true)
+                            {
+                                CHILD_GRANT
+                            } else {
+                                0.0
+                            };
+                            self.ledger.register_agent(child.id, effective_child_grant);
                             let _ = self.mesh.registry.register(
                                 &child,
                                 format!("Gen{}-{}", child.generation, &child.genome_hex()[..6]),
@@ -1529,6 +1553,38 @@ impl World {
             max_fitness = 0.0;
             min_fitness = 0.0;
             stasis_count = 0;
+
+            // S3: When extinction floor is disabled, still process deaths
+            // even when population < MIN_POPULATION_SIZE (normally 2).
+            // Without this, a single stasis agent would persist indefinitely.
+            if !extinction_floor_active && !population.is_empty() {
+                let stasis_agents: Vec<uuid::Uuid> = population.iter()
+                    .filter(|(_, _, in_stasis)| *in_stasis)
+                    .map(|(dna, _, _)| dna.id)
+                    .collect();
+                for dead_id in stasis_agents {
+                    if let Some(&dead_bal) = balance_map.get(&dead_id) {
+                        if dead_bal >= q75_threshold { deaths_top_quartile += 1; }
+                        if dead_bal <= q25_threshold { deaths_bottom_quartile += 1; }
+                    }
+                    self.agents.retain(|a| a.id != dead_id);
+                    self.agent_birth_epoch.remove(&dead_id);
+                    if let Ok(bal) = self.ledger.balance(&dead_id) {
+                        if bal.balance > 0.0 {
+                            let _ = self.ledger.burn(
+                                &dead_id, bal.balance,
+                                TransactionKind::BasalMetabolism,
+                                "Agent terminated (floor disabled)",
+                            );
+                        }
+                    }
+                    let _ = self.mesh.registry.set_status(
+                        &dead_id,
+                        ecosystem::AgentStatus::Dead,
+                    );
+                    deaths += 1;
+                }
+            }
         }
 
         self.epoch += 1;

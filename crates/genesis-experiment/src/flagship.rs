@@ -1426,6 +1426,241 @@ impl FlagshipExperiments {
             "S1 Treasury Disabled: Hostile",
             "S2 ATP Decay Disabled: Baseline",
             "S2 ATP Decay Disabled: Hostile",
+            // Season 3: Coupled Invariant Violations
+            "S3 Coupled: Decay OFF + Treasury OFF",
+            "S3 Coupled: Decay OFF + Grants OFF",
+            "S3 Coupled: Decay OFF + Floor OFF",
+            "S3 Coupled: All Safety OFF",
+        ]
+    }
+
+    // ── Season 3: Coupled Invariant Violations ──────────────────────────
+    //
+    // Supervisor v2 directive: "Move from single-invariant tests to coupled
+    // invariant violations." All S3 experiments run under hostile conditions
+    // (max catastrophe, max entropy, no Gini tax, no cortex, no mutation)
+    // to match S2 Hostile baseline for direct comparison.
+
+    /// Hostile pressure config shared by all S3 experiments.
+    fn s3_hostile_pressure() -> PressureConfig {
+        let mut p = PressureConfig::default();
+        p.catastrophe_base_prob = 0.03;
+        p.entropy_coeff = 0.0001;
+        p.gini_wealth_tax_threshold = 1.0;
+        p.gini_wealth_tax_rate = 0.0;
+        p.treasury_overflow_threshold = 1.0;
+        p
+    }
+
+    /// Metrics collected by all S3 experiments (20 metrics including S2 inequality suite).
+    fn s3_metrics() -> Vec<Metric> {
+        vec![
+            Metric::FinalPopulation,
+            Metric::Collapsed,
+            Metric::SurvivalEpochs,
+            Metric::MeanPopulation,
+            Metric::MinPopulation,
+            Metric::MeanFitness,
+            Metric::GiniCoefficient,
+            Metric::TotalBirths,
+            Metric::TotalDeaths,
+            Metric::TreasuryRatio,
+            Metric::MaxTreasuryReserve,
+            Metric::BirthDeathRatio,
+            Metric::AtpVariance,
+            Metric::WealthConcentrationIndex,
+            Metric::MedianMeanAtpDivergence,
+            Metric::MeanGiniCoefficient,
+            Metric::MaxGiniCoefficient,
+            Metric::ReproductiveInequalityIndex,
+            Metric::SurvivalInequalityIndex,
+            Metric::TopDecilePersistence,
+        ]
+    }
+
+    /// S3-A: ATP decay OFF + treasury cycling OFF (hostile).
+    ///
+    /// Couples two economic invariant violations: wealth never erodes AND
+    /// never redistributes. Supervisor predicts: "Stratification amplification —
+    /// wealth locks in AND no redistribution."
+    pub fn s3_decay_treasury_off() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S3 Coupled: Decay OFF + Treasury OFF".into(),
+            hypothesis: "With ATP decay disabled AND treasury cycling disabled under \
+                         hostile conditions, wealth never erodes and never redistributes. \
+                         This couples two economic invariant violations. The Gini tax is \
+                         also disabled. Expected: permanent wealth stratification where \
+                         founding agents monopolize reproduction indefinitely. The \
+                         extinction floor should still prevent true collapse, producing \
+                         maximal inequality without extinction.".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: Self::s3_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s3_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                atp_decay_enabled: false,
+                treasury_cycling_enabled: false,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S3-A quick variant (2 steps × 5 runs × 100 epochs).
+    pub fn s3_decay_treasury_off_quick() -> ExperimentConfig {
+        let mut config = Self::s3_decay_treasury_off();
+        config.name = "S3 Coupled: Decay OFF + Treasury OFF [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 5;
+        config.epochs_per_run = 100;
+        config
+    }
+
+    /// S3-B: ATP decay OFF + reproduction grants OFF (hostile).
+    ///
+    /// Children receive 0 ATP at birth (no CHILD_GRANT). Combined with
+    /// immortal wealth (no decay), this creates demographic freeze where
+    /// new agents cannot survive their first basal metabolic cost.
+    /// Supervisor predicts: "Demographic freeze."
+    pub fn s3_decay_grants_off() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S3 Coupled: Decay OFF + Grants OFF".into(),
+            hypothesis: "With ATP decay disabled AND reproduction grants disabled, \
+                         children are born with 0 ATP while existing wealthy agents \
+                         retain their balances forever. New agents cannot survive their \
+                         first basal metabolic cost and die immediately, creating \
+                         demographic freeze: a static population of immortal wealthy \
+                         agents with zero successful reproduction. This is a coupled \
+                         economic + demographic invariant violation.".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: Self::s3_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s3_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                atp_decay_enabled: false,
+                reproduction_grants_enabled: false,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S3-B quick variant (2 steps × 5 runs × 100 epochs).
+    pub fn s3_decay_grants_off_quick() -> ExperimentConfig {
+        let mut config = Self::s3_decay_grants_off();
+        config.name = "S3 Coupled: Decay OFF + Grants OFF [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 5;
+        config.epochs_per_run = 100;
+        config
+    }
+
+    /// S3-C: ATP decay OFF + extinction floor OFF (hostile).
+    ///
+    /// Removes the population safety net. Without extinction floor: juvenile
+    /// protection is disabled, stasis tolerance drops to 1 epoch, and
+    /// populations can crash below MIN_POPULATION_SIZE to true zero.
+    /// Combined with immortal wealth (no decay), decline becomes irreversible.
+    /// Supervisor predicts: "True extinction boundary."
+    pub fn s3_decay_floor_off() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S3 Coupled: Decay OFF + Floor OFF".into(),
+            hypothesis: "With ATP decay disabled AND extinction floor disabled, the \
+                         population safety net is removed. Juvenile protection is \
+                         disabled (no 25% basal rebate for young agents), stasis \
+                         tolerance drops from 8 to 1 epoch (instant death on stasis), \
+                         and populations can crash to true zero. Combined with immortal \
+                         wealth (no decay), wealthy agents persist but population \
+                         decline becomes irreversible. This tests whether the extinction \
+                         floor is the true structural stabilizer. Expected: true \
+                         extinction events, especially at low carrying capacities.".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: Self::s3_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s3_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                atp_decay_enabled: false,
+                extinction_floor_enabled: false,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S3-C quick variant (2 steps × 5 runs × 100 epochs).
+    pub fn s3_decay_floor_off_quick() -> ExperimentConfig {
+        let mut config = Self::s3_decay_floor_off();
+        config.name = "S3 Coupled: Decay OFF + Floor OFF [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 5;
+        config.epochs_per_run = 100;
+        config
+    }
+
+    /// S3-D: All metabolic safety OFF (hostile).
+    ///
+    /// ATP decay OFF + treasury cycling OFF + reproduction grants OFF +
+    /// extinction floor OFF. Every economic and metabolic safety mechanism
+    /// removed simultaneously. Supervisor predicts: "High probability collapse."
+    pub fn s3_all_off() -> ExperimentConfig {
+        ExperimentConfig {
+            name: "S3 Coupled: All Safety OFF".into(),
+            hypothesis: "All metabolic and economic safety mechanisms disabled: ATP \
+                         decay never erodes wealth, treasury never redistributes, \
+                         children receive 0 ATP at birth, and the extinction floor \
+                         is removed (no juvenile protection, instant stasis death, \
+                         populations can reach zero). Under hostile conditions with \
+                         all adaptation also disabled, this is the maximal coupled \
+                         invariant violation. Expected: rapid collapse as the \
+                         population has no recovery mechanism from any perturbation.".into(),
+            sweep: ParameterSweep::new(SweepVariable::SoftCap, 30.0, 180.0, 30.0),
+            runs_per_step: 20,
+            epochs_per_run: 500,
+            metrics: Self::s3_metrics(),
+            base_preset: PhysicsPreset::EarthPrime,
+            base_pressure_override: Some(Self::s3_hostile_pressure()),
+            mutation_rate_override: Some(0.0),
+            cortex_enabled_override: Some(false),
+            base_stress_override: Some(StressConfig {
+                atp_decay_enabled: false,
+                treasury_cycling_enabled: false,
+                reproduction_grants_enabled: false,
+                extinction_floor_enabled: false,
+                ..StressConfig::default()
+            }),
+            base_seed: 42,
+        }
+    }
+
+    /// S3-D quick variant (2 steps × 5 runs × 100 epochs).
+    pub fn s3_all_off_quick() -> ExperimentConfig {
+        let mut config = Self::s3_all_off();
+        config.name = "S3 Coupled: All Safety OFF [QUICK]".into();
+        config.sweep = ParameterSweep::new(SweepVariable::SoftCap, 60.0, 120.0, 60.0);
+        config.runs_per_step = 5;
+        config.epochs_per_run = 100;
+        config
+    }
+
+    /// Season 3 Coupled Invariant Violation Suite: all S3 experiments.
+    pub fn s3_coupled_suite() -> Vec<(&'static str, ExperimentConfig)> {
+        vec![
+            ("s3_decay_treasury_off", Self::s3_decay_treasury_off()),
+            ("s3_decay_grants_off", Self::s3_decay_grants_off()),
+            ("s3_decay_floor_off", Self::s3_decay_floor_off()),
+            ("s3_all_off", Self::s3_all_off()),
         ]
     }
 }
@@ -1935,6 +2170,109 @@ mod tests {
         let result = ExperimentRunner::run(&config);
         assert_eq!(result.steps.len(), 2);
         assert!(result.total_worlds > 0);
+    }
+
+    // ── Season 3: Coupled Invariant Violation Tests ─────────────────────
+
+    #[test]
+    fn s3_coupled_suite_valid() {
+        let suite = FlagshipExperiments::s3_coupled_suite();
+        assert_eq!(suite.len(), 4);
+        for (name, config) in &suite {
+            assert!(!name.is_empty());
+            assert_eq!(config.total_worlds(), 120);
+        }
+    }
+
+    #[test]
+    fn s3_decay_treasury_off_config_valid() {
+        let config = FlagshipExperiments::s3_decay_treasury_off();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.total_worlds(), 120);
+        assert!(config.metrics.len() >= 18);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(!stress.atp_decay_enabled);
+        assert!(!stress.treasury_cycling_enabled);
+        assert!(stress.reproduction_grants_enabled); // grants still active
+        assert!(stress.extinction_floor_enabled); // floor still active
+    }
+
+    #[test]
+    fn s3_decay_grants_off_config_valid() {
+        let config = FlagshipExperiments::s3_decay_grants_off();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.total_worlds(), 120);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(!stress.atp_decay_enabled);
+        assert!(!stress.reproduction_grants_enabled);
+        assert!(stress.treasury_cycling_enabled); // treasury still active
+        assert!(stress.extinction_floor_enabled); // floor still active
+    }
+
+    #[test]
+    fn s3_decay_floor_off_config_valid() {
+        let config = FlagshipExperiments::s3_decay_floor_off();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.total_worlds(), 120);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(!stress.atp_decay_enabled);
+        assert!(!stress.extinction_floor_enabled);
+        assert!(stress.treasury_cycling_enabled); // treasury still active
+        assert!(stress.reproduction_grants_enabled); // grants still active
+    }
+
+    #[test]
+    fn s3_all_off_config_valid() {
+        let config = FlagshipExperiments::s3_all_off();
+        assert_eq!(config.sweep.step_count(), 6);
+        assert_eq!(config.total_worlds(), 120);
+        let stress = config.base_stress_override.as_ref().unwrap();
+        assert!(!stress.atp_decay_enabled);
+        assert!(!stress.treasury_cycling_enabled);
+        assert!(!stress.reproduction_grants_enabled);
+        assert!(!stress.extinction_floor_enabled);
+    }
+
+    #[test]
+    fn quick_s3_decay_treasury_off_runs() {
+        let config = FlagshipExperiments::s3_decay_treasury_off_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn quick_s3_decay_grants_off_runs() {
+        let config = FlagshipExperiments::s3_decay_grants_off_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn quick_s3_decay_floor_off_runs() {
+        let config = FlagshipExperiments::s3_decay_floor_off_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn quick_s3_all_off_runs() {
+        let config = FlagshipExperiments::s3_all_off_quick();
+        let result = ExperimentRunner::run(&config);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_worlds > 0);
+    }
+
+    #[test]
+    fn experiment_list_includes_s3() {
+        let list = FlagshipExperiments::list();
+        assert_eq!(list.len(), 29);
+        assert!(list.contains(&"S3 Coupled: Decay OFF + Treasury OFF"));
+        assert!(list.contains(&"S3 Coupled: Decay OFF + Grants OFF"));
+        assert!(list.contains(&"S3 Coupled: Decay OFF + Floor OFF"));
+        assert!(list.contains(&"S3 Coupled: All Safety OFF"));
     }
 
 }

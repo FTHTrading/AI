@@ -1,0 +1,67 @@
+╔══════════════════════════════════════════════════════════╗
+║  Genesis Experiment: S3 Coupled: Decay OFF + Treasury OF ║
+╚══════════════════════════════════════════════════════════╝
+
+Hypothesis: With ATP decay disabled AND treasury cycling disabled under hostile conditions, wealth never erodes and never redistributes. This couples two economic invariant violations. The Gini tax is also disabled. Expected: permanent wealth stratification where founding agents monopolize reproduction indefinitely. The extinction floor should still prevent true collapse, producing maximal inequality without extinction.
+
+── Protocol ──
+  Variable:      soft_cap
+  Range:         30.000000 → 180.000000 (step 30.000000)
+  Runs/step:     20
+  Epochs/run:    500
+  Base preset:   EarthPrime
+  Base seed:     42
+  Total worlds:  120
+  Total epochs:  60000
+  Duration:      3240ms
+
+── Results ──
+
+param_value  collapse_%   final_population     collapsed            survival_epochs      mean_population      min_population       mean_fitness         gini_coefficient     total_births         total_deaths         treasury_ratio       max_treasury_reserve birth_death_ratio    atp_variance         wealth_concentration_index median_mean_atp_divergence mean_gini_coefficient max_gini_coefficient reproductive_inequality_index survival_inequality_index top_decile_persistence
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+30.000000    0.0          29.55    ± 0.69     0.00     ± 0.00     500.00   ± 0.00     30.09    ± 0.24     20.00    ± 0.00     0.57     ± 0.02     0.59     ± 0.03     30.15    ± 3.25     20.60    ± 3.27     0.51     ± 0.03     1650.75  ± 158.17   0.84     ± 0.13     5206.86  ± 932.64   0.46     ± 0.05     0.52     ± 0.09     0.55     ± 0.03     0.65     ± 0.03     0.41     ± 0.13     0.50     ± 0.08     0.36     ± 0.16    
+60.000000    0.0          51.55    ± 1.93     0.00     ± 0.00     500.00   ± 0.00     49.67    ± 1.63     20.00    ± 0.00     0.57     ± 0.02     0.68     ± 0.02     89.60    ± 5.32     58.05    ± 6.35     0.37     ± 0.04     719.21   ± 118.81   0.93     ± 0.18     2157.12  ± 272.50   0.65     ± 0.03     0.59     ± 0.04     0.56     ± 0.02     0.69     ± 0.02     0.87     ± 0.02     0.79     ± 0.02     0.62     ± 0.12    
+90.000000    0.0          53.75    ± 1.71     0.00     ± 0.00     500.00   ± 0.00     52.22    ± 1.28     20.00    ± 0.00     0.57     ± 0.01     0.68     ± 0.02     98.30    ± 7.16     64.55    ± 6.64     0.34     ± 0.03     604.42   ± 76.08    0.94     ± 0.21     1970.72  ± 237.41   0.66     ± 0.03     0.59     ± 0.04     0.54     ± 0.01     0.69     ± 0.02     0.90     ± 0.02     0.80     ± 0.02     0.53     ± 0.08    
+120.000000   0.0          53.35    ± 1.90     0.00     ± 0.00     500.00   ± 0.00     52.12    ± 1.17     20.00    ± 0.00     0.56     ± 0.01     0.69     ± 0.03     98.45    ± 6.00     65.10    ± 6.27     0.34     ± 0.04     584.78   ± 87.79    0.91     ± 0.22     1965.65  ± 356.04   0.67     ± 0.02     0.62     ± 0.05     0.55     ± 0.02     0.70     ± 0.02     0.90     ± 0.02     0.80     ± 0.02     0.53     ± 0.12    
+150.000000   0.0          53.75    ± 1.74     0.00     ± 0.00     500.00   ± 0.00     52.36    ± 1.61     20.00    ± 0.00     0.57     ± 0.01     0.69     ± 0.03     95.90    ± 5.43     62.15    ± 5.81     0.37     ± 0.03     659.13   ± 83.25    0.93     ± 0.21     2083.78  ± 393.63   0.66     ± 0.03     0.61     ± 0.04     0.55     ± 0.01     0.70     ± 0.02     0.89     ± 0.02     0.79     ± 0.02     0.54     ± 0.06    
+180.000000   0.0          53.05    ± 1.99     0.00     ± 0.00     500.00   ± 0.00     51.50    ± 1.85     20.00    ± 0.00     0.57     ± 0.02     0.68     ± 0.02     96.45    ± 6.97     63.40    ± 7.37     0.37     ± 0.04     654.35   ± 108.41   0.90     ± 0.21     1957.16  ± 319.21   0.65     ± 0.03     0.61     ± 0.05     0.54     ± 0.02     0.69     ± 0.02     0.89     ± 0.03     0.80     ± 0.03     0.50     ± 0.11    
+
+── Findings ──
+
+  1. Collapse rate: 0/120 trials (0.0%)
+  2. NO COLLAPSES — coupled invariant violation [s3_decay_treasury_off] did NOT cause extinction
+  3. ── Inequality Instrumentation ──
+  4. Wealth concentration (top 10%): mean=0.6247, max=0.7187
+  5.   ⚠ WEALTH OLIGARCHY: Top 10% controls >50% of ATP
+  6. Mean Gini coefficient: mean=0.5493, max=0.6111
+  7. Median/Mean ATP divergence: mean=0.5900, max=0.7107
+  8.   ⚠ RIGHT-SKEWED: Mean >> Median, wealth hoarding
+  9. ATP variance: mean=2556.9, max=7011.8
+  10. Reproductive inequality: mean=0.8115, max=0.9425
+  11.   ⚠ REPRODUCTIVE MONOPOLY: Top quartile >50% of births
+  12. Survival inequality: mean=0.7463, max=0.8421
+  13.   ⚠ SURVIVAL APARTHEID: Bottom quartile >50% of deaths
+  14. Top decile persistence: mean=0.5141, max=0.7860
+  15. ── Population & Economy ──
+  16. Population floor: global_min=20, mean_min=20.0
+  17. Mean population: 48.0 (min trial: 29.7)
+  18. Final population: mean=49.2, min=28, max=57
+  19. Birth/death ratio: mean=0.9093, min=0.5455
+  20. Total births: mean=84.8, min=25
+  21. Treasury accumulation: global_max=1917.6, mean_max=812.1 ATP
+  22. Mean fitness: 0.5677
+  23. ── Per-step breakdown ──
+  24.   cap=30: collapse=0.0%, pop=30.1, gini=0.5523, wci=0.4576, repro=0.4132, surv=0.5021
+  25.   cap=60: collapse=0.0%, pop=49.7, gini=0.5607, wci=0.6461, repro=0.8729, surv=0.7851
+  26.   cap=90: collapse=0.0%, pop=52.2, gini=0.5447, wci=0.6594, repro=0.9031, surv=0.7974
+  27.   cap=120: collapse=0.0%, pop=52.1, gini=0.5469, wci=0.6662, repro=0.8955, surv=0.8022
+  28.   cap=150: collapse=0.0%, pop=52.4, gini=0.5465, wci=0.6648, repro=0.8936, surv=0.7937
+  29.   cap=180: collapse=0.0%, pop=51.5, gini=0.5449, wci=0.6543, repro=0.8910, surv=0.7975
+  30. ── VERDICT ──
+  31. NO COLLAPSE but PATHOLOGICAL: [s3_decay_treasury_off] → [wealth_concentration=0.625, gini=0.549, repro_inequality=0.812, survival_inequality=0.746]
+  32. Survivable but degenerate economy under coupled invariant violation
+
+── Verification ──
+
+  Result hash:   342e8e965088f03215cf168a1e8284f9f6b89d1dbc1e269c25e54361bbae26b5
+
