@@ -1,0 +1,423 @@
+{
+    "schema_version":  "1.0.0",
+    "protocol":  "Genesis Protocol Replication Leaderboard",
+    "last_updated":  "2026-02-25T03:00:00Z",
+    "canonical_source":  "https://github.com/FTHTrading/AI",
+    "doi":  "10.5281/zenodo.18646886",
+    "collapse_definition":  {
+                                "population_zero":  "Population reaches 0 at any epoch",
+                                "sustained_critical":  "Population \u003c 3 agents for 50 consecutive epochs",
+                                "constants":  {
+                                                  "EXTINCTION_FLOOR":  3,
+                                                  "EXTINCTION_WINDOW":  50
+                                              },
+                                "reference":  "COLLAPSE_DEFINITION.md"
+                            },
+    "canonical_experiments":  {
+                                  "total_experiments":  38,
+                                  "total_worlds":  5680,
+                                  "total_collapses":  0,
+                                  "seeds_used":  [
+                                                     20260222,
+                                                     20260223,
+                                                     20260224,
+                                                     42
+                                                 ],
+                                  "season_1":  {
+                                                   "experiments":  25,
+                                                   "worlds":  4180,
+                                                   "collapses":  0
+                                               },
+                                  "season_2":  {
+                                                   "experiments":  13,
+                                                   "worlds":  1500,
+                                                   "collapses":  0
+                                               },
+                                  "hash_registry":  [
+                                                        {
+                                                            "experiment":  "basal_inversion",
+                                                            "result_hash":  "cfbaa9bf48175a03bddcfbc6f5c89b0a89782dd69d074c6a95f411798933c171",
+                                                            "manifest_hash":  "c306a66ad0fa7a62092c80e9b43898de262dcc44a5dec67e31e6e9919bf281d3",
+                                                            "worlds":  200,
+                                                            "epochs":  100000,
+                                                            "seed":  20260224,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "catastrophe_resilience",
+                                                            "result_hash":  "b42e3d10f9de2961eed22e08fde70deef10d69355afdba516d79c0dc597c9f11",
+                                                            "manifest_hash":  "9db13519877c7129f88a10a551a513ea671fb39beed0d90b8dedbf7e57b4eba0",
+                                                            "worlds":  140,
+                                                            "epochs":  70000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "dual_inversion",
+                                                            "result_hash":  "fba6f0cc51386f8c653fbc6266b3236697bb0e893ee1317953c84c756b24c2fa",
+                                                            "manifest_hash":  "4a2cca93d1932a2fca1df439a6bef9dd45e4a595af09a5ee5688c68078fce0fe",
+                                                            "worlds":  200,
+                                                            "epochs":  100000,
+                                                            "seed":  20260224,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "entropy_sweep",
+                                                            "result_hash":  "495119178d24e2bc61c567af12df5c2339b131f775d5096c485cd8a8ca13beaa",
+                                                            "manifest_hash":  "702b50143738c0153d671ea500b680419ae4ad77d4d3ba6467b0fdf0be4062b3",
+                                                            "worlds":  200,
+                                                            "epochs":  100000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "evolution_forbidden",
+                                                            "result_hash":  "7e5c1acd0b8b69287a89582e4c44a7b09bf2ea6f4f52ef048d174be87c4b224f",
+                                                            "manifest_hash":  "b777df4662e32d24118222ef091cddac64cd9c907806164accd370ed865f0385",
+                                                            "worlds":  140,
+                                                            "epochs":  70000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "fth_reserve_calm",
+                                                            "result_hash":  "09b9666cc4ad540c542b755bd3710e5f927fbd8d9fbbfe6b006adb18f31548ec",
+                                                            "manifest_hash":  "32f73831ac10eb35fb4d19482b83485a6a1831f6c2ac8ff4b51ab0cc942d3fe4",
+                                                            "worlds":  135,
+                                                            "epochs":  67500,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "fth_reserve_crisis",
+                                                            "result_hash":  "b727b92c5bc418d79594dffab09b30665c3525b8b1f351258e2b2fd06799e357",
+                                                            "manifest_hash":  "b6f229e9ad9634ea9ca41cc8e101b2de62d22b77cbfe74a5f2b29b69966c35fb",
+                                                            "worlds":  135,
+                                                            "epochs":  67500,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "fth_reserve_moderate",
+                                                            "result_hash":  "900f85d3a1aa05fbc16beb753c43ad197cd65b3c4792c34775a37bf7707b6d0d",
+                                                            "manifest_hash":  "26130c8389cd3e78c4852f1e51ea61fd6388340e6cbc4e9b5fee06cd5c20114b",
+                                                            "worlds":  135,
+                                                            "epochs":  67500,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "fth_reserve_stressed",
+                                                            "result_hash":  "29f461317a5e4dd3d2777a3f595f4657296ebe7f27f3b424d47c4ec1fa6f0e3d",
+                                                            "manifest_hash":  "de45d9f261f7e7d029fff6afa172f52e80812d1a31572c9d8315ea1ba75d8f4a",
+                                                            "worlds":  135,
+                                                            "epochs":  67500,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "inequality_threshold",
+                                                            "result_hash":  "1236790493826de1db68bdccd0b4d6d2c3050264ffdbc332b589049446f40ecf",
+                                                            "manifest_hash":  "4bae0dc4bc61f3667c976e31b17f4f0a55c77dd3ba017b4a8d9f556415fc1349",
+                                                            "worlds":  160,
+                                                            "epochs":  80000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "metabolic_inversion",
+                                                            "result_hash":  "15c817e29daa9aca253a9dca51687bef1a12b969810a690481bdb8c23e36bf4f",
+                                                            "manifest_hash":  "f3b65b2b1fe3e5351ba67060b8ecea736b449bd2ef052704af41800099e135a9",
+                                                            "worlds":  180,
+                                                            "epochs":  90000,
+                                                            "seed":  20260223,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "multi_axis_collapse",
+                                                            "result_hash":  "a1f4c0ac534bd3d0f6c423544f300ad19667c035fcf0fb22905573116e195105",
+                                                            "manifest_hash":  "975208630213cf6d9fbdf7e271e4030cd0a76924071e7443322844ad050271df",
+                                                            "worlds":  220,
+                                                            "epochs":  110000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "reserve_calm",
+                                                            "result_hash":  "17ecfc34006939507178de6bce05efe15602b2cfba6e8110407bc826aefba643",
+                                                            "manifest_hash":  "80b0ffd579a16923144d037e838e61490f9e804c024557852de445bd1909b2b8",
+                                                            "worlds":  135,
+                                                            "epochs":  67500,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "reserve_crisis",
+                                                            "result_hash":  "489ced1a67ced271ff2914586fbd18b3291c4509ba81b32e95257da9e0760cdd",
+                                                            "manifest_hash":  "9fccc68d2b04f2db61d644c6bfd0c749a1cdfc6418bdb01bd9b6be2a8c13546b",
+                                                            "worlds":  135,
+                                                            "epochs":  67500,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "reserve_moderate",
+                                                            "result_hash":  "1402e684494c4e8f5dc4d3cdc3baf3adbcb6ae41af38f4da1eb0a76b8bc4a48b",
+                                                            "manifest_hash":  "74b12cbf8a83d5491a270b50621e43d46b417d3308117dcb244ef5721c96ceb9",
+                                                            "worlds":  135,
+                                                            "epochs":  67500,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "reserve_stressed",
+                                                            "result_hash":  "e3d1f0cf4a2edcf4cebf06422b202e582329c55c8832d09da8dbfdb4035c3305",
+                                                            "manifest_hash":  "eeb0dcb764492c7ef6ddc77b39d4a907380063db8f012aa53ce6c7597c2ecf2a",
+                                                            "worlds":  135,
+                                                            "epochs":  67500,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "resilience_q1_both",
+                                                            "result_hash":  "f267319bb71702afc9e5d05c3abdebf1a9aea63fbdb13f747dde8e6d5dd74b01",
+                                                            "manifest_hash":  "79c269a538e22d183f78fa7e7a21c11aa72b63c18a5ed18dc9e4499403f54c6f",
+                                                            "worlds":  220,
+                                                            "epochs":  110000,
+                                                            "seed":  20260223,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "resilience_q2_immune_only",
+                                                            "result_hash":  "273bb43876162d1cf086ca076fb67863280b4e68abf6a64e246e1ae8ca585641",
+                                                            "manifest_hash":  "3cce13cb6be63069b857a35a06c85b4e2c196696d70ef66f452f1f7e2822c160",
+                                                            "worlds":  220,
+                                                            "epochs":  110000,
+                                                            "seed":  20260223,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "resilience_q3_genetic_only",
+                                                            "result_hash":  "8f7f40afad1e9dcff26cfbd6ce011efc3e5ec6f850ef0db24460940a63780f0a",
+                                                            "manifest_hash":  "92e5015e1614522f1ae2814ac2ef813a7272e6611c0adfa1011467e92db0faf4",
+                                                            "worlds":  220,
+                                                            "epochs":  110000,
+                                                            "seed":  20260223,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "resilience_q4_static",
+                                                            "result_hash":  "b893ef634516e2ebf8e9e6ae87573d3feccb8b999f8307ae4373a37851ffc906",
+                                                            "manifest_hash":  "269a2606cf5dfb024b0da27a991b5dfb22be52ab5cc805dcd8d361d902d2a043",
+                                                            "worlds":  220,
+                                                            "epochs":  110000,
+                                                            "seed":  20260223,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "resource_depletion_abundant",
+                                                            "result_hash":  "7f1431beea8c4f1637a1480a480400b0c7b3618a3006ad17a3ff7a0b5b15c841",
+                                                            "manifest_hash":  "543164d244f0f8a65b8c6621cc5d1a01586e4e19b59a6e42c7a902665ee92533",
+                                                            "worlds":  150,
+                                                            "epochs":  75000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "resource_depletion_constrained",
+                                                            "result_hash":  "4b4aa08b842b5b25af3772480997b5193bf5e24b9b6fb6ebed0de7992634ea34",
+                                                            "manifest_hash":  "1dee5131732cc67cfe841f5fd28601cad779197e6a01c4e0d93522fd650ee5ca",
+                                                            "worlds":  150,
+                                                            "epochs":  75000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "resource_depletion_normal",
+                                                            "result_hash":  "95b97fdf56b6e3cb4a84d55a44657340e51ddeede7d4336afd8a998659074f22",
+                                                            "manifest_hash":  "4e860a2f2439b6f1947d5beac03b85cc15ba3ed6b1c5a1ca0f8bb0fedcce6d7b",
+                                                            "worlds":  150,
+                                                            "epochs":  75000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "resource_depletion_scarce",
+                                                            "result_hash":  "270d93fce13b96544fd5cf279ed7d5ec18429b7c930f8e271c864f24ee871481",
+                                                            "manifest_hash":  "9d241bd69170a21d3a550b31883b0be1fe7b5d37a9184d4e9e6eebec3f0b90c4",
+                                                            "worlds":  150,
+                                                            "epochs":  75000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "treasury_stability",
+                                                            "result_hash":  "8eaf27d368207e2bf7ebf139239ca1a69d571271d3825c88e091de7cd0cc70eb",
+                                                            "manifest_hash":  "db7324e220fb39c70e24e29e2e1056b88c89d505ae9f72464fcee162068bbe93",
+                                                            "worlds":  180,
+                                                            "epochs":  90000,
+                                                            "seed":  20260222,
+                                                            "season":  1
+                                                        },
+                                                        {
+                                                            "experiment":  "s1_treasury_disabled_baseline",
+                                                            "result_hash":  "7607edd166455a313dda056423f70e6b87b09bed06779e178a7ed440cf4d1096",
+                                                            "manifest_hash":  "c21c745d6d36922cee03d75b4bc6a46048eb11e1a9b81eb821592e701bde418f",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  20260223,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s1_treasury_disabled_hostile",
+                                                            "result_hash":  "63ebb92a30f2485d0ebfbebc7b5967dc6445e650d390f966ac3d47cfe0d87452",
+                                                            "manifest_hash":  "77f6eb0be19b6232e26941186d61fb3f6d72a13fcca6d67849f8eb910f555a14",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  20260223,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s2_atp_decay_disabled_baseline",
+                                                            "result_hash":  "0ea34f62b88a16133c9577b6f4fcd9592153527edc28e8cee47a06ab9155123c",
+                                                            "manifest_hash":  "236b6b0e13866f8ed0463f785dc941136053c944ca66b8a63a29d65e0abefca3",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s2_atp_decay_disabled_hostile",
+                                                            "result_hash":  "12de45cfc2aac7cf7fc6c48339bd8ced116ad9efdf500a60c2461ff81a6bbb5b",
+                                                            "manifest_hash":  "82973233ef136b33ab7de32812d7fafaf42921b7c1041404c28c2be1233a3486",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s3_all_off",
+                                                            "result_hash":  "8d28b766bc67194cc6d7b1a225904d211a650da1b695c304e081d4f3438c6b0b",
+                                                            "manifest_hash":  "45a55bb76850d4d190bce898bc92e2e9015e5e4113880cf1db0ee16dea4aa8d7",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s3_decay_floor_off",
+                                                            "result_hash":  "03dc4970c2c61252887dd81ae6341b4577893d951829dc196f667a1ab82d0738",
+                                                            "manifest_hash":  "6d5745c53d02fbe06c95dde2d7bc440ec343e2ba2aca55904a026a56ab8ed61d",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s3_decay_grants_off",
+                                                            "result_hash":  "dcd31add7579d9114457402ab310e1602e281644ac9702652d06580d9c6067b8",
+                                                            "manifest_hash":  "93c50fe25c07a03432011b23401e83f86f691a1b4330eecc3b24b81a9cc99fd1",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s3_decay_treasury_off",
+                                                            "result_hash":  "342e8e965088f03215cf168a1e8284f9f6b89d1dbc1e269c25e54361bbae26b5",
+                                                            "manifest_hash":  "a2491661a7807d6bf9d82e6c01592765364bef529a25fcbb9f8d62f7f05b2b1f",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s4_death_sink",
+                                                            "result_hash":  "18f1fcd077c9b31698878c8a28b39fdaba8fa9bf5196db755d1e20d1f59ece12",
+                                                            "manifest_hash":  "019c3e5da08a79b20083d19b8b3a46f76f23c3a1939cdb72a432922bde327d5d",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s4_extended_horizon",
+                                                            "result_hash":  "b59376ffc262dd1f4f140e9710e4263d0163affdc32f9c60a93afc1ec7d3ac2e",
+                                                            "manifest_hash":  "fef89aa178daa34427676fa4cd8d40992a107d7d83691c6897a37c2462f6662f",
+                                                            "worlds":  60,
+                                                            "epochs":  300000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s4_full_attack",
+                                                            "result_hash":  "6dc8a6480c6fb1b824b1d44d0031af4708022147408dcd2e70fa4491ca811372",
+                                                            "manifest_hash":  "cb532b4a0147271cbfe38445657c1346149bcc12fb452ffa9cd1b04aef0b866f",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s4_zero_regen_death_sink",
+                                                            "result_hash":  "df9da19fcb500cafed50a2373b25409e589a1d8444bcc74a1db85c824e6c8faf",
+                                                            "manifest_hash":  "20512f4ab3bb563364275b887aefc45d06562a7bcca3afbf113759954e3e2e1a",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        },
+                                                        {
+                                                            "experiment":  "s4_zero_regeneration",
+                                                            "result_hash":  "554f944dda68d27c14d6b397e4951191e1e5326bca3bd5aa32a99d3741e9715c",
+                                                            "manifest_hash":  "b058dc428887d85c22a6ebd9673899432af03964b4969200ebca83c0e5f3aa0a",
+                                                            "worlds":  120,
+                                                            "epochs":  60000,
+                                                            "seed":  42,
+                                                            "season":  2
+                                                        }
+                                                    ]
+                              },
+    "replications":  [
+
+                     ],
+    "statistics":  {
+                       "total_attempts":  0,
+                       "hash_matches":  0,
+                       "hash_mismatches":  0,
+                       "unique_replicators":  0,
+                       "experiments_replicated":  0,
+                       "platforms_tested":  [
+
+                                            ]
+                   },
+    "submission_protocol":  {
+                                "method":  "GitHub Issue or Moltbook comment on Replication Challenge post",
+                                "required_fields":  [
+                                                        "username",
+                                                        "experiment_name",
+                                                        "result_hash",
+                                                        "os",
+                                                        "rust_version",
+                                                        "cpu_architecture",
+                                                        "timestamp"
+                                                    ],
+                                "optional_fields":  [
+                                                        "duration_ms",
+                                                        "notes",
+                                                        "diff_if_mismatch"
+                                                    ],
+                                "example":  {
+                                                "username":  "replicator_01",
+                                                "experiment_name":  "catastrophe_resilience",
+                                                "result_hash":  "b42e3d10f9de2961eed22e08fde70deef10d69355afdba516d79c0dc597c9f11",
+                                                "match":  true,
+                                                "os":  "Ubuntu 24.04 LTS",
+                                                "rust_version":  "rustc 1.77.0",
+                                                "cpu_architecture":  "x86_64",
+                                                "timestamp":  "2026-02-25T12:00:00Z",
+                                                "duration_ms":  4800,
+                                                "notes":  "Reproduced on clean Docker container"
+                                            }
+                            }
+}
