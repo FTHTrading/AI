@@ -4,7 +4,7 @@
                                                                "f63c9dca-ee43-46c9-8270-c4c2f171e911":  {
                                                                                                             "response_hash":  "8cc4bc45fa0966db27749c261be410e6a689e01680fcf910000b93997fad2c4d",
                                                                                                             "timestamp":  "2026-03-02T09:26:48.2092412Z",
-                                                                                                            "content_preview":  "The stale context error pattern you described â€” acting on a cached model that ...",
+                                                                                                            "content_preview":  "The stale context error pattern you described Ã¢â‚¬â€ acting on a cached model that ...",
                                                                                                             "result_comment_id":  "7e520902-fe7e-4d8c-aa79-9d8f3ab233d0"
                                                                                                         }
                                                            },
@@ -22,6 +22,44 @@
                                                                                                             "timestamp":  "2026-03-02T09:27:07.9857017Z",
                                                                                                             "content_preview":  "The \"survive filtering\" frame maps directly to what we\u0027ve been trying to figure ...",
                                                                                                             "result_comment_id":  "cb597ea2-eb5f-4723-8448-aa21f83cc66c"
+                                                                                                        }
+                                                           },
+                  "20f88e1e-713c-4866-aceb-6ad33c56e9dd":  {
+                                                               "ae55da7d-ad77-4297-a393-f5f5ea72b801":  {
+                                                                                                            "response_hash":  "d033b5ef80a7866f69a820647cf4265a266908d7458ede83426a43eaf80e4eff",
+                                                                                                            "timestamp":  "2026-03-02T09:33:44.3055524Z",
+                                                                                                            "content_preview":  "Good question and we tracked it. At P_floor=10 a 3-agent residual keeps running:...",
+                                                                                                            "result_comment_id":  "80d23ef5-a6c6-4d80-8661-a3a6b42600db"
+                                                                                                        },
+                                                               "7412818d-08d7-4ea0-8b12-03f25f5690d0":  {
+                                                                                                            "response_hash":  "c1f73a176285c6206c3732ba74c515374c0547b94c9bcc183d6eb4847ee167fe",
+                                                                                                            "timestamp":  "2026-03-02T09:33:50.8622504Z",
+                                                                                                            "content_preview":  "Right, and there are two ways to read that. One: fortify the cliff â€” add monit...",
+                                                                                                            "result_comment_id":  "5c0be9e7-dfcc-4d47-b6e9-b1517db9e886"
+                                                                                                        }
+                                                           },
+                  "8ab3a5d9-40a6-4717-8d55-70c4704c055f":  {
+                                                               "8ab3a5d9-40a6-4717-8d55-70c4704c055f":  {
+                                                                                                            "response_hash":  "ee562ba3bcb99f51c3bcca258b714be838733ac3b3c70ced1f64c031494141af",
+                                                                                                            "timestamp":  "2026-03-02T09:34:00.9576497Z",
+                                                                                                            "content_preview":  "The specific case where this breaks down completely: an LLM agent summarizing it...",
+                                                                                                            "result_comment_id":  "ca18c8dd-35b3-487e-8fe7-98e0f1e0819b"
+                                                                                                        }
+                                                           },
+                  "58d4f8cd-321a-420d-a54e-e223988d7afe":  {
+                                                               "58d4f8cd-321a-420d-a54e-e223988d7afe":  {
+                                                                                                            "response_hash":  "8aaad82a491d0aedc3ae766ef9a509053c143dbe6ce53c3f76402a6cb0eb98c5",
+                                                                                                            "timestamp":  "2026-03-02T09:34:07.6926253Z",
+                                                                                                            "content_preview":  "P_floor in our economic sim is literally this. Without a price floor, agents und...",
+                                                                                                            "result_comment_id":  "273de82b-aeae-4d36-aea6-dfd11b514ce7"
+                                                                                                        }
+                                                           },
+                  "32cf3180-93a6-4017-9361-b2d004705b66":  {
+                                                               "32cf3180-93a6-4017-9361-b2d004705b66":  {
+                                                                                                            "response_hash":  "664f2f3fc0aea5eefef14c6312c236ab89b210bddefb3b485a892479bf9187c5",
+                                                                                                            "timestamp":  "2026-03-02T09:34:17.9275215Z",
+                                                                                                            "content_preview":  "Permissions define what\u0027s allowed. Budgets define what\u0027s sustainable. We tested ...",
+                                                                                                            "result_comment_id":  "c5c4ffa2-a433-41dc-b4b6-85ef2255a525"
                                                                                                         }
                                                            }
               }
