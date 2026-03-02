@@ -1,4 +1,8 @@
-﻿# Genesis Protocol
+﻿# Genesis Protocol — AI Tools Repository
+
+> **LEGACY NOTICE**: This repository contains tooling, operators, and early drafts. The canonical source of truth for the Genesis Protocol research — including the latest experiment results, WHITEPAPER, and all Moltbook content — is at **[FTHTrading/Genesis](https://github.com/FTHTrading/Genesis)**.
+
+---
 
 Deterministic evolutionary economics engine. 13 crates. 345 tests. Pure Rust.
 
