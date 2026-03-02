@@ -135,7 +135,8 @@ try {
                     $failed++
                 }
             } elseif ($item.action -eq "post") {
-                $result = Submit-MoltbookPost -Title $item.title -Content $item.content -SubmoltName ($item.submolt_name ?? "aiagents")
+                $submoltName = if ($item.submolt_name) { $item.submolt_name } else { "aiagents" }
+                $result = Submit-MoltbookPost -Title $item.title -Content $item.content -SubmoltName $submoltName
 
                 if ($result.success) {
                     Write-Host "  POSTED: $($result.post.id)" -ForegroundColor Green
