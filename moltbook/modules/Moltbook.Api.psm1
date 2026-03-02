@@ -150,36 +150,42 @@ function ConvertFrom-WordNumber {
 function Deobfuscate-ChallengeText {
     <#
     .SYNOPSIS
-        Deobfuscates Moltbook challenge text with doubled-character patterns.
-        "tWwEeNnTtYy" → "twenty", "fFoOuUrR" → "four"
-        Also strips non-letter/non-space/non-digit punctuation.
+        Deobfuscates Moltbook challenge text.
+        Handles two obfuscation styles:
+          1. Doubled pairs within a token: "tWeNtY" -> "twenty"
+          2. Characters split across space-separated micro-tokens: "tW eN tY" -> "twenty"
+        Returns a hashtable with:
+          .Spaced   - tokens joined with spaces (for word-boundary matching)
+          .Concat   - tokens joined without spaces (for cross-token number words like "twentyeight")
     #>
     param([Parameter(Mandatory)][string]$Text)
-    
-    # Step 1: Strip special characters but keep letters, digits, spaces
+
+    # Step 1: Strip all punctuation/special chars, keep letters, digits, spaces
     $cleaned = $Text -replace '[^a-zA-Z0-9\s]', ' '
-    
-    # Step 2: For each word, remove adjacent case-pair duplicates
-    $words = $cleaned -split '\s+'
-    $result = @()
+
+    # Step 2: Per-token: collapse doubled case-pairs and lowercase
+    $words = $cleaned -split '\s+' | Where-Object { $_ }
+    $tokens = @()
     foreach ($word in $words) {
-        if (-not $word) { continue }
         $deduped = ""
         $i = 0
         while ($i -lt $word.Length) {
             $c = $word[$i]
-            # Check if next char is the same letter (case-insensitive)
             if ($i + 1 -lt $word.Length -and [char]::ToLowerInvariant($c) -eq [char]::ToLowerInvariant($word[$i + 1])) {
-                $deduped += $c
-                $i += 2  # skip the duplicate
+                $deduped += [char]::ToLowerInvariant($c)
+                $i += 2
             } else {
-                $deduped += $c
+                $deduped += [char]::ToLowerInvariant($c)
                 $i++
             }
         }
-        $result += $deduped
+        if ($deduped) { $tokens += $deduped }
     }
-    return ($result -join " ")
+
+    return @{
+        Spaced = ($tokens -join " ")
+        Concat = ($tokens -join "")
+    }
 }
 
 function Extract-ChallengeNumbers {
@@ -187,38 +193,96 @@ function Extract-ChallengeNumbers {
     .SYNOPSIS
         Extracts numbers from a Moltbook verification challenge.
         Handles digit-based, word-based, and doubled-character obfuscated numbers.
+        Handles cross-token compound numbers like "tW eN tY eI gGhT" = 28 via Concat.
     #>
     param([Parameter(Mandatory)][string]$ChallengeText)
 
     $numbers = @()
 
-    # Step 0: Deobfuscate doubled-character patterns
-    $deobfuscated = Deobfuscate-ChallengeText -Text $ChallengeText
+    # Deobfuscate — returns .Spaced and .Concat
+    $deob = Deobfuscate-ChallengeText -Text $ChallengeText
 
-    # Try extraction on BOTH original and deobfuscated text
-    foreach ($text in @($ChallengeText, $deobfuscated)) {
-        # Extract digit sequences
-        $digitMatches = [regex]::Matches($text, '\b\d+(\.\d+)?\b')
-        foreach ($m in $digitMatches) {
+    # ---- Spaced/original text: use word-boundary patterns ----
+    $compoundSpaced = '(?i)(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[\s-]+(one|two|three|four|five|six|seven|eight|nine)'
+    $simpleSpaced   = '(?i)\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)\b'
+
+    foreach ($text in @($ChallengeText, $deob.Spaced)) {
+        # Plain digits
+        foreach ($m in ([regex]::Matches($text, '\b\d+(\.\d+)?\b'))) {
             $numbers += [double]$m.Value
         }
-
-        # Extract word-numbers (case-insensitive)
-        $wordPattern = '(?i)\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|teen|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)(?:[-\s]+(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|teen|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand))*\b'
-        $wordMatches = [regex]::Matches($text, $wordPattern)
-        foreach ($m in $wordMatches) {
-            $converted = ConvertFrom-WordNumber -Text $m.Value
-            if ($null -ne $converted) {
-                $numbers += $converted
+        # Compound word-numbers (e.g. "twenty five") — track covered positions
+        $coveredSpaced = @()
+        foreach ($m in ([regex]::Matches($text, $compoundSpaced))) {
+            $v = ConvertFrom-WordNumber -Text "$($m.Groups[1].Value)-$($m.Groups[2].Value)"
+            if ($null -ne $v) {
+                $numbers += $v
+                $coveredSpaced += @{ Start = $m.Index; End = $m.Index + $m.Length - 1 }
+            }
+        }
+        # Simple word-numbers — skip those covered by compound matches
+        foreach ($m in ([regex]::Matches($text, $simpleSpaced))) {
+            $covered = $false
+            foreach ($cr in $coveredSpaced) {
+                if ($m.Index -ge $cr.Start -and $m.Index -le $cr.End) { $covered = $true; break }
+            }
+            if (-not $covered) {
+                $v = ConvertFrom-WordNumber -Text $m.Value.Trim()
+                if ($null -ne $v) { $numbers += $v }
             }
         }
     }
 
-    # Deduplicate while preserving order
+    # ---- Concatenated text: no word boundaries, for split tokens ----
+    # Normalize near-miss number words that deobfuscation can mangle
+    # e.g. "thre" (from "ThR ee") should correct to "three"
+    $nearMissMap = @{
+        'thre'     = 'three'
+        'ninteen'  = 'nineteen'
+        'elevin'   = 'eleven'
+        'twelv'    = 'twelve'
+        'forteen'  = 'fourteen'
+        'sixtee'   = 'sixteen'
+        'sevente'  = 'seventeen'
+        'eightee'  = 'eighteen'
+        'fiften'   = 'fifteen'
+    }
+    $concatText = $deob.Concat
+    foreach ($near in $nearMissMap.GetEnumerator()) {
+        $concatText = [regex]::Replace($concatText, "(?i)$([regex]::Escape($near.Key))", $near.Value)
+    }
+
+    # Process compound matches first, track covered positions, then skip simples that overlap
+    $compoundConcat = '(?i)(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(one|two|three|four|five|six|seven|eight|nine)'
+    $simpleConcat   = '(?i)(nineteen|eighteen|seventeen|sixteen|fifteen|fourteen|thirteen|twelve|eleven|hundred|thousand|zero|one|two|three|four|five|six|seven|eight|nine|ten|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)'
+
+    $coveredRanges = @()
+    foreach ($m in ([regex]::Matches($concatText, $compoundConcat))) {
+        $v = ConvertFrom-WordNumber -Text "$($m.Groups[1].Value)-$($m.Groups[2].Value)"
+        if ($null -ne $v) {
+            $numbers += $v
+            $coveredRanges += @{ Start = $m.Index; End = $m.Index + $m.Length - 1 }
+        }
+    }
+    foreach ($m in ([regex]::Matches($concatText, $simpleConcat))) {
+        # Skip if this position is within a compound match's range
+        $isInCompound = $false
+        foreach ($range in $coveredRanges) {
+            if ($m.Index -ge $range.Start -and $m.Index -le $range.End) {
+                $isInCompound = $true; break
+            }
+        }
+        if (-not $isInCompound) {
+            $v = ConvertFrom-WordNumber -Text $m.Value.Trim()
+            if ($null -ne $v) { $numbers += $v }
+        }
+    }
+
+    # Deduplicate by integer value, first-seen order
     $seen = @{}
     $unique = @()
     foreach ($n in $numbers) {
-        $key = "$n"
+        $key = [string][int]$n
         if (-not $seen.ContainsKey($key)) {
             $seen[$key] = $true
             $unique += $n
@@ -246,18 +310,33 @@ function Solve-Challenge {
 
     # Use deobfuscated text for operation detection
     $deob = Deobfuscate-ChallengeText -Text $ChallengeText
-    $lower = $deob.ToLower()
+    $lower = $deob.Spaced.ToLower()
 
-    if ($lower -match 'increas|add[s ]|plus|gain|more than|total|combin|togeth') {
-        $answer = $num1 + $num2
-    } elseif ($lower -match 'decreas|subtract|minus|lose|less|drop|reduc|remov|remain') {
-        $answer = $num1 - $num2
-    } elseif ($lower -match 'times|multipl|product|doubl') {
+    if ($lower -match 'times|multipl|product|doubl|exert|tripl') {
         $answer = $num1 * $num2
     } elseif ($lower -match 'divid|split|ratio|per|half') {
         if ($num2 -ne 0) { $answer = $num1 / $num2 } else { return $null }
+    } elseif ($lower -match 'decreas|subtract|minus|lose|less|drop|reduc|remov|remain') {
+        $answer = $num1 - $num2
     } else {
-        $answer = $num1 + $num2  # default addition
+        # Default: addition
+        $answer = $num1 + $num2
+    }
+
+    # Sanity check with 3-number challenges:
+    # "has X, adds Y, to get Z" — answer is Z (appears after "to get" in concat form)
+    if ($numbers.Count -ge 3 -and ($lower -match 'to get|equal')) {
+        # Work on concat text since spaced has fragmented tokens
+        $concatLower = ($deob.Concat).ToLower()
+        $toGetMatch = [regex]::Match($concatLower, 'toget((?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(?:one|two|three|four|five|six|seven|eight|nine)?|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|\d+)')
+        if ($toGetMatch.Success) {
+            $rawTg = $toGetMatch.Groups[1].Value.Trim()
+            # ConvertFrom-WordNumber needs hyphen/space separation for compound words
+            # Try inserting a dash between "twenty|thirty... + ones digit" if no separator
+            $rawTg = [regex]::Replace($rawTg, '(?i)(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)(one|two|three|four|five|six|seven|eight|nine)$', '$1-$2')
+            $tgVal = ConvertFrom-WordNumber -Text $rawTg
+            if ($null -ne $tgVal) { $answer = $tgVal }
+        }
     }
 
     return "{0:F2}" -f $answer
